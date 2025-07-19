@@ -1,0 +1,374 @@
+﻿body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    background-color: #f0f0f0;
+}
+
+.console-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.top-bar {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.top-bar h1 {
+    margin: 0;
+    font-size: 24px;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.main-content {
+    display: flex;
+    flex: 1;
+}
+
+.menu-column {
+    width: 200px;
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-right: 1px solid #ddd;
+}
+
+.menu-column ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.menu-column li {
+    margin-bottom: 10px;
+}
+
+.menu-column .admin-section {
+    margin-top: 20px;
+    border-top: 1px solid #ddd;
+    padding-top: 10px;
+}
+
+.menu-column .admin-section strong {
+    display: block;
+    font-size: 16px;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.menu-column .admin-section ul {
+    padding-left: 20px;
+}
+
+.menu-column a {
+    text-decoration: none;
+    color: #007bff;
+    font-size: 16px;
+}
+
+.menu-column a:hover {
+    text-decoration: underline;
+}
+
+.menu-column a.active {
+    font-weight: bold;
+    color: #0056b3;
+}
+
+.info-panel {
+    flex: 1;
+    padding: 20px;
+    background: white;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group.inline {
+    display: inline-block;
+    margin-right: 10px;
+    vertical-align: top;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.form-group input {
+    width: 150px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+button {
+    width: 100%;
+    padding: 10px;
+    background-color: #007bff;
+    border: none;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+.error {
+    color: red;
+    margin-bottom: 15px;
+}
+
+.logout-btn, .action-btn, .reserved-btn {
+    display: inline-block;
+    padding: 10px 20px;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    border: none;
+}
+
+.logout-btn {
+    background-color: #dc3545;
+}
+
+.logout-btn:hover {
+    background-color: #c82333;
+}
+
+.action-btn {
+    background-color: #28a745;
+    margin-right: 10px;
+}
+
+.action-btn:hover {
+    background-color: #218838;
+}
+
+.reserved-btn {
+    background-color: #6c757d;
+    margin-top: 20px;
+}
+
+.reserved-btn:hover {
+    background-color: #5a6268;
+}
+
+.action-btn-tiny {
+    display: inline-block;
+    padding: 3px 6px;
+    color: white;
+    border-radius: 4px;
+    font-size: 10px;
+    text-align: center;
+    margin: 0 5px;
+}
+
+.action-btn-tiny.action-edit {
+    background-color: #007bff;
+    cursor: pointer;
+}
+
+.action-btn-tiny.action-edit:hover {
+    background-color: #0056b3;
+}
+
+.action-btn-tiny.action-delete {
+    background-color: #dc3545;
+    cursor: pointer;
+}
+
+.action-btn-tiny.action-delete:hover {
+    background-color: #c82333;
+}
+
+.action-btn-tiny.action-save {
+    background-color: #28a745;
+    cursor: pointer;
+}
+
+.action-btn-tiny.action-save:hover {
+    background-color: #218838;
+}
+
+.action-btn-tiny.action-cancel {
+    background-color: #6c757d;
+    cursor: pointer;
+}
+
+.action-btn-tiny.action-cancel:hover {
+    background-color: #5a6268;
+}
+
+.action-btn-tiny.action-more {
+    background-color: #17a2b8;
+    cursor: pointer;
+}
+
+.action-btn-tiny.action-more:hover {
+    background-color: #138496;
+}
+
+.action-btn-tiny.action-first, .action-btn-tiny.action-prev, .action-btn-tiny.action-next, .action-btn-tiny.action-last {
+    background-color: #6c757d;
+    cursor: pointer;
+}
+
+.action-btn-tiny.action-first:hover, .action-btn-tiny.action-prev:hover, .action-btn-tiny.action-next:hover, .action-btn-tiny.action-last:hover {
+    background-color: #5a6268;
+}
+
+.action-btn-tiny.action-first:disabled, .action-btn-tiny.action-prev:disabled, .action-btn-tiny.action-next:disabled, .action-btn-tiny.action-last:disabled {
+    background-color: #d6d8db;
+    cursor: not-allowed;
+}
+
+.pagination-select {
+    padding: 3px;
+    font-size: 10px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    background-color: #fff;
+    margin: 0 5px;
+    vertical-align: middle;
+}
+
+.pagination-select:focus {
+    outline: none;
+    border-color: #007bff;
+}
+
+.status-btn {
+    display: inline-block;
+    padding: 5px 10px;
+    color: white;
+    border-radius: 4px;
+    font-size: 12px;
+    text-align: center;
+    margin: 0 5px;
+    cursor: default;
+}
+
+.status-btn.status-online {
+    background-color: #28a745;
+}
+
+.status-btn.status-offline, .status-btn.status-invalid {
+    background-color: #dc3545;
+}
+
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 5px;
+}
+
+.pagination-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 10px 0;
+    align-items: center;
+}
+
+.pagination-buttons a.disabled {
+    background-color: #d6d8db;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.login-container p, .login-container a {
+    margin-top: 15px;
+    font-size: 14px;
+}
+
+.login-container a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.login-container a:hover {
+    text-decoration: underline;
+}
+
+.info-panel p {
+    margin: 10px 0;
+    text-align: left;
+}
+
+.info-panel h3 {
+    margin-top: 20px;
+    font-size: 18px;
+}
+
+.device-table, .log-table, .user-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.device-table th, .device-table td, .log-table th, .log-table td, .user-table th, .user-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+.device-table th, .log-table th, .user-table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+}
+
+.device-table tr:nth-child(even), .log-table tr:nth-child(even), .user-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.device-table input {
+    padding: 5px;
+    margin: 0;
+}
+
+.inner-table {
+    width: 100%;
+    margin: 10px 0;
+    border-collapse: collapse;
+}
+
+.inner-table th, .inner-table td {
+    border: 1px solid #ddd;
+    padding: 6px;
+    font-size: 14px;
+}
+
+.inner-table th {
+    background-color: #e9ecef;
+}
+
+.inner-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+details {
+    text-align: left;
+    margin: 5px 0;
+}
+
+details summary {
+    cursor: pointer;
+    padding: 5px;
+    background-color: #f2f2f2;
+    border-radius: 4px;
+}
