@@ -103,8 +103,9 @@ try {
             // CURLOPT_CONNECTTIMEOUT => 2,
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_FAILONERROR => false
-            // CURLOPT_SSL_VERIFYPEER => false,
-            // CURLOPT_USERAGENT => 'Manual-Device-Check/1.0'            
+            CURLOPT_SSL_VERIFYHOST => false,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_USERAGENT => 'Manual-Device-Check/1.0'            
         ]);
         
         $health_response = curl_exec($ch);
