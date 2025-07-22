@@ -97,7 +97,7 @@ try {
         $ch = curl_init();
         curl_setopt_array($ch, [
             CURLOPT_URL => $health_url,
-            // CURLOPT_CUSTOMREQUEST  => 'GET'
+            CURLOPT_CUSTOMREQUEST  => 'GET',
             CURLOPT_RETURNTRANSFER => true,
             // CURLOPT_TIMEOUT => 5,
             // CURLOPT_CONNECTTIMEOUT => 2,
