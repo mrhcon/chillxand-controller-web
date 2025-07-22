@@ -37,30 +37,75 @@ try {
     logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'last_login_fetch_failed', $error);
 }
 
-// Fetch user's devices with status and last update
+// Fetch user's devices with enhanced status and order by node name
 try {
     $stmt = $pdo->prepare("
-        SELECT d.id, d.pnode_name, d.pnode_ip, d.registration_date,
-               (SELECT MAX(ui.timestamp)
-                FROM user_interactions ui
-                WHERE ui.user_id = ? 
-                AND ui.action IN ('device_status_check_success', 'device_status_check_failed')
-                AND (ui.details LIKE CONCAT('%IP: ', d.pnode_ip, '%') OR ui.details LIKE CONCAT('%Device ID: ', d.id, '%'))) AS last_update
+        SELECT d.id, d.pnode_name, d.pnode_ip, d.registration_date
         FROM devices d
         WHERE d.username = ?
-        ORDER BY d.registration_date DESC
+        ORDER BY d.pnode_name ASC
     ");
-    $stmt->execute([$_SESSION['user_id'], $_SESSION['username']]);
+    $stmt->execute([$_SESSION['username']]);
     $devices = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Add status to each device
+    // Get latest statuses for all devices at once (super efficient!)
+    $device_ids = array_column($devices, 'id');
+    $cached_statuses = getLatestDeviceStatuses($pdo, $device_ids);
+    
+    // Add cached status and health data to each device
     $updated_devices = [];
     foreach ($devices as $device) {
-        $status = pingDevice($device['pnode_ip'], $pdo, $_SESSION['user_id'], $_SESSION['username']);
-        $device['status'] = $status['status'];
+        $device_id = $device['id'];
+        $cached_status = $cached_statuses[$device_id] ?? [
+            'status' => 'Not Initialized',
+            'is_stale' => true,
+            'error_message' => 'Device has not been checked yet'
+        ];
+        
+        // Add status from cache
+        $device['status'] = $cached_status['status'];
+        $device['status_age'] = $cached_status['age_minutes'];
+        $device['status_stale'] = $cached_status['is_stale'];
+        $device['last_check'] = $cached_status['check_time'];
+        $device['response_time'] = $cached_status['response_time'];
+        $device['consecutive_failures'] = $cached_status['consecutive_failures'];
+        $device['health_status'] = $cached_status['health_status'];
+        
+        // Determine overall status (connectivity + health)
+        $overall_status = 'Unknown';
+        if ($device['status'] === 'Online') {
+            if ($device['health_status'] === 'pass') {
+                $overall_status = 'Healthy';
+            } elseif ($device['health_status'] === 'fail') {
+                $overall_status = 'Online (Issues)';
+            } else {
+                $overall_status = 'Online';
+            }
+        } elseif ($device['status'] === 'Offline') {
+            $overall_status = 'Offline';
+        } else {
+            $overall_status = $device['status'];
+        }
+        $device['overall_status'] = $overall_status;
+        
+        // Get last update time from user_interactions for display compatibility
+        $device_name_pattern = "%Device: {$device['pnode_name']}%";
+        $ip_pattern = "%IP: {$device['pnode_ip']}%";
+        $stmt2 = $pdo->prepare("
+            SELECT MAX(timestamp) as last_update
+            FROM user_interactions 
+            WHERE user_id = ? 
+            AND action IN ('device_status_check_success', 'device_status_check_failed')
+            AND (details LIKE ? OR details LIKE ?)
+        ");
+        $stmt2->execute([$_SESSION['user_id'], $device_name_pattern, $ip_pattern]);
+        $last_update = $stmt2->fetchColumn();
+        $device['last_update'] = $last_update ?: $device['last_check'];
+        
         $updated_devices[] = $device;
     }
     $devices = $updated_devices;
+    
 } catch (PDOException $e) {
     $error = "Error fetching devices: " . $e->getMessage();
     logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_fetch_failed', $error);
@@ -77,6 +122,15 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .status-healthy { background-color: #28a745; }
+        .status-online-issues { background-color: #ffc107; color: #212529; }
+        .status-not-initialized { background-color: #6c757d; }
+        .device-status-details { font-size: 11px; color: #666; margin-top: 3px; }
+        .status-age { font-size: 10px; color: #666; }
+        .status-stale { color: #ff6600; }
+        .status-fresh { color: #006600; }
+    </style>
 </head>
 <body>
     <div class="console-container">
@@ -129,7 +183,9 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                 <th>Node Name</th>
                                 <th>IP Address</th>
                                 <th>Registration Date</th>
-                                <th>Status</th>
+                                <th>Overall Status</th>
+                                <th>Connectivity</th>
+                                <th>Health Status</th>
                                 <th>Last Update</th>
                             </tr>
                         </thead>
@@ -140,16 +196,59 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                     <td><?php echo htmlspecialchars($device['pnode_ip']); ?></td>
                                     <td><?php echo htmlspecialchars($device['registration_date']); ?></td>
                                     <td>
+                                        <span class="status-btn status-<?php echo strtolower(str_replace(['(', ')', ' '], ['-', '', '-'], $device['overall_status'])); ?>">
+                                            <?php echo htmlspecialchars($device['overall_status']); ?>
+                                        </span>
+                                        <div class="status-age <?php echo $device['status_stale'] ? 'status-stale' : 'status-fresh'; ?>">
+                                            <?php if ($device['last_check']): ?>
+                                                <?php echo $device['status_age'] ? round($device['status_age']) . 'm ago' : 'Just now'; ?>
+                                            <?php else: ?>
+                                                Never checked
+                                            <?php endif; ?>
+                                        </div>
+                                    </td>
+                                    <td>
                                         <span class="status-btn status-<?php echo strtolower($device['status']); ?>">
                                             <?php echo htmlspecialchars($device['status']); ?>
                                         </span>
+                                        <?php if ($device['response_time']): ?>
+                                            <div class="device-status-details">Response: <?php echo round($device['response_time'] * 1000, 1); ?>ms</div>
+                                        <?php endif; ?>
+                                        <?php if ($device['consecutive_failures'] > 0): ?>
+                                            <div class="device-status-details" style="color: #dc3545;">Failures: <?php echo $device['consecutive_failures']; ?></div>
+                                        <?php endif; ?>
                                     </td>
-                                    <td><?php echo htmlspecialchars($device['last_update'] ?? 'N/A'); ?></td>
+                                    <td>
+                                        <?php if ($device['health_status']): ?>
+                                            <span class="status-btn status-<?php echo $device['health_status'] == 'pass' ? 'online' : 'offline'; ?>">
+                                                <?php echo ucfirst($device['health_status']); ?>
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="status-btn status-unknown">Unknown</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <?php if ($device['last_update']): ?>
+                                            <?php echo htmlspecialchars($device['last_update']); ?>
+                                        <?php else: ?>
+                                            <span style="font-style: italic; color: #999;">N/A</span>
+                                        <?php endif; ?>
+                                    </td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
                     </table>
                 <?php endif; ?>
+                
+                <div style="margin-top: 20px; padding: 10px; background-color: #e9ecef; border-radius: 4px;">
+                    <h4>Status Legend</h4>
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap; font-size: 12px;">
+                        <span><span class="status-btn status-healthy" style="padding: 2px 6px;">Healthy</span> = Online + Health Pass</span>
+                        <span><span class="status-btn status-online-issues" style="padding: 2px 6px;">Online (Issues)</span> = Online + Health Fail</span>
+                        <span><span class="status-btn status-online" style="padding: 2px 6px;">Online</span> = Connected, Health Unknown</span>
+                        <span><span class="status-btn status-offline" style="padding: 2px 6px;">Offline</span> = Not Reachable</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

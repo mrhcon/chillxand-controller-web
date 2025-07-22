@@ -95,13 +95,15 @@ function fetchDeviceHealth($ip, $timeout = 5) {
     $ch = curl_init();
     curl_setopt_array($ch, [
         CURLOPT_URL => "http://$ip:3001/health",
+        CURLOPT_CUSTOMREQUEST  => 'GET',  // <-- This is explicitly set
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_TIMEOUT => $timeout,
         CURLOPT_CONNECTTIMEOUT => 2,
-        CURLOPT_FOLLOWLOCATION => true,
         CURLOPT_MAXREDIRS => 3,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_FAILONERROR => false,
         CURLOPT_SSL_VERIFYPEER => false,
-        CURLOPT_USERAGENT => 'Device-Status-Checker/1.0'
+        CURLOPT_USERAGENT => 'Device-Status-Checker/1.0'  
     ]);
     
     $response = curl_exec($ch);

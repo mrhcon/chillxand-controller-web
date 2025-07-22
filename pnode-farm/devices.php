@@ -76,7 +76,7 @@ try {
         SELECT d.id, d.pnode_name, d.pnode_ip, d.registration_date 
         FROM devices d 
         WHERE d.username = :username OR :admin = 1 
-        ORDER BY d.registration_date DESC
+        ORDER BY d.pnode_name ASC
     ");
     $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
     $stmt->bindValue(':admin', $_SESSION['admin'], PDO::PARAM_INT);
@@ -108,6 +108,24 @@ try {
         $device['last_check'] = $cached_status['check_time'];
         $device['response_time'] = $cached_status['response_time'];
         $device['consecutive_failures'] = $cached_status['consecutive_failures'];
+        $device['health_status'] = $cached_status['health_status'];
+        
+        // Determine overall status (connectivity + health)
+        $overall_status = 'Unknown';
+        if ($device['status'] === 'Online') {
+            if ($device['health_status'] === 'pass') {
+                $overall_status = 'Healthy';
+            } elseif ($device['health_status'] === 'fail') {
+                $overall_status = 'Online (Issues)';
+            } else {
+                $overall_status = 'Online';
+            }
+        } elseif ($device['status'] === 'Offline') {
+            $overall_status = 'Offline';
+        } else {
+            $overall_status = $device['status'];
+        }
+        $device['overall_status'] = $overall_status;
         
         // Parse health data from cached data
         $summaries[$device_id] = parseCachedDeviceHealth($cached_status);
@@ -325,15 +343,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             background-color: #17a2b8; 
             color: white; 
             border: none; 
-            padding: 2px 6px; 
-            font-size: 10px; 
-            border-radius: 3px; 
+            padding: 1px 4px; 
+            font-size: 9px; 
+            border-radius: 2px; 
             cursor: pointer; 
-            margin-left: 5px;
+            margin-left: 3px;
+            width: 14px;
+            height: 14px;
+            line-height: 1;
         }
         .refresh-btn:hover { background-color: #138496; }
         .device-details { font-size: 11px; color: #666; margin-top: 3px; }
         .status-not-initialized { background-color: #6c757d; }
+        .status-healthy { background-color: #28a745; }
+        .status-online-issues { background-color: #ffc107; color: #212529; }
+        .last-check-col { font-size: 11px; color: #666; }
+        .never-checked { font-style: italic; color: #999; }
     </style>
     <script>
         function toggleEdit(deviceId) {
@@ -348,9 +373,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         function refreshDeviceStatus(deviceId) {
             const statusElement = document.querySelector(`#status-${deviceId}`);
             const refreshBtn = document.querySelector(`#refresh-${deviceId}`);
+            const lastCheckElement = document.querySelector(`#lastcheck-${deviceId}`);
             
             refreshBtn.disabled = true;
-            refreshBtn.textContent = '...';
+            refreshBtn.textContent = '⟳';
             
             fetch('manual_device_check.php', {
                 method: 'POST',
@@ -362,12 +388,40 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 if (data.error) {
                     alert('Error: ' + data.error);
                 } else {
-                    const statusClass = data.status.toLowerCase().replace(' ', '-');
+                    // Determine overall status
+                    let overallStatus = 'Unknown';
+                    let statusClass = 'unknown';
+                    
+                    if (data.status === 'Online') {
+                        if (data.health_status === 'pass') {
+                            overallStatus = 'Healthy';
+                            statusClass = 'healthy';
+                        } else if (data.health_status === 'fail') {
+                            overallStatus = 'Online (Issues)';
+                            statusClass = 'online-issues';
+                        } else {
+                            overallStatus = 'Online';
+                            statusClass = 'online';
+                        }
+                    } else if (data.status === 'Offline') {
+                        overallStatus = 'Offline';
+                        statusClass = 'offline';
+                    } else {
+                        overallStatus = data.status;
+                        statusClass = data.status.toLowerCase().replace(' ', '-');
+                    }
+                    
                     statusElement.innerHTML = `
-                        <span class="status-btn status-${statusClass}">${data.status}</span>
+                        <span class="status-btn status-${statusClass}">${overallStatus}</span>
                         <button class="refresh-btn" id="refresh-${deviceId}" onclick="refreshDeviceStatus(${deviceId})" title="Refresh status">↻</button>
                         <div class="status-age status-fresh">Just checked</div>
                         <div class="device-details">Response: ${data.response_time}ms</div>
+                        ${data.health_status ? `<div class="device-details">Health: ${data.health_status}</div>` : ''}
+                    `;
+                    
+                    lastCheckElement.innerHTML = `
+                        <div class="status-fresh">Just now</div>
+                        <div style="font-size: 10px;">${data.timestamp}</div>
                     `;
                 }
                 refreshBtn.disabled = false;
@@ -499,6 +553,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                 <th>IP Address</th>
                                 <th>Registration Date</th>
                                 <th>Status</th>
+                                <th>Last Checked</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -509,8 +564,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                     <td><?php echo htmlspecialchars($device['pnode_ip']); ?></td>
                                     <td><?php echo htmlspecialchars($device['registration_date']); ?></td>
                                     <td id="status-<?php echo $device['id']; ?>">
-                                        <span class="status-btn status-<?php echo strtolower(str_replace(' ', '-', $device['status'])); ?>">
-                                            <?php echo htmlspecialchars($device['status']); ?>
+                                        <span class="status-btn status-<?php echo strtolower(str_replace(['(', ')', ' '], ['-', '', '-'], $device['overall_status'])); ?>">
+                                            <?php echo htmlspecialchars($device['overall_status']); ?>
                                         </span>
                                         <button class="refresh-btn" id="refresh-<?php echo $device['id']; ?>" onclick="refreshDeviceStatus(<?php echo $device['id']; ?>)" title="Refresh status">↻</button>
                                         <div class="status-age <?php echo $device['status_stale'] ? 'status-stale' : 'status-fresh'; ?>">
@@ -523,8 +578,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                         <?php if ($device['response_time']): ?>
                                             <div class="device-details">Response: <?php echo round($device['response_time'] * 1000, 1); ?>ms</div>
                                         <?php endif; ?>
+                                        <?php if ($device['health_status']): ?>
+                                            <div class="device-details">Health: <?php echo htmlspecialchars($device['health_status']); ?></div>
+                                        <?php endif; ?>
                                         <?php if ($device['consecutive_failures'] > 0): ?>
                                             <div class="device-details" style="color: #dc3545;">Failures: <?php echo $device['consecutive_failures']; ?></div>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="last-check-col" id="lastcheck-<?php echo $device['id']; ?>">
+                                        <?php if ($device['last_check']): ?>
+                                            <div class="<?php echo $device['status_stale'] ? 'status-stale' : 'status-fresh'; ?>">
+                                                <?php echo $device['status_age'] ? round($device['status_age']) . ' min ago' : 'Just now'; ?>
+                                            </div>
+                                            <div style="font-size: 10px; color: #999;">
+                                                <?php echo date('M j, H:i', strtotime($device['last_check'])); ?>
+                                            </div>
+                                        <?php else: ?>
+                                            <div class="never-checked">Never checked</div>
                                         <?php endif; ?>
                                     </td>
                                     <td>
@@ -537,7 +607,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td colspan="5">
+                                    <td colspan="6">
                                         <details>
                                             <summary>More Info</summary>
                                             <div class="summary-container">
@@ -636,7 +706,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                     </td>
                                 </tr>
                                 <tr id="edit-<?php echo $device['id']; ?>" style="display:none;">
-                                    <td colspan="5">
+                                    <td colspan="6">
                                         <form method="POST" action="">
                                             <input type="hidden" name="action" value="edit">
                                             <input type="hidden" name="device_id" value="<?php echo $device['id']; ?>">
