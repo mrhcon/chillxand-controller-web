@@ -97,14 +97,13 @@ try {
         $ch = curl_init();
         curl_setopt_array($ch, [
             CURLOPT_URL => $health_url,
-            // CURLOPT_RETURNTRANSFER => true,
-            // CURLOPT_TIMEOUT => 5,
-            // CURLOPT_CONNECTTIMEOUT => 2,
-            // CURLOPT_FOLLOWLOCATION => true,
-            // CURLOPT_SSL_VERIFYPEER => false,
-            // CURLOPT_USERAGENT => 'Manual-Device-Check/1.0',
-            CURLOPT_CUSTOMREQUEST  => 'GET'
-            
+            // CURLOPT_CUSTOMREQUEST  => 'GET'
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 5,
+            CURLOPT_CONNECTTIMEOUT => 2,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_USERAGENT => 'Manual-Device-Check/1.0'            
         ]);
         
         $health_response = curl_exec($ch);
