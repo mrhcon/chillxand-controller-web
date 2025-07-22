@@ -57,7 +57,7 @@ try {
     $check_method = 'manual';
     
     // Try fsockopen first (fastest)
-    $connection = @fsockopen($ip, 80, $errno, $errstr, 3);
+    $connection = @fsockopen($ip, 3001, $errno, $errstr, 3);
     if ($connection) {
         fclose($connection);
         $status = 'Online';
@@ -74,7 +74,7 @@ try {
         } else {
             $status = 'Offline';
             $response_time = microtime(true) - $start_time;
-            $error_message = "Port 80/443 unreachable: $errstr ($errno)";
+            $error_message = "Port 3001 unreachable: $errstr ($errno)";
             $check_method = 'manual:fsockopen+443';
         }
     }

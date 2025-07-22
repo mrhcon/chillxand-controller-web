@@ -44,8 +44,8 @@ function checkDeviceStatus($ip, $timeout = 3) {
         return $result;
     }
     
-    // Method 1: Try fsockopen on port 80
-    $connection = @fsockopen($ip, 80, $errno, $errstr, $timeout);
+    // Method 1: Try fsockopen on port 3001
+    $connection = @fsockopen($ip, 3001, $errno, $errstr, $timeout);
     if ($connection) {
         fclose($connection);
         $result['status'] = 'Online';
