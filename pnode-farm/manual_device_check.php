@@ -283,7 +283,7 @@ try {
         'memory_percent' => $memory_percent,
         'server_hostname' => $server_hostname,
         'chillxand_version' => $chillxand_version,
-        'debug_info' => $debug
+        'debug_info' => var_dump($debug)
     ]);
     
 } catch (Exception $e) {
