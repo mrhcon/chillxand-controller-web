@@ -408,8 +408,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         <button class="refresh-btn" id="refresh-${deviceId}" onclick="refreshDeviceStatus(${deviceId})" title="Refresh status">↻</button>
                         <div class="status-age status-fresh">Just checked</div>
                         <div class="device-details">Response: ${data.response_time}ms</div>
-                        ${data.health_status ? `<div class="device-details">Health: ${data.health_status}</div>` : ''}
+                        ${data.consecutive_failures > 0 ? `<div class="device-details" style="color: #dc3545;">Failures: ${data.consecutive_failures}</div>` : ''}
                     `;
+                    
+                    // Update health status column
+                    const healthElement = statusElement.parentNode.nextElementSibling;
+                    if (data.health_status) {
+                        const healthClass = data.health_status === 'pass' ? 'online' : 'offline';
+                        healthElement.innerHTML = `<span class="status-btn status-${healthClass}">${data.health_status.charAt(0).toUpperCase() + data.health_status.slice(1)}</span>`;
+                    } else {
+                        healthElement.innerHTML = `<span class="status-btn status-not-initialized">Not Initialized</span>`;
+                    }
                     
                     lastCheckElement.innerHTML = `
                         <div class="status-fresh">Just now</div>
@@ -544,7 +553,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                 <th>Node Name</th>
                                 <th>IP Address</th>
                                 <th>Registration Date</th>
-                                <th>Status</th>
+                                <th>Connectivity</th>
+                                <th>Health Status</th>
                                 <th>Last Checked</th>
                                 <th>Actions</th>
                             </tr>
@@ -570,11 +580,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                         <?php if ($device['response_time']): ?>
                                             <div class="device-details">Response: <?php echo round($device['response_time'] * 1000, 1); ?>ms</div>
                                         <?php endif; ?>
-                                        <?php if ($device['health_status']): ?>
-                                            <div class="device-details">Health: <?php echo htmlspecialchars($device['health_status']); ?></div>
-                                        <?php endif; ?>
                                         <?php if ($device['consecutive_failures'] > 0): ?>
                                             <div class="device-details" style="color: #dc3545;">Failures: <?php echo $device['consecutive_failures']; ?></div>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <?php if ($device['health_status']): ?>
+                                            <span class="status-btn status-<?php echo $device['health_status'] == 'pass' ? 'online' : 'offline'; ?>">
+                                                <?php echo ucfirst($device['health_status']); ?>
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="status-btn status-not-initialized">Not Initialized</span>
                                         <?php endif; ?>
                                     </td>
                                     <td class="last-check-col" id="lastcheck-<?php echo $device['id']; ?>">
@@ -599,7 +615,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td colspan="6">
+                                    <td colspan="7">
                                         <details>
                                             <summary>More Info</summary>
                                             <div class="summary-container">
@@ -698,7 +714,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                     </td>
                                 </tr>
                                 <tr id="edit-<?php echo $device['id']; ?>" style="display:none;">
-                                    <td colspan="6">
+                                    <td colspan="7">
                                         <form method="POST" action="">
                                             <input type="hidden" name="action" value="edit">
                                             <input type="hidden" name="device_id" value="<?php echo $device['id']; ?>">

@@ -211,7 +211,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                                 <?php echo ucfirst($device['health_status']); ?>
                                             </span>
                                         <?php else: ?>
-                                            <span class="status-btn status-unknown">Unknown</span>
+                                            <span class="status-btn status-not-initialized">Not Initialized</span>
                                         <?php endif; ?>
                                     </td>
                                     <td>
