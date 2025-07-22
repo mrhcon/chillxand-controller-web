@@ -267,24 +267,24 @@ try {
                    'manual_device_check', 
                    "Device: {$device['pnode_name']}, IP: $ip, Status: $status");
     
-    echo json_encode([
-        'status' => $status,
-        'response_time' => round($response_time * 1000, 1),
-        'device_name' => $device['pnode_name'],
-        'timestamp' => date('Y-m-d H:i:s'),
-        'consecutive_failures' => $consecutive_failures,
-        'check_method' => $check_method,
-        'health_status' => $health_status,
-        'atlas_registered' => $atlas_registered,
-        'pod_status' => $pod_status,
-        'xandminer_status' => $xandminer_status,
-        'xandminerd_status' => $xandminerd_status,
-        'cpu_load_avg' => $cpu_load_avg,
-        'memory_percent' => $memory_percent,
-        'server_hostname' => $server_hostname,
-        'chillxand_version' => $chillxand_version,
-        'debug_info' => $debug
-    ]);
+    // echo json_encode([
+    //     'status' => $status,
+    //     'response_time' => round($response_time * 1000, 1),
+    //     'device_name' => $device['pnode_name'],
+    //     'timestamp' => date('Y-m-d H:i:s'),
+    //     'consecutive_failures' => $consecutive_failures,
+    //     'check_method' => $check_method,
+    //     'health_status' => $health_status,
+    //     'atlas_registered' => $atlas_registered,
+    //     'pod_status' => $pod_status,
+    //     'xandminer_status' => $xandminer_status,
+    //     'xandminerd_status' => $xandminerd_status,
+    //     'cpu_load_avg' => $cpu_load_avg,
+    //     'memory_percent' => $memory_percent,
+    //     'server_hostname' => $server_hostname,
+    //     'chillxand_version' => $chillxand_version,
+    //     'debug_info' => $debug
+    // ]);
     
 } catch (Exception $e) {
     echo json_encode([
