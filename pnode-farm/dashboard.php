@@ -150,7 +150,6 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                         </tbody>
                     </table>
                 <?php endif; ?>
-                <a href="devices.php"><button class="action-btn">Manage Devices</button></a>
             </div>
         </div>
     </div>
