@@ -2,8 +2,7 @@
 /**
  * device_status_checker.php - Background Device Status Checker (Health Endpoint)
  * 
- * Run this script via cron every 5-15 minutes:
- * */5 * * * * /usr/bin/php /path/to/your/app/device_status_checker.php >> /var/log/device_checker.log 2>&1
+ * Run this script via cron every 2 minutes
  */
 
 ini_set('display_errors', 0);
@@ -95,7 +94,7 @@ function fetchDeviceHealth($ip, $timeout = 5) {
     $ch = curl_init();
     curl_setopt_array($ch, [
         CURLOPT_URL => "http://$ip:3001/health",
-        CURLOPT_CUSTOMREQUEST  => 'GET',  // <-- This is explicitly set
+        CURLOPT_CUSTOMREQUEST  => 'GET',
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_TIMEOUT => $timeout,
         CURLOPT_CONNECTTIMEOUT => 2,
