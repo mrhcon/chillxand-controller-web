@@ -227,7 +227,7 @@ try {
             GROUP BY device_id
         ) latest ON d.id = latest.device_id
         WHERE latest.last_check IS NULL 
-           OR latest.last_check < DATE_SUB(NOW(), INTERVAL 5 MINUTE)
+           OR latest.last_check < DATE_SUB(NOW(), INTERVAL 2 MINUTE)
         ORDER BY 
             CASE WHEN latest.last_check IS NULL THEN 0 ELSE 1 END,
             latest.last_check ASC
