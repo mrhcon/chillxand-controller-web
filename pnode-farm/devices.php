@@ -413,9 +413,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     
                     // Update health status column
                     const healthElement = statusElement.parentNode.nextElementSibling;
-                    if (data.health_status) {
+                    if (data.status === 'Online' && data.health_status) {
                         const healthClass = data.health_status === 'pass' ? 'online' : 'offline';
                         healthElement.innerHTML = `<span class="status-btn status-${healthClass}">${data.health_status.charAt(0).toUpperCase() + data.health_status.slice(1)}</span>`;
+                    } else if (data.status === 'Not Initialized') {
+                        healthElement.innerHTML = `<span class="status-btn status-not-initialized">Not Initialized</span>`;
                     } else {
                         healthElement.innerHTML = `<span class="status-btn status-not-initialized">Not Initialized</span>`;
                     }
@@ -566,7 +568,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                     <td><?php echo htmlspecialchars($device['pnode_ip']); ?></td>
                                     <td><?php echo htmlspecialchars($device['registration_date']); ?></td>
                                     <td id="status-<?php echo $device['id']; ?>">
-                                        <span class="status-btn status-<?php echo strtolower($device['status']); ?>">
+                                        <span class="status-btn status-<?php echo strtolower(str_replace(' ', '-', $device['status'])); ?>">
                                             <?php echo htmlspecialchars($device['status']); ?>
                                         </span>
                                         <button class="refresh-btn" id="refresh-<?php echo $device['id']; ?>" onclick="refreshDeviceStatus(<?php echo $device['id']; ?>)" title="Refresh status">↻</button>
@@ -585,7 +587,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                         <?php endif; ?>
                                     </td>
                                     <td>
-                                        <?php if ($device['health_status']): ?>
+                                        <?php if ($device['status'] === 'Not Initialized'): ?>
+                                            <span class="status-btn status-not-initialized">Not Initialized</span>
+                                        <?php elseif ($device['health_status']): ?>
                                             <span class="status-btn status-<?php echo $device['health_status'] == 'pass' ? 'online' : 'offline'; ?>">
                                                 <?php echo ucfirst($device['health_status']); ?>
                                             </span>

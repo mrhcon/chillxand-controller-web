@@ -195,7 +195,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                     <td><?php echo htmlspecialchars($device['pnode_ip']); ?></td>
                                     <td><?php echo htmlspecialchars($device['registration_date']); ?></td>
                                     <td>
-                                        <span class="status-btn status-<?php echo strtolower($device['status']); ?>">
+                                        <span class="status-btn status-<?php echo strtolower(str_replace(' ', '-', $device['status'])); ?>">
                                             <?php echo htmlspecialchars($device['status']); ?>
                                         </span>
                                         <?php if ($device['response_time']): ?>
@@ -206,7 +206,9 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                         <?php endif; ?>
                                     </td>
                                     <td>
-                                        <?php if ($device['health_status']): ?>
+                                        <?php if ($device['status'] === 'Not Initialized'): ?>
+                                            <span class="status-btn status-not-initialized">Not Initialized</span>
+                                        <?php elseif ($device['health_status']): ?>
                                             <span class="status-btn status-<?php echo $device['health_status'] == 'pass' ? 'online' : 'offline'; ?>">
                                                 <?php echo ucfirst($device['health_status']); ?>
                                             </span>
