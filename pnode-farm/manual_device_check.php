@@ -98,10 +98,10 @@ try {
         curl_setopt_array($ch, [
             CURLOPT_URL => $health_url,
             // CURLOPT_CUSTOMREQUEST  => 'GET'
-            CURLOPT_RETURNTRANSFER => true
+            CURLOPT_RETURNTRANSFER => true,
             // CURLOPT_TIMEOUT => 5,
             // CURLOPT_CONNECTTIMEOUT => 2,
-            // CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_FOLLOWLOCATION => true
             // CURLOPT_SSL_VERIFYPEER => false,
             // CURLOPT_USERAGENT => 'Manual-Device-Check/1.0'            
         ]);
