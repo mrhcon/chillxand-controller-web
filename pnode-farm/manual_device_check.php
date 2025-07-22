@@ -184,39 +184,44 @@ try {
         $consecutive_failures = $last_consecutive_failures + 1;
     }
     
-    // Insert new status log entry with full health data
+    // Insert new status log entry with full health data (matching actual table structure)
     $stmt = $pdo->prepare("
         INSERT INTO device_status_log (
             device_id, status, check_time, response_time, check_method, 
-            error_message, consecutive_failures,
-            health_status, atlas_registered, pod_status, xandminer_status, xandminerd_status,
+            error_message, health_status, atlas_registered, pod_status, xandminer_status, xandminerd_status,
             cpu_load_avg, memory_percent, memory_total_bytes, memory_used_bytes,
-            server_ip, server_hostname, chillxand_version, node_version, health_json
+            server_ip, server_hostname, chillxand_version, node_version, health_json, consecutive_failures
         ) VALUES (?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ");
     
-    $stmt->execute([
-        $device_id,
-        $status,
-        $response_time,
-        $check_method,
-        $error_message,
-        $consecutive_failures,
-        $health_status,
-        $atlas_registered,
-        $pod_status,
-        $xandminer_status,
-        $xandminerd_status,
-        $cpu_load_avg,
-        $memory_percent,
-        $memory_total_bytes,
-        $memory_used_bytes,
-        $server_ip,
-        $server_hostname,
-        $chillxand_version,
-        $node_version,
-        $health_json
+    $success = $stmt->execute([
+        $device_id,                 // device_id
+        $status,                    // status
+        $response_time,             // response_time
+        $check_method,              // check_method
+        $error_message,             // error_message
+        $health_status,             // health_status
+        $atlas_registered,          // atlas_registered (boolean)
+        $pod_status,               // pod_status
+        $xandminer_status,         // xandminer_status
+        $xandminerd_status,        // xandminerd_status
+        $cpu_load_avg,             // cpu_load_avg
+        $memory_percent,           // memory_percent
+        $memory_total_bytes,       // memory_total_bytes
+        $memory_used_bytes,        // memory_used_bytes
+        $server_ip,                // server_ip
+        $server_hostname,          // server_hostname
+        $chillxand_version,        // chillxand_version
+        $node_version,             // node_version
+        $health_json,              // health_json (full JSON response)
+        $consecutive_failures      // consecutive_failures (at the end)
     ]);
+    
+    if (!$success) {
+        error_log("Failed to insert device status: " . json_encode($stmt->errorInfo()));
+        echo json_encode(['error' => 'Failed to save status to database']);
+        exit();
+    }
     
     // Log the manual check
     require_once 'functions.php';
