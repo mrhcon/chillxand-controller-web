@@ -9,8 +9,17 @@ require_once 'db_connect.php';
 header('Content-Type: application/json');
 set_time_limit(10);
 
-// Debug array to collect info
-$debug = [];
+// Debug array to collect info - use global to ensure persistence
+$GLOBALS['debug_messages'] = [];
+
+function addDebug($message) {
+    $GLOBALS['debug_messages'][] = $message;
+    error_log("DEBUG: " . $message);
+}
+
+function getDebugMessages() {
+    return $GLOBALS['debug_messages'];
+}
 
 if (!isset($_SESSION['user_id']) || !isset($_POST['device_id'])) {
     echo json_encode(['error' => 'Invalid request']);
@@ -18,6 +27,7 @@ if (!isset($_SESSION['user_id']) || !isset($_POST['device_id'])) {
 }
 
 $device_id = (int)$_POST['device_id'];
+addDebug("Checking device ID: $device_id");
 $debug[] = "Checking device ID: $device_id";
 
 try {
@@ -99,13 +109,10 @@ try {
             CURLOPT_URL => $health_url,
             CURLOPT_CUSTOMREQUEST  => 'GET',
             CURLOPT_RETURNTRANSFER => true,
-            // CURLOPT_TIMEOUT => 5,
-            // CURLOPT_CONNECTTIMEOUT => 2,
+            CURLOPT_TIMEOUT => 5,
+            CURLOPT_CONNECTTIMEOUT => 2,
             CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_FAILONERROR => false
-            // CURLOPT_SSL_VERIFYPEER => false,
-            // CURLOPT_SSL_VERIFYPEER => false,
-            // CURLOPT_USERAGENT => 'Manual-Device-Check/1.0'            
+            CURLOPT_FAILONERROR => false    
         ]);
         
         $health_response = curl_exec($ch);
@@ -236,7 +243,7 @@ try {
     }
     
     $debug[] = "About to insert into database...";
-    $debug[] = "Values: health_status=$health_status, atlas=$atlas_registered, pod=$pod_status, xandminer=$xandminer_status, xandminerd=$xandminerd_status";
+    $debug[] = "Values: health_status=$health_status, atlas=" . ($atlas_registered ? 'true' : 'false') . ", pod=$pod_status, xandminer=$xandminer_status, xandminerd=$xandminerd_status";
     
     // Insert new status log entry with full health data
     $stmt = $pdo->prepare("
@@ -268,6 +275,16 @@ try {
                    'manual_device_check', 
                    "Device: {$device['pnode_name']}, IP: $ip, Status: $status");
     
+    $debug[] = "Final debug array has " . count($debug) . " entries";
+    
+    // Force array to be re-indexed to ensure proper JSON encoding
+    $debug_clean = array_values($debug);
+    
+    // Alternative: If you prefer the var_dump output as a string
+    ob_start();
+    var_dump($debug);
+    $debug_dump = ob_get_clean();
+    
     echo json_encode([
         'status' => $status,
         'response_time' => round($response_time * 1000, 1),
@@ -284,7 +301,9 @@ try {
         'memory_percent' => $memory_percent,
         'server_hostname' => $server_hostname,
         'chillxand_version' => $chillxand_version,
-        'debug_info' => var_dump($debug)
+        'debug_info' => $debug_clean, // Re-indexed array
+        'debug_count' => count($debug),
+        'debug_dump' => $debug_dump // var_dump output as string if you prefer
     ]);
     
 } catch (Exception $e) {
