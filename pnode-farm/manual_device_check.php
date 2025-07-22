@@ -112,7 +112,8 @@ try {
             CURLOPT_TIMEOUT => 5,
             CURLOPT_CONNECTTIMEOUT => 2,
             CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_FAILONERROR => false    
+            CURLOPT_FAILONERROR => false,
+            CURLOPT_USERAGENT => 'Device-Status-Checker/1.0'    
         ]);
         
         $health_response = curl_exec($ch);
