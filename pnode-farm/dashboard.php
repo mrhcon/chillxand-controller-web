@@ -183,10 +183,9 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                 <th>Node Name</th>
                                 <th>IP Address</th>
                                 <th>Registration Date</th>
-                                <th>Overall Status</th>
                                 <th>Connectivity</th>
                                 <th>Health Status</th>
-                                <th>Last Update</th>
+                                <th>Last Checked</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -195,18 +194,6 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                     <td><a href="device_details.php?device_id=<?php echo $device['id']; ?>"><?php echo htmlspecialchars($device['pnode_name']); ?></a></td>
                                     <td><?php echo htmlspecialchars($device['pnode_ip']); ?></td>
                                     <td><?php echo htmlspecialchars($device['registration_date']); ?></td>
-                                    <td>
-                                        <span class="status-btn status-<?php echo strtolower(str_replace(['(', ')', ' '], ['-', '', '-'], $device['overall_status'])); ?>">
-                                            <?php echo htmlspecialchars($device['overall_status']); ?>
-                                        </span>
-                                        <div class="status-age <?php echo $device['status_stale'] ? 'status-stale' : 'status-fresh'; ?>">
-                                            <?php if ($device['last_check']): ?>
-                                                <?php echo $device['status_age'] ? round($device['status_age']) . 'm ago' : 'Just now'; ?>
-                                            <?php else: ?>
-                                                Never checked
-                                            <?php endif; ?>
-                                        </div>
-                                    </td>
                                     <td>
                                         <span class="status-btn status-<?php echo strtolower($device['status']); ?>">
                                             <?php echo htmlspecialchars($device['status']); ?>
@@ -228,10 +215,15 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                         <?php endif; ?>
                                     </td>
                                     <td>
-                                        <?php if ($device['last_update']): ?>
-                                            <?php echo htmlspecialchars($device['last_update']); ?>
+                                        <?php if ($device['last_check']): ?>
+                                            <div class="<?php echo $device['status_stale'] ? 'status-stale' : 'status-fresh'; ?>">
+                                                <?php echo $device['status_age'] ? round($device['status_age']) . ' min ago' : 'Just now'; ?>
+                                            </div>
+                                            <div style="font-size: 10px; color: #999;">
+                                                <?php echo date('M j, H:i', strtotime($device['last_check'])); ?>
+                                            </div>
                                         <?php else: ?>
-                                            <span style="font-style: italic; color: #999;">N/A</span>
+                                            <div style="font-style: italic; color: #999;">Never checked</div>
                                         <?php endif; ?>
                                     </td>
                                 </tr>
@@ -241,13 +233,10 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                 <?php endif; ?>
                 
                 <div style="margin-top: 20px; padding: 10px; background-color: #e9ecef; border-radius: 4px;">
-                    <h4>Status Legend</h4>
-                    <div style="display: flex; gap: 15px; flex-wrap: wrap; font-size: 12px;">
-                        <span><span class="status-btn status-healthy" style="padding: 2px 6px;">Healthy</span> = Online + Health Pass</span>
-                        <span><span class="status-btn status-online-issues" style="padding: 2px 6px;">Online (Issues)</span> = Online + Health Fail</span>
-                        <span><span class="status-btn status-online" style="padding: 2px 6px;">Online</span> = Connected, Health Unknown</span>
-                        <span><span class="status-btn status-offline" style="padding: 2px 6px;">Offline</span> = Not Reachable</span>
-                    </div>
+                    <h4>Status Information</h4>
+                    <p><small>Device status is automatically checked every 5-15 minutes by a background process. 
+                    The "Last Checked" column shows when the device status was last verified. Health status indicates 
+                    whether the device's internal services are functioning properly.</small></p>
                 </div>
             </div>
         </div>

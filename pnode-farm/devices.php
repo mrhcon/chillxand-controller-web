@@ -388,21 +388,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 if (data.error) {
                     alert('Error: ' + data.error);
                 } else {
-                    // Determine overall status
+                    // Determine overall status (connectivity + health)
                     let overallStatus = 'Unknown';
                     let statusClass = 'unknown';
                     
                     if (data.status === 'Online') {
-                        if (data.health_status === 'pass') {
-                            overallStatus = 'Healthy';
-                            statusClass = 'healthy';
-                        } else if (data.health_status === 'fail') {
-                            overallStatus = 'Online (Issues)';
-                            statusClass = 'online-issues';
-                        } else {
-                            overallStatus = 'Online';
-                            statusClass = 'online';
-                        }
+                        statusClass = 'online';
+                        overallStatus = data.status;
                     } else if (data.status === 'Offline') {
                         overallStatus = 'Offline';
                         statusClass = 'offline';
@@ -564,8 +556,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                     <td><?php echo htmlspecialchars($device['pnode_ip']); ?></td>
                                     <td><?php echo htmlspecialchars($device['registration_date']); ?></td>
                                     <td id="status-<?php echo $device['id']; ?>">
-                                        <span class="status-btn status-<?php echo strtolower(str_replace(['(', ')', ' '], ['-', '', '-'], $device['overall_status'])); ?>">
-                                            <?php echo htmlspecialchars($device['overall_status']); ?>
+                                        <span class="status-btn status-<?php echo strtolower($device['status']); ?>">
+                                            <?php echo htmlspecialchars($device['status']); ?>
                                         </span>
                                         <button class="refresh-btn" id="refresh-<?php echo $device['id']; ?>" onclick="refreshDeviceStatus(<?php echo $device['id']; ?>)" title="Refresh status">↻</button>
                                         <div class="status-age <?php echo $device['status_stale'] ? 'status-stale' : 'status-fresh'; ?>">
