@@ -96,13 +96,14 @@ try {
         
         $ch = curl_init();
         curl_setopt_array($ch, [
-            CURLOPT_URL => $_GET[$health_url],
+            CURLOPT_URL => $health_url,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT => 5,
             CURLOPT_CONNECTTIMEOUT => 2,
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_SSL_VERIFYPEER => false,
             CURLOPT_USERAGENT => 'Manual-Device-Check/1.0'
+            CURLOPT_HEADER, false
         ]);
         
         $health_response = curl_exec($ch);
