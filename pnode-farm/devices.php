@@ -1,5 +1,5 @@
 <?php
-// devices.php
+// devices.php - Updated for health endpoint and single table approach (super fast loading!)
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -8,18 +8,22 @@ session_start();
 require_once 'db_connect.php';
 require_once 'functions.php';
 
+// Set reasonable execution limits
+set_time_limit(30);
+ini_set('max_execution_time', 30);
+
 // CLI mock session for testing
 if (PHP_SAPI === 'cli') {
-    $_SESSION['user_id'] = 1; // Replace with a valid user ID for testing
-    $_SESSION['username'] = 'test_user'; // Replace with a valid username
-    $_SESSION['admin'] = 0; // Set to 1 for admin testing
-    error_log("CLI mode: Mock session set with user_id={$_SESSION['user_id']}, username={$_SESSION['username']}, admin={$_SESSION['admin']}");
+    $_SESSION['user_id'] = 1;
+    $_SESSION['username'] = 'test_user';
+    $_SESSION['admin'] = 0;
+    error_log("CLI mode: Mock session set");
 }
 
 // Check if PDO is initialized
 if (!isset($pdo) || $pdo === null) {
     $error = "Database connection error. Please contact the administrator.";
-    error_log("PDO object is null in devices.php. Check db_connect.php configuration.");
+    error_log("PDO object is null in devices.php");
     if (PHP_SAPI !== 'cli') {
         echo "<p class='error'>" . htmlspecialchars($error) . "</p>";
         exit();
@@ -66,36 +70,49 @@ try {
     logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'user_fetch_failed', $error);
 }
 
-// Fetch user's devices and summaries
+// Fetch user's devices with latest status (FAST - no blocking operations!)
 try {
-    $stmt = $pdo->prepare("SELECT id, pnode_name, pnode_ip, registration_date FROM devices WHERE username = :username OR :admin = 1 ORDER BY registration_date DESC");
+    $stmt = $pdo->prepare("
+        SELECT d.id, d.pnode_name, d.pnode_ip, d.registration_date 
+        FROM devices d 
+        WHERE d.username = :username OR :admin = 1 
+        ORDER BY d.registration_date DESC
+    ");
     $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
     $stmt->bindValue(':admin', $_SESSION['admin'], PDO::PARAM_INT);
     $stmt->execute();
     $devices = $stmt->fetchAll(PDO::FETCH_ASSOC);
     error_log("Fetched " . count($devices) . " devices for user {$_SESSION['username']}");
     
-    // Add status, initial logs, and JSON summaries to each device
-    $limit = 3;
+    // Get latest statuses for all devices at once (super efficient!)
+    $device_ids = array_column($devices, 'id');
+    $cached_statuses = getLatestDeviceStatuses($pdo, $device_ids);
+    
+    // Add cached status and health data to each device
     $updated_devices = [];
     $summaries = [];
+    $limit = 3;
+    
     foreach ($devices as $device) {
-        // Validate IP address
-        if (!filter_var($device['pnode_ip'], FILTER_VALIDATE_IP)) {
-            $summaries[$device['id']] = ['error' => 'Invalid IP address.'];
-            $device['status'] = 'Unknown';
-            error_log("Invalid IP for device {$device['id']}: {$device['pnode_ip']}");
-        } else {
-            // Add status
-            $status = pingDevice($device['pnode_ip'], $pdo, $_SESSION['user_id'], $_SESSION['username']);
-            $device['status'] = $status['status'];
-            
-            // Fetch and parse JSON summary
-            $raw_summary = fetchDeviceSummary($device['pnode_ip']);
-            $summaries[$device['id']] = parseDeviceSummary($raw_summary, $device['pnode_ip']);
-        }
+        $device_id = $device['id'];
+        $cached_status = $cached_statuses[$device_id] ?? [
+            'status' => 'Not Initialized',
+            'is_stale' => true,
+            'error_message' => 'Device has not been checked yet'
+        ];
         
-        // Fetch initial logs
+        // Add status from cache
+        $device['status'] = $cached_status['status'];
+        $device['status_age'] = $cached_status['age_minutes'];
+        $device['status_stale'] = $cached_status['is_stale'];
+        $device['last_check'] = $cached_status['check_time'];
+        $device['response_time'] = $cached_status['response_time'];
+        $device['consecutive_failures'] = $cached_status['consecutive_failures'];
+        
+        // Parse health data from cached data
+        $summaries[$device_id] = parseCachedDeviceHealth($cached_status);
+        
+        // Fetch initial logs (fast database query)
         $device_name_pattern = "%Device: {$device['pnode_name']}%";
         $ip_pattern = "%IP: {$device['pnode_ip']}%";
         $sql = "
@@ -114,19 +131,6 @@ try {
         $stmt->bindValue(':device_name_pattern', $device_name_pattern, PDO::PARAM_STR);
         $stmt->bindValue(':ip_pattern', $ip_pattern, PDO::PARAM_STR);
         $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
-        
-        // Debug: Log emulated query
-        $emulated_query = "SELECT action, timestamp, details 
-                           FROM user_interactions 
-                           WHERE user_id = {$_SESSION['user_id']} 
-                           AND (
-                               action IN ('device_status_check_success', 'device_status_check_failed', 'device_register_success', 'device_edit_success', 'device_delete_success')
-                               AND (details LIKE '$device_name_pattern' OR details LIKE '$ip_pattern')
-                           )
-                           ORDER BY timestamp DESC 
-                           LIMIT $limit";
-        error_log("Emulated initial logs query for device {$device['id']}: $emulated_query");
-        
         $stmt->execute();
         $device['logs'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
@@ -144,23 +148,13 @@ try {
         $stmt->bindValue(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
         $stmt->bindValue(':device_name_pattern', $device_name_pattern, PDO::PARAM_STR);
         $stmt->bindValue(':ip_pattern', $ip_pattern, PDO::PARAM_STR);
-        
-        // Debug: Log emulated query
-        $emulated_count_query = "SELECT COUNT(*) 
-                                FROM user_interactions 
-                                WHERE user_id = {$_SESSION['user_id']} 
-                                AND (
-                                    action IN ('device_status_check_success', 'device_status_check_failed', 'device_register_success', 'device_edit_success', 'device_delete_success')
-                                    AND (details LIKE '$device_name_pattern' OR details LIKE '$ip_pattern')
-                                )";
-        error_log("Emulated total logs query for device {$device['id']}: $emulated_count_query");
-        
         $stmt->execute();
         $device['total_logs'] = $stmt->fetchColumn();
         
         $updated_devices[] = $device;
     }
     $devices = $updated_devices;
+    
 } catch (PDOException $e) {
     $error = "Error fetching devices or logs: " . $e->getMessage();
     error_log("PDOException in device/log fetch: " . $e->getMessage());
@@ -191,11 +185,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 $error = "Device name already registered.";
                 logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Duplicate device name');
             } else {
+                // Add device (no seeding required)
                 $stmt = $pdo->prepare("INSERT INTO devices (username, pnode_name, pnode_ip, registration_date) VALUES (:username, :pnode_name, :pnode_ip, NOW())");
                 $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
                 $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
                 $stmt->bindValue(':pnode_ip', $pnode_ip, PDO::PARAM_STR);
                 $stmt->execute();
+                
+                // Get the new device ID (no seeding required - system handles gracefully)
+                $new_device_id = $pdo->lastInsertId();
+                
                 logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_success', "Device: $pnode_name, IP: $pnode_ip");
                 if (PHP_SAPI !== 'cli') {
                     header("Location: devices.php");
@@ -254,6 +253,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
                     $stmt->bindValue(':admin', $_SESSION['admin'], PDO::PARAM_INT);
                     $stmt->execute();
+                    
                     logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_edit_success', "Device ID: $device_id, New Name: $pnode_name, New IP: $pnode_ip");
                     if (PHP_SAPI !== 'cli') {
                         header("Location: devices.php");
@@ -282,6 +282,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         $stmt->execute();
         $device = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($device) {
+            // Delete device (cascade will handle device_status_log)
             $stmt = $pdo->prepare("DELETE FROM devices WHERE id = :device_id AND (username = :username OR :admin = 1)");
             $stmt->bindValue(':device_id', $device_id, PDO::PARAM_INT);
             $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
@@ -317,6 +318,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         .summary-container { margin-bottom: 20px; padding: 10px; border: 1px solid #ccc; background: #f9f9f9; }
         .action-btn-tiny { padding: 5px 10px; margin-left: 10px; cursor: pointer; }
         .error { color: red; }
+        .status-age { font-size: 10px; color: #666; }
+        .status-stale { color: #ff6600; }
+        .status-fresh { color: #006600; }
+        .refresh-btn { 
+            background-color: #17a2b8; 
+            color: white; 
+            border: none; 
+            padding: 2px 6px; 
+            font-size: 10px; 
+            border-radius: 3px; 
+            cursor: pointer; 
+            margin-left: 5px;
+        }
+        .refresh-btn:hover { background-color: #138496; }
+        .device-details { font-size: 11px; color: #666; margin-top: 3px; }
+        .status-not-initialized { background-color: #6c757d; }
     </style>
     <script>
         function toggleEdit(deviceId) {
@@ -327,6 +344,43 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             document.getElementById('view-' + deviceId).style.display = 'table-row';
             document.getElementById('edit-' + deviceId).style.display = 'none';
         }
+        
+        function refreshDeviceStatus(deviceId) {
+            const statusElement = document.querySelector(`#status-${deviceId}`);
+            const refreshBtn = document.querySelector(`#refresh-${deviceId}`);
+            
+            refreshBtn.disabled = true;
+            refreshBtn.textContent = '...';
+            
+            fetch('manual_device_check.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `device_id=${deviceId}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                } else {
+                    const statusClass = data.status.toLowerCase().replace(' ', '-');
+                    statusElement.innerHTML = `
+                        <span class="status-btn status-${statusClass}">${data.status}</span>
+                        <button class="refresh-btn" id="refresh-${deviceId}" onclick="refreshDeviceStatus(${deviceId})" title="Refresh status">↻</button>
+                        <div class="status-age status-fresh">Just checked</div>
+                        <div class="device-details">Response: ${data.response_time}ms</div>
+                    `;
+                }
+                refreshBtn.disabled = false;
+                refreshBtn.textContent = '↻';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to refresh status');
+                refreshBtn.disabled = false;
+                refreshBtn.textContent = '↻';
+            });
+        }
+        
         function fetchLogs(deviceId, page, limit) {
             const logContainer = document.getElementById('log-container-' + deviceId);
             const moreButton = document.getElementById('more-items-' + deviceId);
@@ -390,7 +444,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
 <body>
     <div class="console-container">
         <div class="top-bar">
-            <h1>Network Management Console</h1>
+            <h1>ChillXand - pNode Management Console</h1>
             <div class="user-info">
                 <span>Welcome, <?php echo htmlspecialchars($_SESSION['username'] ?? 'Guest'); ?></span>
                 <a href="logout.php" class="logout-btn">Logout</a>
@@ -398,6 +452,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         </div>
         <div class="main-content">
             <div class="menu-column">
+                <img src="ChillXand-logo.png">
                 <ul>
                     <li><button class="menu-button" onclick="window.location.href='dashboard.php'">Dashboard</button></li>
                     <li><button class="menu-button active" onclick="window.location.href='devices.php'">Manage Devices</button></li>
@@ -453,10 +508,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                     <td><a href="device_details.php?device_id=<?php echo $device['id']; ?>"><?php echo htmlspecialchars($device['pnode_name']); ?></a></td>
                                     <td><?php echo htmlspecialchars($device['pnode_ip']); ?></td>
                                     <td><?php echo htmlspecialchars($device['registration_date']); ?></td>
-                                    <td>
-                                        <span class="status-btn status-<?php echo strtolower($device['status']); ?>">
+                                    <td id="status-<?php echo $device['id']; ?>">
+                                        <span class="status-btn status-<?php echo strtolower(str_replace(' ', '-', $device['status'])); ?>">
                                             <?php echo htmlspecialchars($device['status']); ?>
                                         </span>
+                                        <button class="refresh-btn" id="refresh-<?php echo $device['id']; ?>" onclick="refreshDeviceStatus(<?php echo $device['id']; ?>)" title="Refresh status">↻</button>
+                                        <div class="status-age <?php echo $device['status_stale'] ? 'status-stale' : 'status-fresh'; ?>">
+                                            <?php if ($device['last_check']): ?>
+                                                <?php echo $device['status_age'] ? round($device['status_age']) . 'm ago' : 'Just now'; ?>
+                                            <?php else: ?>
+                                                Never checked
+                                            <?php endif; ?>
+                                        </div>
+                                        <?php if ($device['response_time']): ?>
+                                            <div class="device-details">Response: <?php echo round($device['response_time'] * 1000, 1); ?>ms</div>
+                                        <?php endif; ?>
+                                        <?php if ($device['consecutive_failures'] > 0): ?>
+                                            <div class="device-details" style="color: #dc3545;">Failures: <?php echo $device['consecutive_failures']; ?></div>
+                                        <?php endif; ?>
                                     </td>
                                     <td>
                                         <button type="button" class="action-btn-tiny action-edit" onclick="toggleEdit(<?php echo $device['id']; ?>)">Edit</button>
@@ -472,21 +541,65 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                         <details>
                                             <summary>More Info</summary>
                                             <div class="summary-container">
-                                                <h4>Device Summary (IP: <?php echo htmlspecialchars($device['pnode_ip']); ?>)</h4>
+                                                <h4>Device Health (IP: <?php echo htmlspecialchars($device['pnode_ip']); ?>)</h4>
                                                 <?php if ($summaries[$device['id']]['error']): ?>
                                                     <p class="error"><?php echo htmlspecialchars($summaries[$device['id']]['error']); ?></p>
                                                 <?php else: ?>
-                                                    <ul>
-                                                        <?php if ($summaries[$device['id']]['uptime'] !== null): ?>
-                                                            <li><strong>Uptime:</strong> <?php echo htmlspecialchars($summaries[$device['id']]['uptime']); ?></li>
-                                                        <?php endif; ?>
-                                                        <?php if ($summaries[$device['id']]['cpu_usage'] !== null): ?>
-                                                            <li><strong>CPU Usage:</strong> <?php echo htmlspecialchars($summaries[$device['id']]['cpu_usage']); ?></li>
-                                                        <?php endif; ?>
-                                                        <?php if ($summaries[$device['id']]['memory_usage'] !== null): ?>
-                                                            <li><strong>Memory Usage:</strong> <?php echo htmlspecialchars($summaries[$device['id']]['memory_usage']); ?></li>
-                                                        <?php endif; ?>
-                                                    </ul>
+                                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                                                        <div>
+                                                            <h5>Service Status</h5>
+                                                            <ul style="margin: 0; padding-left: 20px;">
+                                                                <li><strong>Overall Health:</strong> 
+                                                                    <span class="status-btn status-<?php echo $summaries[$device['id']]['health_status'] == 'pass' ? 'online' : 'offline'; ?>" style="padding: 2px 8px; font-size: 10px;">
+                                                                        <?php echo ucfirst($summaries[$device['id']]['health_status'] ?? 'unknown'); ?>
+                                                                    </span>
+                                                                </li>
+                                                                <li><strong>Atlas Registered:</strong> 
+                                                                    <span class="status-btn status-<?php echo $summaries[$device['id']]['atlas_registered'] ? 'online' : 'offline'; ?>" style="padding: 2px 8px; font-size: 10px;">
+                                                                        <?php echo $summaries[$device['id']]['atlas_registered'] ? 'Yes' : 'No'; ?>
+                                                                    </span>
+                                                                </li>
+                                                                <li><strong>Pod:</strong> 
+                                                                    <span class="status-btn status-<?php echo $summaries[$device['id']]['pod_status'] == 'active' ? 'online' : 'offline'; ?>" style="padding: 2px 8px; font-size: 10px;">
+                                                                        <?php echo ucfirst($summaries[$device['id']]['pod_status'] ?? 'unknown'); ?>
+                                                                    </span>
+                                                                </li>
+                                                                <li><strong>XandMiner:</strong> 
+                                                                    <span class="status-btn status-<?php echo $summaries[$device['id']]['xandminer_status'] == 'active' ? 'online' : 'offline'; ?>" style="padding: 2px 8px; font-size: 10px;">
+                                                                        <?php echo ucfirst($summaries[$device['id']]['xandminer_status'] ?? 'unknown'); ?>
+                                                                    </span>
+                                                                </li>
+                                                                <li><strong>XandMinerD:</strong> 
+                                                                    <span class="status-btn status-<?php echo $summaries[$device['id']]['xandminerd_status'] == 'active' ? 'online' : 'offline'; ?>" style="padding: 2px 8px; font-size: 10px;">
+                                                                        <?php echo ucfirst($summaries[$device['id']]['xandminerd_status'] ?? 'unknown'); ?>
+                                                                    </span>
+                                                                </li>
+                                                            </ul>
+                                                        </div>
+                                                        <div>
+                                                            <h5>System Info</h5>
+                                                            <ul style="margin: 0; padding-left: 20px;">
+                                                                <?php if ($summaries[$device['id']]['cpu_load_avg'] !== null): ?>
+                                                                    <li><strong>CPU Load:</strong> <?php echo number_format($summaries[$device['id']]['cpu_load_avg'], 2); ?></li>
+                                                                <?php endif; ?>
+                                                                <?php if ($summaries[$device['id']]['memory_percent'] !== null): ?>
+                                                                    <li><strong>Memory:</strong> <?php echo number_format($summaries[$device['id']]['memory_percent'], 1); ?>%</li>
+                                                                <?php endif; ?>
+                                                                <?php if ($summaries[$device['id']]['server_hostname']): ?>
+                                                                    <li><strong>Hostname:</strong> <?php echo htmlspecialchars($summaries[$device['id']]['server_hostname']); ?></li>
+                                                                <?php endif; ?>
+                                                                <?php if ($summaries[$device['id']]['chillxand_version']): ?>
+                                                                    <li><strong>ChillXand:</strong> <?php echo htmlspecialchars($summaries[$device['id']]['chillxand_version']); ?></li>
+                                                                <?php endif; ?>
+                                                                <?php if ($summaries[$device['id']]['node_version']): ?>
+                                                                    <li><strong>Node Version:</strong> <?php echo htmlspecialchars($summaries[$device['id']]['node_version']); ?></li>
+                                                                <?php endif; ?>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                    <?php if ($summaries[$device['id']]['last_update']): ?>
+                                                        <p><small>Health data last updated: <?php echo htmlspecialchars($summaries[$device['id']]['last_update']); ?></small></p>
+                                                    <?php endif; ?>
                                                 <?php endif; ?>
                                             </div>
                                             <div id="log-container-<?php echo $device['id']; ?>">
@@ -544,6 +657,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         </tbody>
                     </table>
                 <?php endif; ?>
+                
+                <div style="margin-top: 20px; padding: 10px; background-color: #e9ecef; border-radius: 4px;">
+                    <h4>Background Health Monitoring</h4>
+                    <p><small>Device health status is automatically checked every 5-15 minutes by a background process. 
+                    Use the refresh button (↻) next to each device for immediate status updates. All health data including 
+                    Atlas registration, service status (Pod, XandMiner, XandMinerD), and system metrics are tracked and preserved in the log.</small></p>
+                </div>
             </div>
         </div>
     </div>
