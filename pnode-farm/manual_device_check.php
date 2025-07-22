@@ -101,7 +101,8 @@ try {
             CURLOPT_RETURNTRANSFER => true,
             // CURLOPT_TIMEOUT => 5,
             // CURLOPT_CONNECTTIMEOUT => 2,
-            CURLOPT_FOLLOWLOCATION => true
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_FAILONERROR => false
             // CURLOPT_SSL_VERIFYPEER => false,
             // CURLOPT_USERAGENT => 'Manual-Device-Check/1.0'            
         ]);
