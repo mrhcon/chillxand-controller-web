@@ -146,7 +146,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
         <div class="main-content">
             <!-- Left Menu -->
             <div class="menu-column">
-            	<img src="ChillXand-logo.png">
+            	<img src="images/logo.png">
                 <ul>
                     <li><button class="menu-button active" onclick="window.location.href='dashboard.php'">Dashboard</button></li>
                     <li><button class="menu-button" onclick="window.location.href='devices.php'">Manage Devices</button></li>

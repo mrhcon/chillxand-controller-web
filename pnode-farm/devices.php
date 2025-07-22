@@ -331,6 +331,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Devices</title>
+    <link rel="icon" type="image/x-icon" href="images/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="images/favicon-16x16.png">
     <link rel="stylesheet" href="style.css">
     <style>
         .summary-container { margin-bottom: 20px; padding: 10px; border: 1px solid #ccc; background: #f9f9f9; }
@@ -509,7 +512,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         </div>
         <div class="main-content">
             <div class="menu-column">
-                <img src="ChillXand-logo.png">
+                <img src="images/logo.png">
                 <ul>
                     <li><button class="menu-button" onclick="window.location.href='dashboard.php'">Dashboard</button></li>
                     <li><button class="menu-button active" onclick="window.location.href='devices.php'">Manage Devices</button></li>
