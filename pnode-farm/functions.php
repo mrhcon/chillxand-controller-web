@@ -9,7 +9,7 @@ require_once 'db_connect.php';
 function logInteraction($pdo, $user_id, $username, $action, $details = null) {
     try {
         // Truncate details to avoid exceeding TEXT column limit (65,535 bytes)
-        $details = substr($details, 0, 65535);
+        $details = substr($details ?? '', 0, 65535);
         $stmt = $pdo->prepare("INSERT INTO user_interactions (user_id, username, action, details) VALUES (?, ?, ?, ?)");
         $stmt->execute([$user_id, $username, $action, $details]);
     } catch (PDOException $e) {
