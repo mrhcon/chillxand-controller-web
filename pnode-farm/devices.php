@@ -457,7 +457,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             const moreButton = document.getElementById('more-items-' + deviceId);
             const pagination = document.getElementById('pagination-' + deviceId);
 
-            fetch('get_device_status_logs.php', {
+            fetch('get_device_logs.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: `device_id=${deviceId}&page=${page}&limit=${limit}`
