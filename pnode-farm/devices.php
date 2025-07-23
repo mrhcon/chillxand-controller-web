@@ -1,4 +1,107 @@
-<?php
+// Update functions with better error handling - using same pattern as delete
+        function updateController(deviceId, deviceIp, deviceName) {
+            console.log('updateController called with:', deviceId, deviceIp, deviceName);
+            
+            // Use the same confirm() pattern as the delete function
+            if (confirm(`⚠️ UPDATE CONTROLLER CONFIRMATION\n\nAre you sure you want to update the controller for "${deviceName}"?\n\nDevice IP: ${deviceIp}\n\n⚠️ WARNING: The device may be temporarily unavailable during the update process.\n\nClick OK to proceed or Cancel to abort.`)) {
+                console.log('User confirmed controller update');
+                const btn = document.querySelector(`[data-device-id="${deviceId}"].update-btn-controller`);
+                if (!btn) {
+                    console.error('Could not find controller button for device', deviceId);
+                    alert('Error: Could not find update button');
+                    return;
+                }
+                
+                const originalText = btn.textContent;
+                btn.disabled = true;
+                btn.textContent = 'Updating...';
+                
+                console.log('Sending controller update request...');
+                
+                fetch('device_update.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `action=update_controller&device_id=${deviceId}&device_ip=${encodeURIComponent(deviceIp)}`
+                })
+                .then(response => {
+                    console.log('Controller update response received:', response.status);
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Controller update response data:', data);
+                    if (data.success) {
+                        alert(`✅ Controller update initiated successfully for ${deviceName}!\n\nResponse: ${data.message || 'Update started'}`);
+                    } else {
+                        alert(`❌ Controller update failed for ${deviceName}!\n\nError: ${data.error || 'Unknown error'}`);
+                    }
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                })
+                .catch(error => {
+                    console.error('Controller update error:', error);
+                    alert(`❌ Controller update failed for ${deviceName}!\n\nNetwork error: ${error.message}`);
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                });
+            } else {
+                console.log('User cancelled controller update');
+            }
+        }
+        
+        function updatePod(deviceId, deviceIp, deviceName) {
+            console.log('updatePod called with:', deviceId, deviceIp, deviceName);
+            
+            // Use the same confirm() pattern as the delete function
+            if (confirm(`⚠️ UPDATE POD CONFIRMATION\n\nAre you sure you want to update the pod for "${deviceName}"?\n\nDevice IP: ${deviceIp}\n\n⚠️ WARNING: The device may be temporarily unavailable during the update process.\n\nClick OK to proceed or Cancel to abort.`)) {
+                console.log('User confirmed pod update');
+                const btn = document.querySelector(`[data-device-id="${deviceId}"].update-btn-pod`);
+                if (!btn) {
+                    console.error('Could not find pod button for device', deviceId);
+                    alert('Error: Could not find update button');
+                    return;
+                }
+                
+                const originalText = btn.textContent;
+                btn.disabled = true;
+                btn.textContent = 'Updating...';
+                
+                console.log('Sending pod update request...');
+                
+                fetch('device_update.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `action=update_pod&device_id=${deviceId}&device_ip=${encodeURIComponent(deviceIp)}`
+                })
+                .then(response => {
+                    console.log('Pod update response received:', response.status);
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Pod update response data:', data);
+                    if (data.success) {
+                        alert(`✅ Pod update initiated successfully for ${deviceName}!\n\nResponse: ${data.message || 'Update started'}`);
+                    } else {
+                        alert(`❌ Pod update failed for ${deviceName}!\n\nError: ${data.error || 'Unknown error'}`);
+                    }
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                })
+                .catch(error => {
+                    console.error('Pod update error:', error);
+                    alert(`❌ Pod update failed for ${deviceName}!\n\nNetwork error: ${error.message}`);
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                });
+            } else {
+                console.log('User cancelled pod update');
+            }
+        }<?php
 // devices.php - Fixed version with working update buttons
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -493,6 +596,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         }
         .action-btn:hover {
             background-color: #0056b3;
+        }
+        .modal-btn-warning {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        .modal-btn-warning:hover {
+            background-color: #e0a800;
         }
         .version-info {
             font-size: 10px; 
