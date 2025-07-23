@@ -1,5 +1,5 @@
 <?php
-// devices.php - Updated to show device status logs instead of user interactions
+// devices.php - Fixed version with working update buttons
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -381,8 +381,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             border-radius: 3px; 
             cursor: pointer; 
             margin-left: 5px;
+            margin-top: 3px;
         }
         .update-btn-controller:hover { background-color: #e66a00; }
+        .update-btn-controller:disabled { background-color: #ccc; cursor: not-allowed; }
+        
         .update-btn-pod { 
             background-color: #6f42c1; 
             color: white; 
@@ -392,8 +395,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             border-radius: 3px; 
             cursor: pointer; 
             margin-left: 5px;
+            margin-top: 3px;
         }
         .update-btn-pod:hover { background-color: #59359a; }
+        .update-btn-pod:disabled { background-color: #ccc; cursor: not-allowed; }
         
         /* Modal styling */
         .modal {
@@ -477,281 +482,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         .modal-btn-danger:hover {
             background-color: #c82333;
         }
+        .action-btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .action-btn:hover {
+            background-color: #0056b3;
+        }
     </style>
-    <script>
-        function refreshDeviceStatus(deviceId) {
-            const statusElement = document.querySelector(`#status-${deviceId}`);
-            const refreshBtn = document.querySelector(`#refresh-${deviceId}`);
-            const lastCheckElement = document.querySelector(`#lastcheck-${deviceId}`);
-            
-            refreshBtn.disabled = true;
-            refreshBtn.textContent = '⟳';
-            
-            fetch('manual_device_check.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `device_id=${deviceId}`
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    alert('Error: ' + data.error);
-                } else {
-                    // Determine overall status (connectivity + health)
-                    let overallStatus = 'Unknown';
-                    let statusClass = 'unknown';
-                    
-                    if (data.status === 'Online') {
-                        statusClass = 'online';
-                        overallStatus = data.status;
-                    } else if (data.status === 'Offline') {
-                        overallStatus = 'Offline';
-                        statusClass = 'offline';
-                    } else {
-                        overallStatus = data.status;
-                        statusClass = data.status.toLowerCase().replace(' ', '-');
-                    }
-                    
-                    statusElement.innerHTML = `
-                        <span class="status-btn status-${statusClass}">${overallStatus}</span>
-                        <button class="refresh-btn" id="refresh-${deviceId}" onclick="refreshDeviceStatus(${deviceId})" title="Refresh status">↻</button>
-                        <div class="status-age status-fresh">Just checked</div>
-                        <div class="device-details">Response: ${data.response_time}ms</div>
-                        ${data.consecutive_failures > 0 ? `<div class="device-details" style="color: #dc3545;">Failures: ${data.consecutive_failures}</div>` : ''}
-                    `;
-                    
-                    // Update health status column
-                    const healthElement = statusElement.parentNode.nextElementSibling;
-                    if (data.status === 'Online' && data.health_status) {
-                        const healthClass = data.health_status === 'pass' ? 'online' : 'offline';
-                        healthElement.innerHTML = `<span class="status-btn status-${healthClass}">${data.health_status.charAt(0).toUpperCase() + data.health_status.slice(1)}</span>`;
-                    } else if (data.status === 'Not Initialized') {
-                        healthElement.innerHTML = `<span class="status-btn status-not-initialized">Not Initialized</span>`;
-                    } else {
-                        healthElement.innerHTML = `<span class="status-btn status-not-initialized">Not Initialized</span>`;
-                    }
-                    
-                    lastCheckElement.innerHTML = `
-                        <div class="status-fresh">Just now</div>
-                        <div style="font-size: 10px;">${data.timestamp}</div>
-                    `;
-                    
-                    // Refresh the status logs section
-                    fetchStatusLogs(deviceId, 1, 3);
-                }
-                refreshBtn.disabled = false;
-                refreshBtn.textContent = '↻';
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Failed to refresh status');
-                refreshBtn.disabled = false;
-                refreshBtn.textContent = '↻';
-            });
-        }
-        
-        function fetchStatusLogs(deviceId, page, limit) {
-            const logContainer = document.getElementById('log-container-' + deviceId);
-            const moreButton = document.getElementById('more-items-' + deviceId);
-            const pagination = document.getElementById('pagination-' + deviceId);
-
-            fetch('get_device_status_logs.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `device_id=${deviceId}&page=${page}&limit=${limit}`
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    logContainer.innerHTML = '<p>Error: ' + data.error + '</p>';
-                    return;
-                }
-
-                let html = '<table class="status-log-table"><thead><tr>';
-                html += '<th>Status</th><th>Check Time</th><th>Response</th><th>Health</th>';
-                html += '<th>Atlas</th><th>Services</th><th>System</th><th>Errors</th>';
-                html += '</tr></thead><tbody>';
-                
-                if (data.logs.length === 0) {
-                    html += '<tr><td colspan="9">No status logs for this device.</td></tr>';
-                } else {
-                    data.logs.forEach(log => {
-                        const statusClass = log.status === 'Online' ? 'log-status-online' : 
-                                          log.status === 'Offline' ? 'log-status-offline' : 'log-status-error';
-                        const responseTime = log.response_time ? Math.round(log.response_time * 1000) + 'ms' : 'N/A';
-                        const healthStatus = log.health_status ? 
-                            `<span class="log-health-${log.health_status}">${log.health_status}</span>` : 'N/A';
-                        const atlasStatus = log.atlas_registered !== null ? 
-                            `<span class="log-atlas-${log.atlas_registered ? 'yes' : 'no'}">${log.atlas_registered ? 'Yes' : 'No'}</span>` : 'N/A';
-                        
-                        // Services column
-                        let services = [];
-                        if (log.pod_status) services.push(`Pod: <span class="log-service-${log.pod_status}">${log.pod_status}</span>`);
-                        if (log.xandminer_status) services.push(`XM: <span class="log-service-${log.xandminer_status}">${log.xandminer_status}</span>`);
-                        if (log.xandminerd_status) services.push(`XMD: <span class="log-service-${log.xandminerd_status}">${log.xandminerd_status}</span>`);
-                        const servicesText = services.length > 0 ? services.join('<br>') : 'N/A';
-                        
-                        // System metrics column
-                        let metrics = [];
-                        if (log.cpu_load_avg !== null) metrics.push(`CPU: ${parseFloat(log.cpu_load_avg).toFixed(2)}`);
-                        if (log.memory_percent !== null) metrics.push(`Mem: ${parseFloat(log.memory_percent).toFixed(1)}%`);
-                        if (log.consecutive_failures > 0) metrics.push(`Fails: ${log.consecutive_failures}`);
-                        const metricsText = metrics.length > 0 ? 
-                            `<span class="log-metrics">${metrics.join('<br>')}</span>` : 'N/A';
-                        
-                        const errorMsg = log.error_message ? 
-                            `<span class="log-error" title="${log.error_message}">${log.error_message.substring(0, 30)}${log.error_message.length > 30 ? '...' : ''}</span>` : 'None';
-                        
-                        html += `<tr>
-                            <td><span class="${statusClass}">${log.status}</span></td>
-                            <td>${log.check_time}</td>
-                            <td>${responseTime}</td>
-                            <td>${healthStatus}</td>
-                            <td>${atlasStatus}</td>
-                            <td>${servicesText}</td>
-                            <td>${metricsText}</td>
-                            <td>${errorMsg}</td>
-                        </tr>`;
-                    });
-                }
-                html += '</tbody></table>';
-                logContainer.innerHTML = html;
-
-                pagination.innerHTML = '';
-                if (data.total_pages > 1) {
-                    const firstButton = `<a href="#" class="action-btn-tiny action-first ${data.current_page === 1 ? 'disabled' : ''}" onclick="fetchStatusLogs(${deviceId}, 1, ${limit}); return false;">First</a>`;
-                    const prevButton = `<a href="#" class="action-btn-tiny action-prev ${data.current_page === 1 ? 'disabled' : ''}" onclick="fetchStatusLogs(${deviceId}, ${data.current_page - 1}, ${limit}); return false;">Previous</a>`;
-                    const nextButton = `<a href="#" class="action-btn-tiny action-next ${data.current_page === data.total_pages ? 'disabled' : ''}" onclick="fetchStatusLogs(${deviceId}, ${data.current_page + 1}, ${limit}); return false;">Next</a>`;
-                    const lastButton = `<a href="#" class="action-btn-tiny action-last ${data.current_page === data.total_pages ? 'disabled' : ''}" onclick="fetchStatusLogs(${deviceId}, ${data.total_pages}, ${limit}); return false;">Last</a>`;
-                    let selectOptions = `<select onchange="fetchStatusLogs(${deviceId}, this.value, ${limit})" class="pagination-select">`;
-                    for (let i = 1; i <= data.total_pages; i++) {
-                        selectOptions += `<option value="${i}" ${i === data.current_page ? 'selected' : ''}>${i}</option>`;
-                    }
-                    selectOptions += '</select>';
-                    let limitOptions = `<select onchange="fetchStatusLogs(${deviceId}, 1, this.value)" class="pagination-select">`;
-                    [5, 10, 20, 50].forEach(l => {
-                        limitOptions += `<option value="${l}" ${l === limit ? 'selected' : ''}>${l}</option>`;
-                    });
-                    limitOptions += '</select>';
-                    pagination.innerHTML = `${firstButton}${prevButton}${selectOptions}<span>of ${data.total_pages}</span>${nextButton}${lastButton}${limitOptions}`;
-                }
-
-                if (limit >= 5) {
-                    moreButton.style.display = 'none';
-                }
-            })
-            .catch(error => {
-                logContainer.innerHTML = '<p>Error fetching status logs: ' + error.message + '</p>';
-            });
-        }
-        
-        function showMoreItems(deviceId) {
-            fetchStatusLogs(deviceId, 1, 10);
-        }
-        
-        // Modal functions
-        function openEditModal(deviceId, currentName, currentIp) {
-            document.getElementById('edit-device-id').value = deviceId;
-            document.getElementById('edit-pnode-name').value = currentName;
-            document.getElementById('edit-pnode-ip').value = currentIp;
-            document.getElementById('editModal').style.display = 'block';
-        }
-        
-        function closeEditModal() {
-            document.getElementById('editModal').style.display = 'none';
-        }
-        
-        function openDeleteModal(deviceId, deviceName) {
-            document.getElementById('delete-device-id').value = deviceId;
-            document.getElementById('delete-device-name').textContent = deviceName;
-            document.getElementById('deleteModal').style.display = 'block';
-        }
-        
-        function closeDeleteModal() {
-            document.getElementById('deleteModal').style.display = 'none';
-        }
-        
-        function submitEdit() {
-            document.getElementById('editForm').submit();
-        }
-        
-        function submitDelete() {
-            document.getElementById('deleteForm').submit();
-        }
-        
-        // Update functions
-        function updateController(deviceId, deviceIp, deviceName) {
-            if (confirm(`Are you sure you want to update the controller for ${deviceName}?\n\nThis will trigger an update process on the device at ${deviceIp}.`)) {
-                const btn = document.querySelector(`[onclick*="updateController(${deviceId}"]`);
-                const originalText = btn.textContent;
-                btn.disabled = true;
-                btn.textContent = 'Updating...';
-                
-                fetch('device_update.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: `action=update_controller&device_id=${deviceId}&device_ip=${deviceIp}`
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert(`Controller update initiated successfully for ${deviceName}.\n\nResponse: ${data.message || 'Update started'}`);
-                    } else {
-                        alert(`Controller update failed for ${deviceName}.\n\nError: ${data.error || 'Unknown error'}`);
-                    }
-                    btn.disabled = false;
-                    btn.textContent = originalText;
-                })
-                .catch(error => {
-                    alert(`Controller update failed for ${deviceName}.\n\nNetwork error: ${error.message}`);
-                    btn.disabled = false;
-                    btn.textContent = originalText;
-                });
-            }
-        }
-        
-        function updatePod(deviceId, deviceIp, deviceName) {
-            if (confirm(`Are you sure you want to update the pod for ${deviceName}?\n\nThis will trigger an update process on the device at ${deviceIp}.`)) {
-                const btn = document.querySelector(`[onclick*="updatePod(${deviceId}"]`);
-                const originalText = btn.textContent;
-                btn.disabled = true;
-                btn.textContent = 'Updating...';
-                
-                fetch('device_update.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: `action=update_pod&device_id=${deviceId}&device_ip=${deviceIp}`
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert(`Pod update initiated successfully for ${deviceName}.\n\nResponse: ${data.message || 'Update started'}`);
-                    } else {
-                        alert(`Pod update failed for ${deviceName}.\n\nError: ${data.error || 'Unknown error'}`);
-                    }
-                    btn.disabled = false;
-                    btn.textContent = originalText;
-                })
-                .catch(error => {
-                    alert(`Pod update failed for ${deviceName}.\n\nNetwork error: ${error.message}`);
-                    btn.disabled = false;
-                    btn.textContent = originalText;
-                });
-            }
-        }
-        
-        // Close modals when clicking outside
-        window.onclick = function(event) {
-            const editModal = document.getElementById('editModal');
-            const deleteModal = document.getElementById('deleteModal');
-            if (event.target == editModal) {
-                closeEditModal();
-            }
-            if (event.target == deleteModal) {
-                closeDeleteModal();
-            }
-        }
-    </script>
 </head>
 <body>
     <div class="console-container">
@@ -786,19 +529,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     <p class="error"><?php echo htmlspecialchars($error); ?></p>
                 <?php endif; ?>
                 
-                <h3>Add New Device</h3>
-                <form method="POST" action="">
-                    <input type="hidden" name="action" value="add">
-                    <div class="form-group">
-                        <label for="pnode_name">Node Name:</label>
-                        <input type="text" id="pnode_name" name="pnode_name" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="pnode_ip">IP Address:</label>
-                        <input type="text" id="pnode_ip" name="pnode_ip" required>
-                    </div>
-                    <button type="submit">Add Device</button>
-                </form>
+                <div style="margin-bottom: 20px;">
+                    <button type="button" class="action-btn" id="add-device-btn" onclick="openAddModal()">Add New Device</button>
+                </div>
 
                 <h3>Your Devices</h3>
                 <?php if (empty($devices)): ?>
@@ -869,11 +602,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                                 onclick="openEditModal(<?php echo $device['id']; ?>, '<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>', '<?php echo htmlspecialchars($device['pnode_ip']); ?>')">Edit</button>
                                         <button type="button" class="action-btn-tiny action-delete" 
                                                 onclick="openDeleteModal(<?php echo $device['id']; ?>, '<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>')">Delete</button>
-                                        <br><br>
+                                        <br>
                                         <button type="button" class="update-btn-controller" 
-                                                onclick="updateController(<?php echo $device['id']; ?>, '<?php echo htmlspecialchars($device['pnode_ip']); ?>', '<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>')">Update Controller</button>
+                                                data-device-id="<?php echo $device['id']; ?>"
+                                                data-device-ip="<?php echo htmlspecialchars($device['pnode_ip']); ?>"
+                                                data-device-name="<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>">
+                                            Update Controller
+                                        </button>
                                         <button type="button" class="update-btn-pod" 
-                                                onclick="updatePod(<?php echo $device['id']; ?>, '<?php echo htmlspecialchars($device['pnode_ip']); ?>', '<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>')">Update Pod</button>
+                                                data-device-id="<?php echo $device['id']; ?>"
+                                                data-device-ip="<?php echo htmlspecialchars($device['pnode_ip']); ?>"
+                                                data-device-name="<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>">
+                                            Update Pod
+                                        </button>
                                     </td>
                                 </tr>
                                 <tr>
@@ -1044,6 +785,31 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         </div>
     </div>
 
+    <!-- Add Device Modal -->
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Device</h3>
+                <span class="close" onclick="closeAddModal()">&times;</span>
+            </div>
+            <form id="addForm" method="POST" action="">
+                <input type="hidden" name="action" value="add">
+                <div class="modal-form-group">
+                    <label for="add-pnode-name">Node Name:</label>
+                    <input type="text" id="add-pnode-name" name="pnode_name" required>
+                </div>
+                <div class="modal-form-group">
+                    <label for="add-pnode-ip">IP Address:</label>
+                    <input type="text" id="add-pnode-ip" name="pnode_ip" required>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="modal-btn modal-btn-secondary" onclick="closeAddModal()">Cancel</button>
+                    <button type="button" class="modal-btn modal-btn-primary" onclick="submitAdd()">Add Device</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Edit Device Modal -->
     <div id="editModal" class="modal">
         <div class="modal-content">
@@ -1090,5 +856,364 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             </form>
         </div>
     </div>
+
+    <script>
+        // Wait for DOM to be fully loaded before attaching event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing button handlers...');
+            
+            // Handle update controller buttons
+            document.querySelectorAll('.update-btn-controller').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    const deviceId = this.getAttribute('data-device-id');
+                    const deviceIp = this.getAttribute('data-device-ip');
+                    const deviceName = this.getAttribute('data-device-name');
+                    console.log('Controller update clicked:', deviceId, deviceIp, deviceName);
+                    updateController(deviceId, deviceIp, deviceName);
+                });
+            });
+            
+            // Handle update pod buttons
+            document.querySelectorAll('.update-btn-pod').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    const deviceId = this.getAttribute('data-device-id');
+                    const deviceIp = this.getAttribute('data-device-ip');
+                    const deviceName = this.getAttribute('data-device-name');
+                    console.log('Pod update clicked:', deviceId, deviceIp, deviceName);
+                    updatePod(deviceId, deviceIp, deviceName);
+                });
+            });
+            
+            console.log('Button handlers initialized successfully');
+        });
+        
+        function refreshDeviceStatus(deviceId) {
+            const statusElement = document.querySelector(`#status-${deviceId}`);
+            const refreshBtn = document.querySelector(`#refresh-${deviceId}`);
+            const lastCheckElement = document.querySelector(`#lastcheck-${deviceId}`);
+            
+            refreshBtn.disabled = true;
+            refreshBtn.textContent = '⟳';
+            
+            fetch('manual_device_check.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `device_id=${deviceId}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                } else {
+                    // Determine overall status (connectivity + health)
+                    let overallStatus = 'Unknown';
+                    let statusClass = 'unknown';
+                    
+                    if (data.status === 'Online') {
+                        statusClass = 'online';
+                        overallStatus = data.status;
+                    } else if (data.status === 'Offline') {
+                        overallStatus = 'Offline';
+                        statusClass = 'offline';
+                    } else {
+                        overallStatus = data.status;
+                        statusClass = data.status.toLowerCase().replace(' ', '-');
+                    }
+                    
+                    statusElement.innerHTML = `
+                        <span class="status-btn status-${statusClass}">${overallStatus}</span>
+                        <button class="refresh-btn" id="refresh-${deviceId}" onclick="refreshDeviceStatus(${deviceId})" title="Refresh status">↻</button>
+                        <div class="status-age status-fresh">Just checked</div>
+                        <div class="device-details">Response: ${data.response_time}ms</div>
+                        ${data.consecutive_failures > 0 ? `<div class="device-details" style="color: #dc3545;">Failures: ${data.consecutive_failures}</div>` : ''}
+                    `;
+                    
+                    // Update health status column
+                    const healthElement = statusElement.parentNode.nextElementSibling;
+                    if (data.status === 'Online' && data.health_status) {
+                        const healthClass = data.health_status === 'pass' ? 'online' : 'offline';
+                        healthElement.innerHTML = `<span class="status-btn status-${healthClass}">${data.health_status.charAt(0).toUpperCase() + data.health_status.slice(1)}</span>`;
+                    } else if (data.status === 'Not Initialized') {
+                        healthElement.innerHTML = `<span class="status-btn status-not-initialized">Not Initialized</span>`;
+                    } else {
+                        healthElement.innerHTML = `<span class="status-btn status-not-initialized">Not Initialized</span>`;
+                    }
+                    
+                    lastCheckElement.innerHTML = `
+                        <div class="status-fresh">Just now</div>
+                        <div style="font-size: 10px;">${data.timestamp}</div>
+                    `;
+                    
+                    // Refresh the status logs section
+                    fetchStatusLogs(deviceId, 1, 3);
+                }
+                refreshBtn.disabled = false;
+                refreshBtn.textContent = '↻';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to refresh status');
+                refreshBtn.disabled = false;
+                refreshBtn.textContent = '↻';
+            });
+        }
+        
+        function fetchStatusLogs(deviceId, page, limit) {
+            const logContainer = document.getElementById('log-container-' + deviceId);
+            const moreButton = document.getElementById('more-items-' + deviceId);
+            const pagination = document.getElementById('pagination-' + deviceId);
+
+            fetch('get_device_logs.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `device_id=${deviceId}&page=${page}&limit=${limit}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    logContainer.innerHTML = '<p>Error: ' + data.error + '</p>';
+                    return;
+                }
+
+                let html = '<table class="status-log-table"><thead><tr>';
+                html += '<th>Status</th><th>Check Time</th><th>Response</th><th>Health</th>';
+                html += '<th>Atlas</th><th>Services</th><th>System</th><th>Errors</th>';
+                html += '</tr></thead><tbody>';
+                
+                if (data.logs.length === 0) {
+                    html += '<tr><td colspan="9">No status logs for this device.</td></tr>';
+                } else {
+                    data.logs.forEach(log => {
+                        const statusClass = log.status === 'Online' ? 'log-status-online' : 
+                                          log.status === 'Offline' ? 'log-status-offline' : 'log-status-error';
+                        const responseTime = log.response_time ? Math.round(log.response_time * 1000) + 'ms' : 'N/A';
+                        const healthStatus = log.health_status ? 
+                            `<span class="log-health-${log.health_status}">${log.health_status}</span>` : 'N/A';
+                        const atlasStatus = log.atlas_registered !== null ? 
+                            `<span class="log-atlas-${log.atlas_registered ? 'yes' : 'no'}">${log.atlas_registered ? 'Yes' : 'No'}</span>` : 'N/A';
+                        
+                        // Services column
+                        let services = [];
+                        if (log.pod_status) services.push(`Pod: <span class="log-service-${log.pod_status}">${log.pod_status}</span>`);
+                        if (log.xandminer_status) services.push(`XM: <span class="log-service-${log.xandminer_status}">${log.xandminer_status}</span>`);
+                        if (log.xandminerd_status) services.push(`XMD: <span class="log-service-${log.xandminerd_status}">${log.xandminerd_status}</span>`);
+                        const servicesText = services.length > 0 ? services.join('<br>') : 'N/A';
+                        
+                        // System metrics column
+                        let metrics = [];
+                        if (log.cpu_load_avg !== null) metrics.push(`CPU: ${parseFloat(log.cpu_load_avg).toFixed(2)}`);
+                        if (log.memory_percent !== null) metrics.push(`Mem: ${parseFloat(log.memory_percent).toFixed(1)}%`);
+                        if (log.consecutive_failures > 0) metrics.push(`Fails: ${log.consecutive_failures}`);
+                        const metricsText = metrics.length > 0 ? 
+                            `<span class="log-metrics">${metrics.join('<br>')}</span>` : 'N/A';
+                        
+                        const errorMsg = log.error_message ? 
+                            `<span class="log-error" title="${log.error_message}">${log.error_message.substring(0, 30)}${log.error_message.length > 30 ? '...' : ''}</span>` : 'None';
+                        
+                        html += `<tr>
+                            <td><span class="${statusClass}">${log.status}</span></td>
+                            <td>${log.check_time}</td>
+                            <td>${responseTime}</td>
+                            <td>${healthStatus}</td>
+                            <td>${atlasStatus}</td>
+                            <td>${servicesText}</td>
+                            <td>${metricsText}</td>
+                            <td>${errorMsg}</td>
+                        </tr>`;
+                    });
+                }
+                html += '</tbody></table>';
+                logContainer.innerHTML = html;
+
+                pagination.innerHTML = '';
+                if (data.total_pages > 1) {
+                    const firstButton = `<a href="#" class="action-btn-tiny action-first ${data.current_page === 1 ? 'disabled' : ''}" onclick="fetchStatusLogs(${deviceId}, 1, ${limit}); return false;">First</a>`;
+                    const prevButton = `<a href="#" class="action-btn-tiny action-prev ${data.current_page === 1 ? 'disabled' : ''}" onclick="fetchStatusLogs(${deviceId}, ${data.current_page - 1}, ${limit}); return false;">Previous</a>`;
+                    const nextButton = `<a href="#" class="action-btn-tiny action-next ${data.current_page === data.total_pages ? 'disabled' : ''}" onclick="fetchStatusLogs(${deviceId}, ${data.current_page + 1}, ${limit}); return false;">Next</a>`;
+                    const lastButton = `<a href="#" class="action-btn-tiny action-last ${data.current_page === data.total_pages ? 'disabled' : ''}" onclick="fetchStatusLogs(${deviceId}, ${data.total_pages}, ${limit}); return false;">Last</a>`;
+                    let selectOptions = `<select onchange="fetchStatusLogs(${deviceId}, this.value, ${limit})" class="pagination-select">`;
+                    for (let i = 1; i <= data.total_pages; i++) {
+                        selectOptions += `<option value="${i}" ${i === data.current_page ? 'selected' : ''}>${i}</option>`;
+                    }
+                    selectOptions += '</select>';
+                    let limitOptions = `<select onchange="fetchStatusLogs(${deviceId}, 1, this.value)" class="pagination-select">`;
+                    [5, 10, 20, 50].forEach(l => {
+                        limitOptions += `<option value="${l}" ${l === limit ? 'selected' : ''}>${l}</option>`;
+                    });
+                    limitOptions += '</select>';
+                    pagination.innerHTML = `${firstButton}${prevButton}${selectOptions}<span>of ${data.total_pages}</span>${nextButton}${lastButton}${limitOptions}`;
+                }
+
+                if (limit >= 5) {
+                    moreButton.style.display = 'none';
+                }
+            })
+            .catch(error => {
+                logContainer.innerHTML = '<p>Error fetching status logs: ' + error.message + '</p>';
+            });
+        }
+        
+        function showMoreItems(deviceId) {
+            fetchStatusLogs(deviceId, 1, 10);
+        }
+        
+        // Modal functions
+        function openAddModal() {
+            document.getElementById('add-pnode-name').value = '';
+            document.getElementById('add-pnode-ip').value = '';
+            document.getElementById('addModal').style.display = 'block';
+        }
+        
+        function closeAddModal() {
+            document.getElementById('addModal').style.display = 'none';
+        }
+        
+        function openEditModal(deviceId, currentName, currentIp) {
+            document.getElementById('edit-device-id').value = deviceId;
+            document.getElementById('edit-pnode-name').value = currentName;
+            document.getElementById('edit-pnode-ip').value = currentIp;
+            document.getElementById('editModal').style.display = 'block';
+        }
+        
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+        
+        function openDeleteModal(deviceId, deviceName) {
+            document.getElementById('delete-device-id').value = deviceId;
+            document.getElementById('delete-device-name').textContent = deviceName;
+            document.getElementById('deleteModal').style.display = 'block';
+        }
+        
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').style.display = 'none';
+        }
+        
+        function submitAdd() {
+            document.getElementById('addForm').submit();
+        }
+        
+        function submitEdit() {
+            document.getElementById('editForm').submit();
+        }
+        
+        function submitDelete() {
+            document.getElementById('deleteForm').submit();
+        }
+        
+        // Update functions with better error handling
+        function updateController(deviceId, deviceIp, deviceName) {
+            console.log('updateController called with:', deviceId, deviceIp, deviceName);
+            
+            if (confirm(`Are you sure you want to update the controller for ${deviceName}?\n\nThis will trigger an update process on the device at ${deviceIp}.`)) {
+                const btn = document.querySelector(`[data-device-id="${deviceId}"].update-btn-controller`);
+                if (!btn) {
+                    console.error('Could not find controller button for device', deviceId);
+                    alert('Error: Could not find update button');
+                    return;
+                }
+                
+                const originalText = btn.textContent;
+                btn.disabled = true;
+                btn.textContent = 'Updating...';
+                
+                fetch('device_update.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `action=update_controller&device_id=${deviceId}&device_ip=${encodeURIComponent(deviceIp)}`
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        alert(`Controller update initiated successfully for ${deviceName}.\n\nResponse: ${data.message || 'Update started'}`);
+                    } else {
+                        alert(`Controller update failed for ${deviceName}.\n\nError: ${data.error || 'Unknown error'}`);
+                    }
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                })
+                .catch(error => {
+                    console.error('Controller update error:', error);
+                    alert(`Controller update failed for ${deviceName}.\n\nNetwork error: ${error.message}`);
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                });
+            }
+        }
+        
+        function updatePod(deviceId, deviceIp, deviceName) {
+            console.log('updatePod called with:', deviceId, deviceIp, deviceName);
+            
+            if (confirm(`Are you sure you want to update the pod for ${deviceName}?\n\nThis will trigger an update process on the device at ${deviceIp}.`)) {
+                const btn = document.querySelector(`[data-device-id="${deviceId}"].update-btn-pod`);
+                if (!btn) {
+                    console.error('Could not find pod button for device', deviceId);
+                    alert('Error: Could not find update button');
+                    return;
+                }
+                
+                const originalText = btn.textContent;
+                btn.disabled = true;
+                btn.textContent = 'Updating...';
+                
+                fetch('device_update.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `action=update_pod&device_id=${deviceId}&device_ip=${encodeURIComponent(deviceIp)}`
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        alert(`Pod update initiated successfully for ${deviceName}.\n\nResponse: ${data.message || 'Update started'}`);
+                    } else {
+                        alert(`Pod update failed for ${deviceName}.\n\nError: ${data.error || 'Unknown error'}`);
+                    }
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                })
+                .catch(error => {
+                    console.error('Pod update error:', error);
+                    alert(`Pod update failed for ${deviceName}.\n\nNetwork error: ${error.message}`);
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                });
+            }
+        }
+        
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            const addModal = document.getElementById('addModal');
+            const editModal = document.getElementById('editModal');
+            const deleteModal = document.getElementById('deleteModal');
+            if (event.target == addModal) {
+                closeAddModal();
+            }
+            if (event.target == editModal) {
+                closeEditModal();
+            }
+            if (event.target == deleteModal) {
+                closeDeleteModal();
+            }
+        }
+        
+        // Close modals with Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeAddModal();
+                closeEditModal();
+                closeDeleteModal();
+            }
+        });
+    </script>
 </body>
 </html>
