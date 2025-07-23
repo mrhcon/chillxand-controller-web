@@ -239,7 +239,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                 
                 <div style="margin-top: 20px; padding: 10px; background-color: #e9ecef; border-radius: 4px;">
                     <h4>Status Information</h4>
-                    <p><small>Device status is automatically checked every 5-15 minutes by a background process. 
+                    <p><small>Device status is automatically checked every 2 minutes by a background process. 
                     The "Last Checked" column shows when the device status was last verified. Health status indicates 
                     whether the device's internal services are functioning properly.</small></p>
                 </div>

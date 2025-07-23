@@ -1,5 +1,5 @@
 <?php
-// devices.php - Updated for health endpoint and single table approach (super fast loading!)
+// devices.php - Updated to show device status logs instead of user interactions
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -130,42 +130,28 @@ try {
         // Parse health data from cached data
         $summaries[$device_id] = parseCachedDeviceHealth($cached_status);
         
-        // Fetch initial logs (fast database query)
-        $device_name_pattern = "%Device: {$device['pnode_name']}%";
-        $ip_pattern = "%IP: {$device['pnode_ip']}%";
+        // Fetch initial device status logs (instead of user interactions)
         $sql = "
-            SELECT action, timestamp, details 
-            FROM user_interactions 
-            WHERE user_id = :user_id 
-            AND (
-                action IN ('device_status_check_success', 'device_status_check_failed', 'device_register_success', 'device_edit_success', 'device_delete_success')
-                AND (details LIKE :device_name_pattern OR details LIKE :ip_pattern)
-            )
-            ORDER BY timestamp DESC 
+            SELECT status, check_time, response_time, check_method, error_message, health_status
+            FROM device_status_log 
+            WHERE device_id = :device_id
+            ORDER BY check_time DESC 
             LIMIT :limit
         ";
         $stmt = $pdo->prepare($sql);
-        $stmt->bindValue(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
-        $stmt->bindValue(':device_name_pattern', $device_name_pattern, PDO::PARAM_STR);
-        $stmt->bindValue(':ip_pattern', $ip_pattern, PDO::PARAM_STR);
+        $stmt->bindValue(':device_id', $device_id, PDO::PARAM_INT);
         $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
         $stmt->execute();
         $device['logs'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // Count total logs
+        // Count total device status logs
         $sql = "
             SELECT COUNT(*) 
-            FROM user_interactions 
-            WHERE user_id = :user_id 
-            AND (
-                action IN ('device_status_check_success', 'device_status_check_failed', 'device_register_success', 'device_edit_success', 'device_delete_success')
-                AND (details LIKE :device_name_pattern OR details LIKE :ip_pattern)
-            )
+            FROM device_status_log 
+            WHERE device_id = :device_id
         ";
         $stmt = $pdo->prepare($sql);
-        $stmt->bindValue(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
-        $stmt->bindValue(':device_name_pattern', $device_name_pattern, PDO::PARAM_STR);
-        $stmt->bindValue(':ip_pattern', $ip_pattern, PDO::PARAM_STR);
+        $stmt->bindValue(':device_id', $device_id, PDO::PARAM_INT);
         $stmt->execute();
         $device['total_logs'] = $stmt->fetchColumn();
         
@@ -362,6 +348,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         .status-online-issues { background-color: #ffc107; color: #212529; }
         .last-check-col { font-size: 11px; color: #666; }
         .never-checked { font-style: italic; color: #999; }
+        .status-log-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .status-log-table th, .status-log-table td { 
+            border: 1px solid #ddd; 
+            padding: 6px; 
+            text-align: left; 
+            font-size: 12px; 
+        }
+        .status-log-table th { background-color: #f8f9fa; }
+        .log-status-online { color: #28a745; font-weight: bold; }
+        .log-status-offline { color: #dc3545; font-weight: bold; }
+        .log-status-error { color: #ffc107; font-weight: bold; }
     </style>
     <script>
         function toggleEdit(deviceId) {
@@ -429,6 +426,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         <div class="status-fresh">Just now</div>
                         <div style="font-size: 10px;">${data.timestamp}</div>
                     `;
+                    
+                    // Refresh the status logs section
+                    fetchStatusLogs(deviceId, 1, 3);
                 }
                 refreshBtn.disabled = false;
                 refreshBtn.textContent = '↻';
@@ -441,12 +441,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             });
         }
         
-        function fetchLogs(deviceId, page, limit) {
+        function fetchStatusLogs(deviceId, page, limit) {
             const logContainer = document.getElementById('log-container-' + deviceId);
             const moreButton = document.getElementById('more-items-' + deviceId);
             const pagination = document.getElementById('pagination-' + deviceId);
 
-            fetch('get_device_logs.php', {
+            fetch('get_device_status_logs.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: `device_id=${deviceId}&page=${page}&limit=${limit}`
@@ -458,12 +458,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     return;
                 }
 
-                let html = '<table class="log-table"><thead><tr><th>Action</th><th>Timestamp</th><th>Details</th></tr></thead><tbody>';
+                let html = '<table class="status-log-table"><thead><tr><th>Status</th><th>Check Time</th><th>Response Time</th><th>Health Status</th><th>Method</th></tr></thead><tbody>';
                 if (data.logs.length === 0) {
-                    html += '<tr><td colspan="3">No recent logs for this device.</td></tr>';
+                    html += '<tr><td colspan="5">No status logs for this device.</td></tr>';
                 } else {
                     data.logs.forEach(log => {
-                        html += `<tr><td>${log.action}</td><td>${log.timestamp}</td><td>${log.details || 'N/A'}</td></tr>`;
+                        const statusClass = log.status === 'Online' ? 'log-status-online' : 
+                                          log.status === 'Offline' ? 'log-status-offline' : 'log-status-error';
+                        const responseTime = log.response_time ? Math.round(log.response_time * 1000) + 'ms' : 'N/A';
+                        const healthStatus = log.health_status || 'N/A';
+                        const method = log.check_method || 'N/A';
+                        
+                        html += `<tr>
+                            <td><span class="${statusClass}">${log.status}</span></td>
+                            <td>${log.check_time}</td>
+                            <td>${responseTime}</td>
+                            <td>${healthStatus}</td>
+                            <td>${method}</td>
+                        </tr>`;
                     });
                 }
                 html += '</tbody></table>';
@@ -471,16 +483,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
 
                 pagination.innerHTML = '';
                 if (data.total_pages > 1) {
-                    const firstButton = `<a href="#" class="action-btn-tiny action-first ${data.current_page === 1 ? 'disabled' : ''}" onclick="fetchLogs(${deviceId}, 1, ${limit}); return false;">First</a>`;
-                    const prevButton = `<a href="#" class="action-btn-tiny action-prev ${data.current_page === 1 ? 'disabled' : ''}" onclick="fetchLogs(${deviceId}, ${data.current_page - 1}, ${limit}); return false;">Previous</a>`;
-                    const nextButton = `<a href="#" class="action-btn-tiny action-next ${data.current_page === data.total_pages ? 'disabled' : ''}" onclick="fetchLogs(${deviceId}, ${data.current_page + 1}, ${limit}); return false;">Next</a>`;
-                    const lastButton = `<a href="#" class="action-btn-tiny action-last ${data.current_page === data.total_pages ? 'disabled' : ''}" onclick="fetchLogs(${deviceId}, ${data.total_pages}, ${limit}); return false;">Last</a>`;
-                    let selectOptions = `<select onchange="fetchLogs(${deviceId}, this.value, ${limit})" class="pagination-select">`;
+                    const firstButton = `<a href="#" class="action-btn-tiny action-first ${data.current_page === 1 ? 'disabled' : ''}" onclick="fetchStatusLogs(${deviceId}, 1, ${limit}); return false;">First</a>`;
+                    const prevButton = `<a href="#" class="action-btn-tiny action-prev ${data.current_page === 1 ? 'disabled' : ''}" onclick="fetchStatusLogs(${deviceId}, ${data.current_page - 1}, ${limit}); return false;">Previous</a>`;
+                    const nextButton = `<a href="#" class="action-btn-tiny action-next ${data.current_page === data.total_pages ? 'disabled' : ''}" onclick="fetchStatusLogs(${deviceId}, ${data.current_page + 1}, ${limit}); return false;">Next</a>`;
+                    const lastButton = `<a href="#" class="action-btn-tiny action-last ${data.current_page === data.total_pages ? 'disabled' : ''}" onclick="fetchStatusLogs(${deviceId}, ${data.total_pages}, ${limit}); return false;">Last</a>`;
+                    let selectOptions = `<select onchange="fetchStatusLogs(${deviceId}, this.value, ${limit})" class="pagination-select">`;
                     for (let i = 1; i <= data.total_pages; i++) {
                         selectOptions += `<option value="${i}" ${i === data.current_page ? 'selected' : ''}>${i}</option>`;
                     }
                     selectOptions += '</select>';
-                    let limitOptions = `<select onchange="fetchLogs(${deviceId}, 1, this.value)" class="pagination-select">`;
+                    let limitOptions = `<select onchange="fetchStatusLogs(${deviceId}, 1, this.value)" class="pagination-select">`;
                     [5, 10, 20, 50].forEach(l => {
                         limitOptions += `<option value="${l}" ${l === limit ? 'selected' : ''}>${l}</option>`;
                     });
@@ -493,11 +505,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 }
             })
             .catch(error => {
-                logContainer.innerHTML = '<p>Error fetching logs: ' + error.message + '</p>';
+                logContainer.innerHTML = '<p>Error fetching status logs: ' + error.message + '</p>';
             });
         }
         function showMoreItems(deviceId) {
-            fetchLogs(deviceId, 1, 10);
+            fetchStatusLogs(deviceId, 1, 10);
         }
     </script>
 </head>
@@ -687,26 +699,35 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                                     <?php endif; ?>
                                                 <?php endif; ?>
                                             </div>
+                                            <h4>Recent Status Logs</h4>
                                             <div id="log-container-<?php echo $device['id']; ?>">
-                                                <table class="log-table">
+                                                <table class="status-log-table">
                                                     <thead>
                                                         <tr>
-                                                            <th>Action</th>
-                                                            <th>Timestamp</th>
-                                                            <th>Details</th>
+                                                            <th>Status</th>
+                                                            <th>Check Time</th>
+                                                            <th>Response Time</th>
+                                                            <th>Health Status</th>
+                                                            <th>Method</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
                                                         <?php if (empty($device['logs'])): ?>
                                                             <tr>
-                                                                <td colspan="3">No recent logs for this device.</td>
+                                                                <td colspan="5">No status logs for this device.</td>
                                                             </tr>
                                                         <?php else: ?>
                                                             <?php foreach ($device['logs'] as $log): ?>
                                                                 <tr>
-                                                                    <td><?php echo htmlspecialchars($log['action']); ?></td>
-                                                                    <td><?php echo htmlspecialchars($log['timestamp']); ?></td>
-                                                                    <td><?php echo htmlspecialchars($log['details'] ?? 'N/A'); ?></td>
+                                                                    <td>
+                                                                        <span class="<?php echo $log['status'] === 'Online' ? 'log-status-online' : ($log['status'] === 'Offline' ? 'log-status-offline' : 'log-status-error'); ?>">
+                                                                            <?php echo htmlspecialchars($log['status']); ?>
+                                                                        </span>
+                                                                    </td>
+                                                                    <td><?php echo htmlspecialchars($log['check_time']); ?></td>
+                                                                    <td><?php echo $log['response_time'] ? round($log['response_time'] * 1000) . 'ms' : 'N/A'; ?></td>
+                                                                    <td><?php echo htmlspecialchars($log['health_status'] ?? 'N/A'); ?></td>
+                                                                    <td><?php echo htmlspecialchars($log['check_method'] ?? 'N/A'); ?></td>
                                                                 </tr>
                                                             <?php endforeach; ?>
                                                         <?php endif; ?>
@@ -745,9 +766,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 
                 <div style="margin-top: 20px; padding: 10px; background-color: #e9ecef; border-radius: 4px;">
                     <h4>Background Health Monitoring</h4>
-                    <p><small>Device health status is automatically checked every 5-15 minutes by a background process. 
-                    Use the refresh button (↻) next to each device for immediate status updates. All health data including 
-                    Atlas registration, service status (Pod, XandMiner, XandMinerD), and system metrics are tracked and preserved in the log.</small></p>
+                    <p><small>Device health status is automatically checked every 2 minutes by a background process. 
+                    Use the refresh button (↻) next to each device for immediate status updates. The status logs show 
+                    device connectivity checks, response times, health status, and check methods used.</small></p>
                 </div>
             </div>
         </div>
