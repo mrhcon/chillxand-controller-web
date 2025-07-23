@@ -1,4 +1,78 @@
-<?php
+fetch('device_update.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `action=update_pod&device_id=${deviceId}&device_ip=${encodeURIComponent(deviceIp)}`
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.text(); // Get as text first to debug
+            })
+            .then(responseText => {
+                console.log('Pod update raw response:', responseText);
+                
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                } catch (jsonError) {
+                    console.error('JSON parse error:', jsonError);
+                    console.error('Response was:', responseText);
+                    throw new Error(`Invalid JSON response from device_update.php: ${responseText.substring(0, 100)}...`);
+                }
+                
+                if (data.success) {
+                    // Check the status from device response
+                    if (data.status === 'no_update_needed') {
+                        btn.textContent = 'No Update Needed';
+                        btn.disabled = false;
+                        setTimeout(() => {
+                            btn.textContent = originalText;
+                        }, 3000);
+                        console.log(`Pod update: ${data.message}`);
+                    } else if (data.status === 'update_initiated') {
+                        btn.textContent = 'Update Started';
+                        console.log(`Pod update started for ${deviceName}: ${data.message}`);
+                        
+                        // Start monitoring the update progress
+                        startUpdateMonitoring(deviceId, deviceIp, deviceName, 'pod', btn, originalText);
+                    } else if (data.status === 'error_github_check') {
+                        btn.textContent = 'GitHub Check Failed';
+                        btn.disabled = false;
+                        setTimeout(() => {
+                            btn.textContent = originalText;
+                        }, 5000);
+                        console.error(`Pod update GitHub error for ${deviceName}: ${data.message}`);
+                        alert(`Pod update failed for ${deviceName}\n\nGitHub Error: ${data.message}`);
+                    } else if (data.status === 'exception') {
+                        btn.textContent = 'Update Exception';
+                        btn.disabled = false;
+                        setTimeout(() => {
+                            btn.textContent = originalText;
+                        }, 5000);
+                        console.error(`Pod update exception for ${deviceName}: ${data.message}`);
+                        alert(`Pod update failed for ${deviceName}\n\nException: ${data.message}`);
+                    } else {
+                        btn.textContent = 'Update Response';
+                        console.log(`Pod update response for ${deviceName}: Status=${data.status}, Message=${data.message}`);
+                        setTimeout(() => {
+                            btn.disabled = false;
+                            btn.textContent = originalText;
+                        }, 3000);
+                    }
+                } else {
+                    alert(`Pod update failed for ${deviceName}.\n\nError: ${data.error || 'Unknown error'}`);
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                }
+            })
+            .catch(error => {
+                console.error('Pod update error:', error);
+                alert(`Pod update failed for ${deviceName}.\n\nNetwork error: ${error.message}`);
+                btn.disabled = false;
+                btn.textContent = originalText;
+            });
+                <?php
 // devices.php - Fixed version with working update buttons
 session_start();
 
@@ -1065,7 +1139,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             document.getElementById('deleteForm').submit();
         }
 
-        // Confirm update functions - EXACTLY like submitDelete but with fetch
+        // Update monitoring variables
+        var updateMonitors = {};
+
+        // Confirm update functions with progress monitoring
         function confirmUpdateController() {
             if (!pendingControllerUpdate) return;
             
@@ -1086,7 +1163,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             
             const originalText = btn.textContent;
             btn.disabled = true;
-            btn.textContent = 'Updating...';
+            btn.textContent = 'Starting...';
             
             fetch('device_update.php', {
                 method: 'POST',
@@ -1097,16 +1174,64 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
-                return response.json();
+                return response.text(); // Get as text first to debug
             })
-            .then(data => {
+            .then(responseText => {
+                console.log('Controller update raw response:', responseText);
+                
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                } catch (jsonError) {
+                    console.error('JSON parse error:', jsonError);
+                    console.error('Response was:', responseText);
+                    throw new Error(`Invalid JSON response from device_update.php: ${responseText.substring(0, 100)}...`);
+                }
+                
                 if (data.success) {
-                    alert(`Controller update initiated successfully for ${deviceName}.\n\nResponse: ${data.message || 'Update started'}`);
+                    // Check the status from device response
+                    if (data.status === 'no_update_needed') {
+                        btn.textContent = 'No Update Needed';
+                        btn.disabled = false;
+                        setTimeout(() => {
+                            btn.textContent = originalText;
+                        }, 3000);
+                        console.log(`Controller update: ${data.message}`);
+                    } else if (data.status === 'update_initiated') {
+                        btn.textContent = 'Update Started';
+                        console.log(`Controller update started for ${deviceName}: ${data.message}`);
+                        
+                        // Start monitoring the update progress
+                        startUpdateMonitoring(deviceId, deviceIp, deviceName, 'controller', btn, originalText);
+                    } else if (data.status === 'error_github_check') {
+                        btn.textContent = 'GitHub Check Failed';
+                        btn.disabled = false;
+                        setTimeout(() => {
+                            btn.textContent = originalText;
+                        }, 5000);
+                        console.error(`Controller update GitHub error for ${deviceName}: ${data.message}`);
+                        alert(`Controller update failed for ${deviceName}\n\nGitHub Error: ${data.message}`);
+                    } else if (data.status === 'exception') {
+                        btn.textContent = 'Update Exception';
+                        btn.disabled = false;
+                        setTimeout(() => {
+                            btn.textContent = originalText;
+                        }, 5000);
+                        console.error(`Controller update exception for ${deviceName}: ${data.message}`);
+                        alert(`Controller update failed for ${deviceName}\n\nException: ${data.message}`);
+                    } else {
+                        btn.textContent = 'Update Response';
+                        console.log(`Controller update response for ${deviceName}: Status=${data.status}, Message=${data.message}`);
+                        setTimeout(() => {
+                            btn.disabled = false;
+                            btn.textContent = originalText;
+                        }, 3000);
+                    }
                 } else {
                     alert(`Controller update failed for ${deviceName}.\n\nError: ${data.error || 'Unknown error'}`);
+                    btn.disabled = false;
+                    btn.textContent = originalText;
                 }
-                btn.disabled = false;
-                btn.textContent = originalText;
             })
             .catch(error => {
                 console.error('Controller update error:', error);
@@ -1136,7 +1261,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             
             const originalText = btn.textContent;
             btn.disabled = true;
-            btn.textContent = 'Updating...';
+            btn.textContent = 'Starting...';
             
             fetch('device_update.php', {
                 method: 'POST',
@@ -1147,16 +1272,31 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
-                return response.json();
+                return response.text(); // Get as text first to debug
             })
-            .then(data => {
+            .then(responseText => {
+                console.log('Pod update raw response:', responseText);
+                
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                } catch (jsonError) {
+                    console.error('JSON parse error:', jsonError);
+                    console.error('Response was:', responseText);
+                    throw new Error(`Invalid JSON response: ${responseText.substring(0, 100)}...`);
+                }
+                
                 if (data.success) {
-                    alert(`Pod update initiated successfully for ${deviceName}.\n\nResponse: ${data.message || 'Update started'}`);
+                    btn.textContent = 'Update Started';
+                    console.log(`Pod update started for ${deviceName}`);
+                    
+                    // Start monitoring the update progress
+                    startUpdateMonitoring(deviceId, deviceIp, deviceName, 'pod', btn, originalText);
                 } else {
                     alert(`Pod update failed for ${deviceName}.\n\nError: ${data.error || 'Unknown error'}`);
+                    btn.disabled = false;
+                    btn.textContent = originalText;
                 }
-                btn.disabled = false;
-                btn.textContent = originalText;
             })
             .catch(error => {
                 console.error('Pod update error:', error);
@@ -1164,6 +1304,203 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 btn.disabled = false;
                 btn.textContent = originalText;
             });
+        }
+
+        // Start monitoring update progress
+        function startUpdateMonitoring(deviceId, deviceIp, deviceName, updateType, btn, originalText) {
+            const monitorKey = `${deviceId}_${updateType}`;
+            
+            // Clear any existing monitor
+            if (updateMonitors[monitorKey]) {
+                clearInterval(updateMonitors[monitorKey].interval);
+            }
+            
+            const monitor = {
+                deviceId: deviceId,
+                deviceIp: deviceIp,
+                deviceName: deviceName,
+                updateType: updateType,
+                btn: btn,
+                originalText: originalText,
+                attemptCount: 0,
+                maxAttempts: 60, // 5 minutes at 5-second intervals
+                lastLogLength: 0,
+                consecutiveFailures: 0,
+                maxConsecutiveFailures: 3
+            };
+            
+            // Start polling
+            monitor.interval = setInterval(() => {
+                checkUpdateProgress(monitorKey, monitor);
+            }, 5000); // Check every 5 seconds
+            
+            updateMonitors[monitorKey] = monitor;
+            
+            console.log(`Started monitoring ${updateType} update for ${deviceName}`);
+        }
+
+        // Check update progress by polling the log endpoint
+        function checkUpdateProgress(monitorKey, monitor) {
+            monitor.attemptCount++;
+            
+            const logUrl = `http://${monitor.deviceIp}:8080/update/${monitor.updateType}/log`;
+            
+            fetch(logUrl, {
+                method: 'GET',
+                headers: { 'Accept': 'text/plain' }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                return response.text();
+            })
+            .then(logData => {
+                monitor.consecutiveFailures = 0;
+                
+                const lines = logData.trim().split('\n').filter(line => line.trim());
+                const currentLogLength = lines.length;
+                
+                // Show progress in button
+                if (lines.length > 0) {
+                    const lastLine = lines[lines.length - 1].trim();
+                    
+                    // Check for completion indicators
+                    if (lastLine.includes('no upgrade required') || 
+                        lastLine.includes('No upgrade required') ||
+                        lastLine.includes('already up to date') ||
+                        lastLine.includes('Already up to date')) {
+                        
+                        monitor.btn.textContent = 'No Update Needed';
+                        console.log(`${monitor.updateType} update completed - no upgrade required for ${monitor.deviceName}`);
+                        finishUpdateMonitoring(monitorKey, monitor, 'completed');
+                        return;
+                    }
+                    
+                    if (lastLine.includes('Update completed') ||
+                        lastLine.includes('update completed') ||
+                        lastLine.includes('Successfully updated') ||
+                        lastLine.includes('Restart complete')) {
+                        
+                        monitor.btn.textContent = 'Update Complete';
+                        console.log(`${monitor.updateType} update completed successfully for ${monitor.deviceName}`);
+                        finishUpdateMonitoring(monitorKey, monitor, 'completed');
+                        return;
+                    }
+                    
+                    if (lastLine.includes('error') || 
+                        lastLine.includes('Error') ||
+                        lastLine.includes('failed') ||
+                        lastLine.includes('Failed')) {
+                        
+                        monitor.btn.textContent = 'Update Failed';
+                        console.log(`${monitor.updateType} update failed for ${monitor.deviceName}: ${lastLine}`);
+                        finishUpdateMonitoring(monitorKey, monitor, 'failed');
+                        return;
+                    }
+                    
+                    // Show progress indicators
+                    if (lastLine.includes('Downloading') || lastLine.includes('downloading')) {
+                        monitor.btn.textContent = 'Downloading...';
+                    } else if (lastLine.includes('Installing') || lastLine.includes('installing')) {
+                        monitor.btn.textContent = 'Installing...';
+                    } else if (lastLine.includes('Restarting') || lastLine.includes('restarting')) {
+                        monitor.btn.textContent = 'Restarting...';
+                    } else if (lastLine.includes('Updating') || lastLine.includes('updating')) {
+                        monitor.btn.textContent = 'Updating...';
+                    } else {
+                        monitor.btn.textContent = 'In Progress...';
+                    }
+                    
+                    // Log new lines
+                    if (currentLogLength > monitor.lastLogLength) {
+                        const newLines = lines.slice(monitor.lastLogLength);
+                        newLines.forEach(line => {
+                            console.log(`[${monitor.deviceName} ${monitor.updateType}] ${line}`);
+                        });
+                        monitor.lastLogLength = currentLogLength;
+                    }
+                } else {
+                    monitor.btn.textContent = 'Waiting...';
+                }
+                
+                // Check if we've reached max attempts
+                if (monitor.attemptCount >= monitor.maxAttempts) {
+                    console.log(`Update monitoring timeout for ${monitor.deviceName} ${monitor.updateType}`);
+                    finishUpdateMonitoring(monitorKey, monitor, 'timeout');
+                }
+            })
+            .catch(error => {
+                monitor.consecutiveFailures++;
+                console.log(`Failed to get update logs for ${monitor.deviceName}: ${error.message}`);
+                
+                if (monitor.consecutiveFailures >= monitor.maxConsecutiveFailures) {
+                    console.log(`Too many consecutive failures for ${monitor.deviceName} ${monitor.updateType} - assuming device is restarting`);
+                    monitor.btn.textContent = 'Device Restarting...';
+                    
+                    // Wait a bit longer and then finish
+                    setTimeout(() => {
+                        finishUpdateMonitoring(monitorKey, monitor, 'restart');
+                    }, 15000); // Wait 15 seconds for restart
+                } else {
+                    monitor.btn.textContent = `Checking... (${monitor.consecutiveFailures})`;
+                }
+                
+                // Check if we've reached max attempts
+                if (monitor.attemptCount >= monitor.maxAttempts) {
+                    console.log(`Update monitoring timeout for ${monitor.deviceName} ${monitor.updateType}`);
+                    finishUpdateMonitoring(monitorKey, monitor, 'timeout');
+                }
+            });
+        }
+
+        // Finish update monitoring and cleanup
+        function finishUpdateMonitoring(monitorKey, monitor, reason) {
+            // Clear the interval
+            if (monitor.interval) {
+                clearInterval(monitor.interval);
+            }
+            
+            // Remove from monitors
+            delete updateMonitors[monitorKey];
+            
+            // Re-enable button
+            monitor.btn.disabled = false;
+            
+            // Set final button text based on reason
+            switch (reason) {
+                case 'completed':
+                    setTimeout(() => {
+                        monitor.btn.textContent = monitor.originalText;
+                        // Refresh device status
+                        refreshDeviceStatus(monitor.deviceId);
+                    }, 3000);
+                    break;
+                case 'failed':
+                    setTimeout(() => {
+                        monitor.btn.textContent = monitor.originalText;
+                    }, 5000);
+                    break;
+                case 'timeout':
+                    monitor.btn.textContent = 'Timeout - Check Device';
+                    setTimeout(() => {
+                        monitor.btn.textContent = monitor.originalText;
+                        // Try to refresh device status
+                        refreshDeviceStatus(monitor.deviceId);
+                    }, 3000);
+                    break;
+                case 'restart':
+                    setTimeout(() => {
+                        monitor.btn.textContent = monitor.originalText;
+                        // Refresh device status after restart
+                        refreshDeviceStatus(monitor.deviceId);
+                    }, 3000);
+                    break;
+                default:
+                    monitor.btn.textContent = monitor.originalText;
+            }
+            
+            console.log(`Finished monitoring ${monitor.updateType} update for ${monitor.deviceName} - reason: ${reason}`);
         }
         
         // Close modals when clicking outside
