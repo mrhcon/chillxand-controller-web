@@ -1,108 +1,5 @@
-// Update functions with better error handling - using same pattern as delete
-        function updateController(deviceId, deviceIp, deviceName) {
-            console.log('updateController called with:', deviceId, deviceIp, deviceName);
-            
-            // Use the same confirm() pattern as the delete function
-            if (confirm(`⚠️ UPDATE CONTROLLER CONFIRMATION\n\nAre you sure you want to update the controller for "${deviceName}"?\n\nDevice IP: ${deviceIp}\n\n⚠️ WARNING: The device may be temporarily unavailable during the update process.\n\nClick OK to proceed or Cancel to abort.`)) {
-                console.log('User confirmed controller update');
-                const btn = document.querySelector(`[data-device-id="${deviceId}"].update-btn-controller`);
-                if (!btn) {
-                    console.error('Could not find controller button for device', deviceId);
-                    alert('Error: Could not find update button');
-                    return;
-                }
-                
-                const originalText = btn.textContent;
-                btn.disabled = true;
-                btn.textContent = 'Updating...';
-                
-                console.log('Sending controller update request...');
-                
-                fetch('device_update.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: `action=update_controller&device_id=${deviceId}&device_ip=${encodeURIComponent(deviceIp)}`
-                })
-                .then(response => {
-                    console.log('Controller update response received:', response.status);
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('Controller update response data:', data);
-                    if (data.success) {
-                        alert(`✅ Controller update initiated successfully for ${deviceName}!\n\nResponse: ${data.message || 'Update started'}`);
-                    } else {
-                        alert(`❌ Controller update failed for ${deviceName}!\n\nError: ${data.error || 'Unknown error'}`);
-                    }
-                    btn.disabled = false;
-                    btn.textContent = originalText;
-                })
-                .catch(error => {
-                    console.error('Controller update error:', error);
-                    alert(`❌ Controller update failed for ${deviceName}!\n\nNetwork error: ${error.message}`);
-                    btn.disabled = false;
-                    btn.textContent = originalText;
-                });
-            } else {
-                console.log('User cancelled controller update');
-            }
-        }
-        
-        function updatePod(deviceId, deviceIp, deviceName) {
-            console.log('updatePod called with:', deviceId, deviceIp, deviceName);
-            
-            // Use the same confirm() pattern as the delete function
-            if (confirm(`⚠️ UPDATE POD CONFIRMATION\n\nAre you sure you want to update the pod for "${deviceName}"?\n\nDevice IP: ${deviceIp}\n\n⚠️ WARNING: The device may be temporarily unavailable during the update process.\n\nClick OK to proceed or Cancel to abort.`)) {
-                console.log('User confirmed pod update');
-                const btn = document.querySelector(`[data-device-id="${deviceId}"].update-btn-pod`);
-                if (!btn) {
-                    console.error('Could not find pod button for device', deviceId);
-                    alert('Error: Could not find update button');
-                    return;
-                }
-                
-                const originalText = btn.textContent;
-                btn.disabled = true;
-                btn.textContent = 'Updating...';
-                
-                console.log('Sending pod update request...');
-                
-                fetch('device_update.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: `action=update_pod&device_id=${deviceId}&device_ip=${encodeURIComponent(deviceIp)}`
-                })
-                .then(response => {
-                    console.log('Pod update response received:', response.status);
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('Pod update response data:', data);
-                    if (data.success) {
-                        alert(`✅ Pod update initiated successfully for ${deviceName}!\n\nResponse: ${data.message || 'Update started'}`);
-                    } else {
-                        alert(`❌ Pod update failed for ${deviceName}!\n\nError: ${data.error || 'Unknown error'}`);
-                    }
-                    btn.disabled = false;
-                    btn.textContent = originalText;
-                })
-                .catch(error => {
-                    console.error('Pod update error:', error);
-                    alert(`❌ Pod update failed for ${deviceName}!\n\nNetwork error: ${error.message}`);
-                    btn.disabled = false;
-                    btn.textContent = originalText;
-                });
-            } else {
-                console.log('User cancelled pod update');
-            }
-        }<?php
-// devices.php - Fixed version with working update buttons
+<?php
+// devices.php - Updated to show device status logs instead of user interactions
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -597,13 +494,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         .action-btn:hover {
             background-color: #0056b3;
         }
-        .modal-btn-warning {
-            background-color: #ffc107;
-            color: #212529;
-        }
-        .modal-btn-warning:hover {
-            background-color: #e0a800;
-        }
         .version-info {
             font-size: 10px; 
             line-height: 1.3; 
@@ -805,10 +695,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                                 <div><strong>Pod:</strong> 
                                                     <span class="version-value">
                                                         <?php 
-                                                        // Extract pod version from health data if available
                                                         $pod_version = 'N/A';
                                                         if (!empty($summaries[$device['id']]['pod_status']) && $summaries[$device['id']]['pod_status'] === 'active') {
-                                                            $pod_version = 'Active'; // Could be enhanced with actual version if available
+                                                            $pod_version = 'Active';
                                                         }
                                                         echo htmlspecialchars($pod_version);
                                                         ?>
@@ -817,10 +706,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                                 <div><strong>XandMiner:</strong> 
                                                     <span class="version-value">
                                                         <?php 
-                                                        // Extract XandMiner version from health data if available
                                                         $xm_version = 'N/A';
                                                         if (!empty($summaries[$device['id']]['xandminer_status']) && $summaries[$device['id']]['xandminer_status'] === 'active') {
-                                                            $xm_version = 'Active'; // Could be enhanced with actual version if available
+                                                            $xm_version = 'Active';
                                                         }
                                                         echo htmlspecialchars($xm_version);
                                                         ?>
@@ -829,10 +717,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                                 <div><strong>XandMinerD:</strong> 
                                                     <span class="version-value">
                                                         <?php 
-                                                        // Extract XandMinerD version from health data if available
                                                         $xmd_version = 'N/A';
                                                         if (!empty($summaries[$device['id']]['xandminerd_status']) && $summaries[$device['id']]['xandminerd_status'] === 'active') {
-                                                            $xmd_version = 'Active'; // Could be enhanced with actual version if available
+                                                            $xmd_version = 'Active';
                                                         }
                                                         echo htmlspecialchars($xmd_version);
                                                         ?>
@@ -1009,7 +896,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 if (data.error) {
                     alert('Error: ' + data.error);
                 } else {
-                    // Determine overall status (connectivity + health)
                     let overallStatus = 'Unknown';
                     let statusClass = 'unknown';
                     
@@ -1032,7 +918,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         ${data.consecutive_failures > 0 ? `<div class="device-details" style="color: #dc3545;">Failures: ${data.consecutive_failures}</div>` : ''}
                     `;
                     
-                    // Update health status column
                     const healthElement = statusElement.parentNode.nextElementSibling;
                     if (data.status === 'Online' && data.health_status) {
                         const healthClass = data.health_status === 'pass' ? 'online' : 'offline';
@@ -1047,9 +932,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         <div class="status-fresh">Just now</div>
                         <div style="font-size: 10px;">${data.timestamp}</div>
                     `;
-                    
-                    // Refresh the status logs section
-                    fetchStatusLogs(deviceId, 1, 3);
                 }
                 refreshBtn.disabled = false;
                 refreshBtn.textContent = '↻';
@@ -1060,105 +942,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 refreshBtn.disabled = false;
                 refreshBtn.textContent = '↻';
             });
-        }
-        
-        function fetchStatusLogs(deviceId, page, limit) {
-            const logContainer = document.getElementById('log-container-' + deviceId);
-            const moreButton = document.getElementById('more-items-' + deviceId);
-            const pagination = document.getElementById('pagination-' + deviceId);
-
-            fetch('get_device_logs.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `device_id=${deviceId}&page=${page}&limit=${limit}`
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    logContainer.innerHTML = '<p>Error: ' + data.error + '</p>';
-                    return;
-                }
-
-                let html = '<table class="status-log-table"><thead><tr>';
-                html += '<th>Status</th><th>Check Time</th><th>Response</th><th>Health</th>';
-                html += '<th>Atlas</th><th>Services</th><th>System</th><th>Errors</th>';
-                html += '</tr></thead><tbody>';
-                
-                if (data.logs.length === 0) {
-                    html += '<tr><td colspan="9">No status logs for this device.</td></tr>';
-                } else {
-                    data.logs.forEach(log => {
-                        const statusClass = log.status === 'Online' ? 'log-status-online' : 
-                                          log.status === 'Offline' ? 'log-status-offline' : 'log-status-error';
-                        const responseTime = log.response_time ? Math.round(log.response_time * 1000) + 'ms' : 'N/A';
-                        const healthStatus = log.health_status ? 
-                            `<span class="log-health-${log.health_status}">${log.health_status}</span>` : 'N/A';
-                        const atlasStatus = log.atlas_registered !== null ? 
-                            `<span class="log-atlas-${log.atlas_registered ? 'yes' : 'no'}">${log.atlas_registered ? 'Yes' : 'No'}</span>` : 'N/A';
-                        
-                        // Services column
-                        let services = [];
-                        if (log.pod_status) services.push(`Pod: <span class="log-service-${log.pod_status}">${log.pod_status}</span>`);
-                        if (log.xandminer_status) services.push(`XM: <span class="log-service-${log.xandminer_status}">${log.xandminer_status}</span>`);
-                        if (log.xandminerd_status) services.push(`XMD: <span class="log-service-${log.xandminerd_status}">${log.xandminerd_status}</span>`);
-                        const servicesText = services.length > 0 ? services.join('<br>') : 'N/A';
-                        
-                        // System metrics column
-                        let metrics = [];
-                        if (log.cpu_load_avg !== null) metrics.push(`CPU: ${parseFloat(log.cpu_load_avg).toFixed(2)}`);
-                        if (log.memory_percent !== null) metrics.push(`Mem: ${parseFloat(log.memory_percent).toFixed(1)}%`);
-                        if (log.consecutive_failures > 0) metrics.push(`Fails: ${log.consecutive_failures}`);
-                        const metricsText = metrics.length > 0 ? 
-                            `<span class="log-metrics">${metrics.join('<br>')}</span>` : 'N/A';
-                        
-                        const errorMsg = log.error_message ? 
-                            `<span class="log-error" title="${log.error_message}">${log.error_message.substring(0, 30)}${log.error_message.length > 30 ? '...' : ''}</span>` : 'None';
-                        
-                        html += `<tr>
-                            <td><span class="${statusClass}">${log.status}</span></td>
-                            <td>${log.check_time}</td>
-                            <td>${responseTime}</td>
-                            <td>${healthStatus}</td>
-                            <td>${atlasStatus}</td>
-                            <td>${servicesText}</td>
-                            <td>${metricsText}</td>
-                            <td>${errorMsg}</td>
-                        </tr>`;
-                    });
-                }
-                html += '</tbody></table>';
-                logContainer.innerHTML = html;
-
-                pagination.innerHTML = '';
-                if (data.total_pages > 1) {
-                    const firstButton = `<a href="#" class="action-btn-tiny action-first ${data.current_page === 1 ? 'disabled' : ''}" onclick="fetchStatusLogs(${deviceId}, 1, ${limit}); return false;">First</a>`;
-                    const prevButton = `<a href="#" class="action-btn-tiny action-prev ${data.current_page === 1 ? 'disabled' : ''}" onclick="fetchStatusLogs(${deviceId}, ${data.current_page - 1}, ${limit}); return false;">Previous</a>`;
-                    const nextButton = `<a href="#" class="action-btn-tiny action-next ${data.current_page === data.total_pages ? 'disabled' : ''}" onclick="fetchStatusLogs(${deviceId}, ${data.current_page + 1}, ${limit}); return false;">Next</a>`;
-                    const lastButton = `<a href="#" class="action-btn-tiny action-last ${data.current_page === data.total_pages ? 'disabled' : ''}" onclick="fetchStatusLogs(${deviceId}, ${data.total_pages}, ${limit}); return false;">Last</a>`;
-                    let selectOptions = `<select onchange="fetchStatusLogs(${deviceId}, this.value, ${limit})" class="pagination-select">`;
-                    for (let i = 1; i <= data.total_pages; i++) {
-                        selectOptions += `<option value="${i}" ${i === data.current_page ? 'selected' : ''}>${i}</option>`;
-                    }
-                    selectOptions += '</select>';
-                    let limitOptions = `<select onchange="fetchStatusLogs(${deviceId}, 1, this.value)" class="pagination-select">`;
-                    [5, 10, 20, 50].forEach(l => {
-                        limitOptions += `<option value="${l}" ${l === limit ? 'selected' : ''}>${l}</option>`;
-                    });
-                    limitOptions += '</select>';
-                    pagination.innerHTML = `${firstButton}${prevButton}${selectOptions}<span>of ${data.total_pages}</span>${nextButton}${lastButton}${limitOptions}`;
-                }
-
-                if (limit >= 5) {
-                    moreButton.style.display = 'none';
-                }
-            })
-            .catch(error => {
-                logContainer.innerHTML = '<p>Error fetching status logs: ' + error.message + '</p>';
-            });
-        }
-        
-        function showMoreItems(deviceId) {
-            fetchStatusLogs(deviceId, 1, 10);
         }
         
         // Modal functions
@@ -1205,14 +988,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             document.getElementById('deleteForm').submit();
         }
         
-        // Update functions with better error handling
+        // Update functions - using same pattern as delete
         function updateController(deviceId, deviceIp, deviceName) {
             console.log('updateController called with:', deviceId, deviceIp, deviceName);
             
-            // Force the confirmation dialog to show
-            const confirmed = confirm(`Are you sure you want to update the controller for ${deviceName}?\n\nThis will trigger an update process on the device at ${deviceIp}.\n\nClick OK to proceed or Cancel to abort.`);
-            
-            if (confirmed) {
+            if (confirm(`⚠️ UPDATE CONTROLLER CONFIRMATION\n\nAre you sure you want to update the controller for "${deviceName}"?\n\nDevice IP: ${deviceIp}\n\n⚠️ WARNING: The device may be temporarily unavailable during the update process.\n\nClick OK to proceed or Cancel to abort.`)) {
                 console.log('User confirmed controller update');
                 const btn = document.querySelector(`[data-device-id="${deviceId}"].update-btn-controller`);
                 if (!btn) {
@@ -1263,10 +1043,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         function updatePod(deviceId, deviceIp, deviceName) {
             console.log('updatePod called with:', deviceId, deviceIp, deviceName);
             
-            // Force the confirmation dialog to show
-            const confirmed = confirm(`Are you sure you want to update the pod for ${deviceName}?\n\nThis will trigger an update process on the device at ${deviceIp}.\n\nClick OK to proceed or Cancel to abort.`);
-            
-            if (confirmed) {
+            if (confirm(`⚠️ UPDATE POD CONFIRMATION\n\nAre you sure you want to update the pod for "${deviceName}"?\n\nDevice IP: ${deviceIp}\n\n⚠️ WARNING: The device may be temporarily unavailable during the update process.\n\nClick OK to proceed or Cancel to abort.`)) {
                 console.log('User confirmed pod update');
                 const btn = document.querySelector(`[data-device-id="${deviceId}"].update-btn-pod`);
                 if (!btn) {
