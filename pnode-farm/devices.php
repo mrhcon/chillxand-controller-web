@@ -494,6 +494,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         .action-btn:hover {
             background-color: #0056b3;
         }
+        .version-info {
+            font-size: 10px; 
+            line-height: 1.3; 
+            color: #666;
+        }
+        .version-value {
+            font-family: 'Courier New', monospace;
+            color: #333;
+            font-weight: 500;
+        }
     </style>
 </head>
 <body>
@@ -545,6 +555,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                 <th>Registration Date</th>
                                 <th>Connectivity</th>
                                 <th>Health Status</th>
+                                <th>Versions</th>
                                 <th>Last Checked</th>
                                 <th>Actions</th>
                             </tr>
@@ -577,12 +588,88 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                     <td>
                                         <?php if ($device['status'] === 'Not Initialized'): ?>
                                             <span class="status-btn status-not-initialized">Not Initialized</span>
-                                        <?php elseif ($device['health_status']): ?>
-                                            <span class="status-btn status-<?php echo $device['health_status'] == 'pass' ? 'online' : 'offline'; ?>">
-                                                <?php echo ucfirst($device['health_status']); ?>
-                                            </span>
                                         <?php else: ?>
+                                            <div style="font-size: 10px; line-height: 1.3;">
+                                                <div><strong>Health:</strong> 
+                                                    <span class="status-btn status-<?php echo $summaries[$device['id']]['health_status'] == 'pass' ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
+                                                        <?php echo ucfirst($summaries[$device['id']]['health_status'] ?? 'unknown'); ?>
+                                                    </span>
+                                                </div>
+                                                <div><strong>Atlas:</strong> 
+                                                    <span class="status-btn status-<?php echo $summaries[$device['id']]['atlas_registered'] ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
+                                                        <?php echo $summaries[$device['id']]['atlas_registered'] ? 'Yes' : 'No'; ?>
+                                                    </span>
+                                                </div>
+                                                <div><strong>Pod:</strong> 
+                                                    <span class="status-btn status-<?php echo $summaries[$device['id']]['pod_status'] == 'active' ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
+                                                        <?php echo ucfirst($summaries[$device['id']]['pod_status'] ?? 'unknown'); ?>
+                                                    </span>
+                                                </div>
+                                                <div><strong>XandMiner:</strong> 
+                                                    <span class="status-btn status-<?php echo $summaries[$device['id']]['xandminer_status'] == 'active' ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
+                                                        <?php echo ucfirst($summaries[$device['id']]['xandminer_status'] ?? 'unknown'); ?>
+                                                    </span>
+                                                </div>
+                                                <div><strong>XandMinerD:</strong> 
+                                                    <span class="status-btn status-<?php echo $summaries[$device['id']]['xandminerd_status'] == 'active' ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
+                                                        <?php echo ucfirst($summaries[$device['id']]['xandminerd_status'] ?? 'unknown'); ?>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <?php if ($device['status'] === 'Not Initialized'): ?>
                                             <span class="status-btn status-not-initialized">Not Initialized</span>
+                                        <?php else: ?>
+                                            <div class="version-info">
+                                                <div><strong>Controller:</strong> 
+                                                    <span class="version-value">
+                                                        <?php echo htmlspecialchars($summaries[$device['id']]['chillxand_version'] ?? 'N/A'); ?>
+                                                    </span>
+                                                </div>
+                                                <div><strong>Node:</strong> 
+                                                    <span class="version-value">
+                                                        <?php echo htmlspecialchars($summaries[$device['id']]['node_version'] ?? 'N/A'); ?>
+                                                    </span>
+                                                </div>
+                                                <div><strong>Pod:</strong> 
+                                                    <span class="version-value">
+                                                        <?php 
+                                                        // Extract pod version from health data if available
+                                                        $pod_version = 'N/A';
+                                                        if (!empty($summaries[$device['id']]['pod_status']) && $summaries[$device['id']]['pod_status'] === 'active') {
+                                                            $pod_version = 'Active'; // Could be enhanced with actual version if available
+                                                        }
+                                                        echo htmlspecialchars($pod_version);
+                                                        ?>
+                                                    </span>
+                                                </div>
+                                                <div><strong>XandMiner:</strong> 
+                                                    <span class="version-value">
+                                                        <?php 
+                                                        // Extract XandMiner version from health data if available
+                                                        $xm_version = 'N/A';
+                                                        if (!empty($summaries[$device['id']]['xandminer_status']) && $summaries[$device['id']]['xandminer_status'] === 'active') {
+                                                            $xm_version = 'Active'; // Could be enhanced with actual version if available
+                                                        }
+                                                        echo htmlspecialchars($xm_version);
+                                                        ?>
+                                                    </span>
+                                                </div>
+                                                <div><strong>XandMinerD:</strong> 
+                                                    <span class="version-value">
+                                                        <?php 
+                                                        // Extract XandMinerD version from health data if available
+                                                        $xmd_version = 'N/A';
+                                                        if (!empty($summaries[$device['id']]['xandminerd_status']) && $summaries[$device['id']]['xandminerd_status'] === 'active') {
+                                                            $xmd_version = 'Active'; // Could be enhanced with actual version if available
+                                                        }
+                                                        echo htmlspecialchars($xmd_version);
+                                                        ?>
+                                                    </span>
+                                                </div>
+                                            </div>
                                         <?php endif; ?>
                                     </td>
                                     <td class="last-check-col" id="lastcheck-<?php echo $device['id']; ?>">
@@ -615,158 +702,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                                 data-device-name="<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>">
                                             Update Pod
                                         </button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td colspan="7">
-                                        <details>
-                                            <summary>More Info</summary>
-                                            <div class="summary-container">
-                                                <h4>Device Health (IP: <?php echo htmlspecialchars($device['pnode_ip']); ?>)</h4>
-                                                <?php if ($summaries[$device['id']]['error']): ?>
-                                                    <p class="error"><?php echo htmlspecialchars($summaries[$device['id']]['error']); ?></p>
-                                                <?php else: ?>
-                                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-                                                        <div>
-                                                            <h5>Service Status</h5>
-                                                            <ul style="margin: 0; padding-left: 20px;">
-                                                                <li><strong>Overall Health:</strong> 
-                                                                    <span class="status-btn status-<?php echo $summaries[$device['id']]['health_status'] == 'pass' ? 'online' : 'offline'; ?>" style="padding: 2px 8px; font-size: 10px;">
-                                                                        <?php echo ucfirst($summaries[$device['id']]['health_status'] ?? 'unknown'); ?>
-                                                                    </span>
-                                                                </li>
-                                                                <li><strong>Atlas Registered:</strong> 
-                                                                    <span class="status-btn status-<?php echo $summaries[$device['id']]['atlas_registered'] ? 'online' : 'offline'; ?>" style="padding: 2px 8px; font-size: 10px;">
-                                                                        <?php echo $summaries[$device['id']]['atlas_registered'] ? 'Yes' : 'No'; ?>
-                                                                    </span>
-                                                                </li>
-                                                                <li><strong>Pod:</strong> 
-                                                                    <span class="status-btn status-<?php echo $summaries[$device['id']]['pod_status'] == 'active' ? 'online' : 'offline'; ?>" style="padding: 2px 8px; font-size: 10px;">
-                                                                        <?php echo ucfirst($summaries[$device['id']]['pod_status'] ?? 'unknown'); ?>
-                                                                    </span>
-                                                                </li>
-                                                                <li><strong>XandMiner:</strong> 
-                                                                    <span class="status-btn status-<?php echo $summaries[$device['id']]['xandminer_status'] == 'active' ? 'online' : 'offline'; ?>" style="padding: 2px 8px; font-size: 10px;">
-                                                                        <?php echo ucfirst($summaries[$device['id']]['xandminer_status'] ?? 'unknown'); ?>
-                                                                    </span>
-                                                                </li>
-                                                                <li><strong>XandMinerD:</strong> 
-                                                                    <span class="status-btn status-<?php echo $summaries[$device['id']]['xandminerd_status'] == 'active' ? 'online' : 'offline'; ?>" style="padding: 2px 8px; font-size: 10px;">
-                                                                        <?php echo ucfirst($summaries[$device['id']]['xandminerd_status'] ?? 'unknown'); ?>
-                                                                    </span>
-                                                                </li>
-                                                            </ul>
-                                                        </div>
-                                                        <div>
-                                                            <h5>System Info</h5>
-                                                            <ul style="margin: 0; padding-left: 20px;">
-                                                                <?php if ($summaries[$device['id']]['cpu_load_avg'] !== null): ?>
-                                                                    <li><strong>CPU Load:</strong> <?php echo number_format($summaries[$device['id']]['cpu_load_avg'], 2); ?></li>
-                                                                <?php endif; ?>
-                                                                <?php if ($summaries[$device['id']]['memory_percent'] !== null): ?>
-                                                                    <li><strong>Memory:</strong> <?php echo number_format($summaries[$device['id']]['memory_percent'], 1); ?>%</li>
-                                                                <?php endif; ?>
-                                                                <?php if ($summaries[$device['id']]['server_hostname']): ?>
-                                                                    <li><strong>Hostname:</strong> <?php echo htmlspecialchars($summaries[$device['id']]['server_hostname']); ?></li>
-                                                                <?php endif; ?>
-                                                                <?php if ($summaries[$device['id']]['chillxand_version']): ?>
-                                                                    <li><strong>ChillXand:</strong> <?php echo htmlspecialchars($summaries[$device['id']]['chillxand_version']); ?></li>
-                                                                <?php endif; ?>
-                                                                <?php if ($summaries[$device['id']]['node_version']): ?>
-                                                                    <li><strong>Node Version:</strong> <?php echo htmlspecialchars($summaries[$device['id']]['node_version']); ?></li>
-                                                                <?php endif; ?>
-                                                            </ul>
-                                                        </div>
-                                                    </div>
-                                                    <?php if ($summaries[$device['id']]['last_update']): ?>
-                                                        <p><small>Health data last updated: <?php echo htmlspecialchars($summaries[$device['id']]['last_update']); ?></small></p>
-                                                    <?php endif; ?>
-                                                <?php endif; ?>
-                                            </div>
-                                            <h4>Recent Status Logs</h4>
-                                            <div id="log-container-<?php echo $device['id']; ?>">
-                                                <table class="status-log-table">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Status</th>
-                                                            <th>Check Time</th>
-                                                            <th>Response</th>
-                                                            <th>Health</th>
-                                                            <th>Atlas</th>
-                                                            <th>Services</th>
-                                                            <th>System</th>
-                                                            <th>Errors</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        <?php if (empty($device['logs'])): ?>
-                                                            <tr>
-                                                                <td colspan="9">No status logs for this device.</td>
-                                                            </tr>
-                                                        <?php else: ?>
-                                                            <?php foreach ($device['logs'] as $log): ?>
-                                                                <tr>
-                                                                    <td>
-                                                                        <span class="<?php echo $log['status'] === 'Online' ? 'log-status-online' : ($log['status'] === 'Offline' ? 'log-status-offline' : 'log-status-error'); ?>">
-                                                                            <?php echo htmlspecialchars($log['status']); ?>
-                                                                        </span>
-                                                                    </td>
-                                                                    <td><?php echo htmlspecialchars($log['check_time']); ?></td>
-                                                                    <td><?php echo $log['response_time'] ? round($log['response_time'] * 1000) . 'ms' : 'N/A'; ?></td>
-                                                                    <td>
-                                                                        <?php if ($log['health_status']): ?>
-                                                                            <span class="log-health-<?php echo $log['health_status']; ?>"><?php echo htmlspecialchars($log['health_status']); ?></span>
-                                                                        <?php else: ?>
-                                                                            N/A
-                                                                        <?php endif; ?>
-                                                                    </td>
-                                                                    <td>
-                                                                        <?php if (isset($log['atlas_registered'])): ?>
-                                                                            <span class="log-atlas-<?php echo $log['atlas_registered'] ? 'yes' : 'no'; ?>"><?php echo $log['atlas_registered'] ? 'Yes' : 'No'; ?></span>
-                                                                        <?php else: ?>
-                                                                            N/A
-                                                                        <?php endif; ?>
-                                                                    </td>
-                                                                    <td>
-                                                                        <?php 
-                                                                        $services = [];
-                                                                        if ($log['pod_status']) $services[] = 'Pod: <span class="log-service-' . $log['pod_status'] . '">' . htmlspecialchars($log['pod_status']) . '</span>';
-                                                                        if ($log['xandminer_status']) $services[] = 'XM: <span class="log-service-' . $log['xandminer_status'] . '">' . htmlspecialchars($log['xandminer_status']) . '</span>';
-                                                                        if ($log['xandminerd_status']) $services[] = 'XMD: <span class="log-service-' . $log['xandminerd_status'] . '">' . htmlspecialchars($log['xandminerd_status']) . '</span>';
-                                                                        echo $services ? implode('<br>', $services) : 'N/A';
-                                                                        ?>
-                                                                    </td>
-                                                                    <td>
-                                                                        <span class="log-metrics">
-                                                                        <?php 
-                                                                        $metrics = [];
-                                                                        if ($log['cpu_load_avg'] !== null) $metrics[] = 'CPU: ' . number_format($log['cpu_load_avg'], 2);
-                                                                        if ($log['memory_percent'] !== null) $metrics[] = 'Mem: ' . number_format($log['memory_percent'], 1) . '%';
-                                                                        if ($log['consecutive_failures'] > 0) $metrics[] = 'Fails: ' . $log['consecutive_failures'];
-                                                                        echo $metrics ? implode('<br>', $metrics) : 'N/A';
-                                                                        ?>
-                                                                        </span>
-                                                                    </td>
-                                                                    <td>
-                                                                        <?php if ($log['error_message']): ?>
-                                                                            <span class="log-error" title="<?php echo htmlspecialchars($log['error_message']); ?>">
-                                                                                <?php echo htmlspecialchars(strlen($log['error_message']) > 30 ? substr($log['error_message'], 0, 30) . '...' : $log['error_message']); ?>
-                                                                            </span>
-                                                                        <?php else: ?>
-                                                                            None
-                                                                        <?php endif; ?>
-                                                                    </td>
-                                                                </tr>
-                                                            <?php endforeach; ?>
-                                                        <?php endif; ?>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                            <?php if ($device['total_logs'] > $limit): ?>
-                                                <button type="button" class="action-btn-tiny action-more" id="more-items-<?php echo $device['id']; ?>" onclick="showMoreItems(<?php echo $device['id']; ?>)">More Items</button>
-                                            <?php endif; ?>
-                                            <div id="pagination-<?php echo $device['id']; ?>" class="pagination-buttons"></div>
-                                        </details>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
