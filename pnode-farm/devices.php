@@ -132,7 +132,9 @@ try {
         
         // Fetch initial device status logs (instead of user interactions)
         $sql = "
-            SELECT status, check_time, response_time, check_method, error_message, health_status
+            SELECT status, check_time, response_time, check_method, error_message, health_status,
+                   atlas_registered, pod_status, xandminer_status, xandminerd_status,
+                   cpu_load_avg, memory_percent, consecutive_failures
             FROM device_status_log 
             WHERE device_id = :device_id
             ORDER BY check_time DESC 
@@ -348,17 +350,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         .status-online-issues { background-color: #ffc107; color: #212529; }
         .last-check-col { font-size: 11px; color: #666; }
         .never-checked { font-style: italic; color: #999; }
-        .status-log-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .status-log-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; }
         .status-log-table th, .status-log-table td { 
             border: 1px solid #ddd; 
-            padding: 6px; 
+            padding: 4px; 
             text-align: left; 
-            font-size: 12px; 
+            font-size: 11px; 
+            vertical-align: top;
         }
-        .status-log-table th { background-color: #f8f9fa; }
+        .status-log-table th { background-color: #f8f9fa; font-weight: bold; }
         .log-status-online { color: #28a745; font-weight: bold; }
         .log-status-offline { color: #dc3545; font-weight: bold; }
         .log-status-error { color: #ffc107; font-weight: bold; }
+        .log-health-pass { color: #28a745; }
+        .log-health-fail { color: #dc3545; }
+        .log-atlas-yes { color: #28a745; }
+        .log-atlas-no { color: #dc3545; }
+        .log-service-active { color: #28a745; }
+        .log-service-inactive { color: #dc3545; }
+        .log-metrics { font-size: 10px; color: #666; }
+        .log-error { color: #dc3545; font-size: 10px; }
     </style>
     <script>
         function toggleEdit(deviceId) {
@@ -458,23 +469,52 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     return;
                 }
 
-                let html = '<table class="status-log-table"><thead><tr><th>Status</th><th>Check Time</th><th>Response Time</th><th>Health Status</th><th>Method</th></tr></thead><tbody>';
+                let html = '<table class="status-log-table"><thead><tr>';
+                html += '<th>Status</th><th>Check Time</th><th>Response</th><th>Health</th>';
+                html += '<th>Atlas</th><th>Services</th><th>System</th><th>Method</th><th>Errors</th>';
+                html += '</tr></thead><tbody>';
+                
                 if (data.logs.length === 0) {
-                    html += '<tr><td colspan="5">No status logs for this device.</td></tr>';
+                    html += '<tr><td colspan="9">No status logs for this device.</td></tr>';
                 } else {
                     data.logs.forEach(log => {
                         const statusClass = log.status === 'Online' ? 'log-status-online' : 
                                           log.status === 'Offline' ? 'log-status-offline' : 'log-status-error';
                         const responseTime = log.response_time ? Math.round(log.response_time * 1000) + 'ms' : 'N/A';
-                        const healthStatus = log.health_status || 'N/A';
+                        const healthStatus = log.health_status ? 
+                            `<span class="log-health-${log.health_status}">${log.health_status}</span>` : 'N/A';
+                        const atlasStatus = log.atlas_registered !== null ? 
+                            `<span class="log-atlas-${log.atlas_registered ? 'yes' : 'no'}">${log.atlas_registered ? 'Yes' : 'No'}</span>` : 'N/A';
+                        
+                        // Services column
+                        let services = [];
+                        if (log.pod_status) services.push(`Pod: <span class="log-service-${log.pod_status}">${log.pod_status}</span>`);
+                        if (log.xandminer_status) services.push(`XM: <span class="log-service-${log.xandminer_status}">${log.xandminer_status}</span>`);
+                        if (log.xandminerd_status) services.push(`XMD: <span class="log-service-${log.xandminerd_status}">${log.xandminerd_status}</span>`);
+                        const servicesText = services.length > 0 ? services.join('<br>') : 'N/A';
+                        
+                        // System metrics column
+                        let metrics = [];
+                        if (log.cpu_load_avg !== null) metrics.push(`CPU: ${parseFloat(log.cpu_load_avg).toFixed(2)}`);
+                        if (log.memory_percent !== null) metrics.push(`Mem: ${parseFloat(log.memory_percent).toFixed(1)}%`);
+                        if (log.consecutive_failures > 0) metrics.push(`Fails: ${log.consecutive_failures}`);
+                        const metricsText = metrics.length > 0 ? 
+                            `<span class="log-metrics">${metrics.join('<br>')}</span>` : 'N/A';
+                        
                         const method = log.check_method || 'N/A';
+                        const errorMsg = log.error_message ? 
+                            `<span class="log-error" title="${log.error_message}">${log.error_message.substring(0, 30)}${log.error_message.length > 30 ? '...' : ''}</span>` : 'None';
                         
                         html += `<tr>
                             <td><span class="${statusClass}">${log.status}</span></td>
                             <td>${log.check_time}</td>
                             <td>${responseTime}</td>
                             <td>${healthStatus}</td>
+                            <td>${atlasStatus}</td>
+                            <td>${servicesText}</td>
+                            <td>${metricsText}</td>
                             <td>${method}</td>
+                            <td>${errorMsg}</td>
                         </tr>`;
                     });
                 }
@@ -706,15 +746,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                                         <tr>
                                                             <th>Status</th>
                                                             <th>Check Time</th>
-                                                            <th>Response Time</th>
-                                                            <th>Health Status</th>
+                                                            <th>Response</th>
+                                                            <th>Health</th>
+                                                            <th>Atlas</th>
+                                                            <th>Services</th>
+                                                            <th>System</th>
                                                             <th>Method</th>
+                                                            <th>Errors</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
                                                         <?php if (empty($device['logs'])): ?>
                                                             <tr>
-                                                                <td colspan="5">No status logs for this device.</td>
+                                                                <td colspan="9">No status logs for this device.</td>
                                                             </tr>
                                                         <?php else: ?>
                                                             <?php foreach ($device['logs'] as $log): ?>
@@ -726,8 +770,50 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                                                     </td>
                                                                     <td><?php echo htmlspecialchars($log['check_time']); ?></td>
                                                                     <td><?php echo $log['response_time'] ? round($log['response_time'] * 1000) . 'ms' : 'N/A'; ?></td>
-                                                                    <td><?php echo htmlspecialchars($log['health_status'] ?? 'N/A'); ?></td>
+                                                                    <td>
+                                                                        <?php if ($log['health_status']): ?>
+                                                                            <span class="log-health-<?php echo $log['health_status']; ?>"><?php echo htmlspecialchars($log['health_status']); ?></span>
+                                                                        <?php else: ?>
+                                                                            N/A
+                                                                        <?php endif; ?>
+                                                                    </td>
+                                                                    <td>
+                                                                        <?php if (isset($log['atlas_registered'])): ?>
+                                                                            <span class="log-atlas-<?php echo $log['atlas_registered'] ? 'yes' : 'no'; ?>"><?php echo $log['atlas_registered'] ? 'Yes' : 'No'; ?></span>
+                                                                        <?php else: ?>
+                                                                            N/A
+                                                                        <?php endif; ?>
+                                                                    </td>
+                                                                    <td>
+                                                                        <?php 
+                                                                        $services = [];
+                                                                        if ($log['pod_status']) $services[] = 'Pod: <span class="log-service-' . $log['pod_status'] . '">' . htmlspecialchars($log['pod_status']) . '</span>';
+                                                                        if ($log['xandminer_status']) $services[] = 'XM: <span class="log-service-' . $log['xandminer_status'] . '">' . htmlspecialchars($log['xandminer_status']) . '</span>';
+                                                                        if ($log['xandminerd_status']) $services[] = 'XMD: <span class="log-service-' . $log['xandminerd_status'] . '">' . htmlspecialchars($log['xandminerd_status']) . '</span>';
+                                                                        echo $services ? implode('<br>', $services) : 'N/A';
+                                                                        ?>
+                                                                    </td>
+                                                                    <td>
+                                                                        <span class="log-metrics">
+                                                                        <?php 
+                                                                        $metrics = [];
+                                                                        if ($log['cpu_load_avg'] !== null) $metrics[] = 'CPU: ' . number_format($log['cpu_load_avg'], 2);
+                                                                        if ($log['memory_percent'] !== null) $metrics[] = 'Mem: ' . number_format($log['memory_percent'], 1) . '%';
+                                                                        if ($log['consecutive_failures'] > 0) $metrics[] = 'Fails: ' . $log['consecutive_failures'];
+                                                                        echo $metrics ? implode('<br>', $metrics) : 'N/A';
+                                                                        ?>
+                                                                        </span>
+                                                                    </td>
                                                                     <td><?php echo htmlspecialchars($log['check_method'] ?? 'N/A'); ?></td>
+                                                                    <td>
+                                                                        <?php if ($log['error_message']): ?>
+                                                                            <span class="log-error" title="<?php echo htmlspecialchars($log['error_message']); ?>">
+                                                                                <?php echo htmlspecialchars(strlen($log['error_message']) > 30 ? substr($log['error_message'], 0, 30) . '...' : $log['error_message']); ?>
+                                                                            </span>
+                                                                        <?php else: ?>
+                                                                            None
+                                                                        <?php endif; ?>
+                                                                    </td>
                                                                 </tr>
                                                             <?php endforeach; ?>
                                                         <?php endif; ?>
