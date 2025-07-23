@@ -504,6 +504,32 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             color: #333;
             font-weight: 500;
         }
+        .dashboard-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .summary-card {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            text-align: center;
+        }
+        .summary-card h4 {
+            margin: 0 0 10px 0;
+            color: #495057;
+        }
+        .summary-number {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+        .summary-online { color: #28a745; }
+        .summary-offline { color: #dc3545; }
+        .summary-total { color: #007bff; }
+        .summary-issues { color: #ffc107; }
     </style>
 </head>
 <body>
@@ -542,6 +568,39 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 <div style="margin-bottom: 20px;">
                     <button type="button" class="action-btn" id="add-device-btn" onclick="openAddModal()">Add New Device</button>
                 </div>
+
+                <!-- Device Summary Cards -->
+                <?php if (!empty($devices)): ?>
+                    <?php
+                    $total_devices = count($devices);
+                    $online_devices = count(array_filter($devices, function($d) { return $d['status'] === 'Online'; }));
+                    $offline_devices = count(array_filter($devices, function($d) { return $d['status'] === 'Offline'; }));
+                    $healthy_devices = count(array_filter($devices, function($d) { return $d['overall_status'] === 'Healthy'; }));
+                    $issues_devices = count(array_filter($devices, function($d) { return $d['overall_status'] === 'Online (Issues)'; }));
+                    ?>
+                    <div class="dashboard-summary">
+                        <div class="summary-card">
+                            <h4>Total Devices</h4>
+                            <div class="summary-number summary-total"><?php echo $total_devices; ?></div>
+                        </div>
+                        <div class="summary-card">
+                            <h4>Online</h4>
+                            <div class="summary-number summary-online"><?php echo $online_devices; ?></div>
+                        </div>
+                        <div class="summary-card">
+                            <h4>Healthy</h4>
+                            <div class="summary-number summary-online"><?php echo $healthy_devices; ?></div>
+                        </div>
+                        <div class="summary-card">
+                            <h4>With Issues</h4>
+                            <div class="summary-number summary-issues"><?php echo $issues_devices; ?></div>
+                        </div>
+                        <div class="summary-card">
+                            <h4>Offline</h4>
+                            <div class="summary-number summary-offline"><?php echo $offline_devices; ?></div>
+                        </div>
+                    </div>
+                <?php endif; ?>
 
                 <h3>Your Devices</h3>
                 <?php if (empty($devices)): ?>
