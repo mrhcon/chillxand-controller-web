@@ -1,4 +1,51 @@
-<?php
+fetch('device_update.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `action=update_pod&device_id=${deviceId}&device_ip=${encodeURIComponent(deviceIp)}`
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.text(); // Get as text first to debug
+            })
+            .then(responseText => {
+                console.log('Pod update raw response:', responseText);
+                
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                } catch (jsonError) {
+                    console.error('JSON parse error:', jsonError);
+                    console.error('Response was:', responseText);
+                    throw new Error(`Invalid JSON response: ${responseText.substring(0, 100)}...`);
+                }
+                
+                if (data.success) {
+                    btn.textContent = 'Update Started';
+                    console.log(`Pod update started for ${deviceName}`);
+                    
+                    // Start monitoring the update progress
+                    startUpdateMonitoring(deviceId, deviceIp, deviceName, 'pod', btn, originalText);
+                if (data.success) {
+                    btn.textContent = 'Update Started';
+                    console.log(`Pod update started for ${deviceName}`);
+                    
+                    // Start monitoring the update progress
+                    startUpdateMonitoring(deviceId, deviceIp, deviceName, 'pod', btn, originalText);
+                } else {
+                    alert(`Pod update failed for ${deviceName}.\n\nError: ${data.error || 'Unknown error'}`);
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                }
+            })
+            .catch(error => {
+                console.error('Pod update error:', error);
+                alert(`Pod update failed for ${deviceName}.\n\nNetwork error: ${error.message}`);
+                btn.disabled = false;
+                btn.textContent = originalText;
+            });
+                <?php
 // devices.php - Fixed version with working update buttons
 session_start();
 
@@ -1100,9 +1147,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
-                return response.json();
+                return response.text(); // Get as text first to debug
             })
-            .then(data => {
+            .then(responseText => {
+                console.log('Controller update raw response:', responseText);
+                
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                } catch (jsonError) {
+                    console.error('JSON parse error:', jsonError);
+                    console.error('Response was:', responseText);
+                    throw new Error(`Invalid JSON response: ${responseText.substring(0, 100)}...`);
+                }
+                
                 if (data.success) {
                     btn.textContent = 'Update Started';
                     console.log(`Controller update started for ${deviceName}`);
