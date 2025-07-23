@@ -209,7 +209,7 @@ try {
             <div class="menu-column">
                 <img src="images/logo.png">
                 <ul>
-                    <li><button class="menu-button" onclick="window.location.href='dashboard.php'">Dashboard</button></li>
+                    <li><button class="menu-button" onclick="window.location.href='updated_dashboard.php'">Dashboard</button></li>
                     <li><button class="menu-button" onclick="window.location.href='devices.php'">Manage Devices</button></li>
                     <li><button class="menu-button active" onclick="window.location.href='device_logs.php'">Device Logs</button></li>
                     <?php if ($_SESSION['admin']): ?>

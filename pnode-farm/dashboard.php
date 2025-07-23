@@ -54,6 +54,8 @@ try {
     
     // Add cached status and health data to each device
     $updated_devices = [];
+    $summaries = [];
+    
     foreach ($devices as $device) {
         $device_id = $device['id'];
         $cached_status = $cached_statuses[$device_id] ?? [
@@ -88,19 +90,8 @@ try {
         }
         $device['overall_status'] = $overall_status;
         
-        // Get last update time from user_interactions for display compatibility
-        $device_name_pattern = "%Device: {$device['pnode_name']}%";
-        $ip_pattern = "%IP: {$device['pnode_ip']}%";
-        $stmt2 = $pdo->prepare("
-            SELECT MAX(timestamp) as last_update
-            FROM user_interactions 
-            WHERE user_id = ? 
-            AND action IN ('device_status_check_success', 'device_status_check_failed')
-            AND (details LIKE ? OR details LIKE ?)
-        ");
-        $stmt2->execute([$_SESSION['user_id'], $device_name_pattern, $ip_pattern]);
-        $last_update = $stmt2->fetchColumn();
-        $device['last_update'] = $last_update ?: $device['last_check'];
+        // Parse health data from cached data
+        $summaries[$device_id] = parseCachedDeviceHealth($cached_status);
         
         $updated_devices[] = $device;
     }
@@ -133,6 +124,44 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
         .status-age { font-size: 10px; color: #666; }
         .status-stale { color: #ff6600; }
         .status-fresh { color: #006600; }
+        .never-checked { font-style: italic; color: #999; }
+        .last-check-col { font-size: 11px; color: #666; }
+        .version-info {
+            font-size: 10px; 
+            line-height: 1.3; 
+            color: #666;
+        }
+        .version-value {
+            font-family: 'Courier New', monospace;
+            color: #333;
+            font-weight: 500;
+        }
+        .dashboard-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .summary-card {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            text-align: center;
+        }
+        .summary-card h4 {
+            margin: 0 0 10px 0;
+            color: #495057;
+        }
+        .summary-number {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+        .summary-online { color: #28a745; }
+        .summary-offline { color: #dc3545; }
+        .summary-total { color: #007bff; }
+        .summary-issues { color: #ffc107; }
     </style>
 </head>
 <body>
@@ -169,16 +198,62 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
             <div class="info-panel">
                 <h2>Welcome, <?php echo htmlspecialchars($user['first_name'] . ' ' . $user['last_name']); ?>!</h2>
                 <p>Last Login: <?php echo $last_login_display; ?></p>
-                <h3>Your Details:</h3>
-                <p><strong>Username:</strong> <?php echo htmlspecialchars($user['username']); ?></p>
-                <p><strong>Email:</strong> <?php echo htmlspecialchars($user['email']); ?></p>
-                <p><strong>Country:</strong> <?php echo htmlspecialchars($user['country']); ?></p>
+                
+                <!-- User Details Section -->
+                <div style="margin-bottom: 30px;">
+                    <h3>Your Details:</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; background: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                        <div>
+                            <p><strong>Username:</strong> <?php echo htmlspecialchars($user['username']); ?></p>
+                            <p><strong>Email:</strong> <?php echo htmlspecialchars($user['email']); ?></p>
+                        </div>
+                        <div>
+                            <p><strong>Country:</strong> <?php echo htmlspecialchars($user['country']); ?></p>
+                            <p><strong>Account Type:</strong> <?php echo $user['admin'] ? 'Administrator' : 'Standard User'; ?></p>
+                        </div>
+                    </div>
+                </div>
+                
                 <?php if (isset($error)): ?>
                     <p class="error"><?php echo htmlspecialchars($error); ?></p>
                 <?php endif; ?>
-                <h3>Your Devices:</h3>
+                
+                <!-- Device Summary Cards -->
+                <?php if (!empty($devices)): ?>
+                    <?php
+                    $total_devices = count($devices);
+                    $online_devices = count(array_filter($devices, function($d) { return $d['status'] === 'Online'; }));
+                    $offline_devices = count(array_filter($devices, function($d) { return $d['status'] === 'Offline'; }));
+                    $healthy_devices = count(array_filter($devices, function($d) { return $d['overall_status'] === 'Healthy'; }));
+                    $issues_devices = count(array_filter($devices, function($d) { return $d['overall_status'] === 'Online (Issues)'; }));
+                    ?>
+                    <div class="dashboard-summary">
+                        <div class="summary-card">
+                            <h4>Total Devices</h4>
+                            <div class="summary-number summary-total"><?php echo $total_devices; ?></div>
+                        </div>
+                        <div class="summary-card">
+                            <h4>Online</h4>
+                            <div class="summary-number summary-online"><?php echo $online_devices; ?></div>
+                        </div>
+                        <div class="summary-card">
+                            <h4>Healthy</h4>
+                            <div class="summary-number summary-online"><?php echo $healthy_devices; ?></div>
+                        </div>
+                        <div class="summary-card">
+                            <h4>With Issues</h4>
+                            <div class="summary-number summary-issues"><?php echo $issues_devices; ?></div>
+                        </div>
+                        <div class="summary-card">
+                            <h4>Offline</h4>
+                            <div class="summary-number summary-offline"><?php echo $offline_devices; ?></div>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
+                <h3>Your Devices</h3>
                 <?php if (empty($devices)): ?>
-                    <p>No devices registered.</p>
+                    <p>No devices registered. <a href="devices.php">Add your first device</a> to get started!</p>
                 <?php else: ?>
                     <table class="device-table">
                         <thead>
@@ -188,6 +263,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                 <th>Registration Date</th>
                                 <th>Connectivity</th>
                                 <th>Health Status</th>
+                                <th>Versions</th>
                                 <th>Last Checked</th>
                             </tr>
                         </thead>
@@ -201,6 +277,13 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                         <span class="status-btn status-<?php echo strtolower(str_replace(' ', '-', $device['status'])); ?>">
                                             <?php echo htmlspecialchars($device['status']); ?>
                                         </span>
+                                        <div class="status-age <?php echo $device['status_stale'] ? 'status-stale' : 'status-fresh'; ?>">
+                                            <?php if ($device['last_check']): ?>
+                                                <?php echo $device['status_age'] ? round($device['status_age']) . 'm ago' : 'Just now'; ?>
+                                            <?php else: ?>
+                                                Never checked
+                                            <?php endif; ?>
+                                        </div>
                                         <?php if ($device['response_time']): ?>
                                             <div class="device-status-details">Response: <?php echo round($device['response_time'] * 1000, 1); ?>ms</div>
                                         <?php endif; ?>
@@ -211,15 +294,91 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                     <td>
                                         <?php if ($device['status'] === 'Not Initialized'): ?>
                                             <span class="status-btn status-not-initialized">Not Initialized</span>
-                                        <?php elseif ($device['health_status']): ?>
-                                            <span class="status-btn status-<?php echo $device['health_status'] == 'pass' ? 'online' : 'offline'; ?>">
-                                                <?php echo ucfirst($device['health_status']); ?>
-                                            </span>
                                         <?php else: ?>
-                                            <span class="status-btn status-not-initialized">Not Initialized</span>
+                                            <div style="font-size: 10px; line-height: 1.3;">
+                                                <div><strong>Health:</strong> 
+                                                    <span class="status-btn status-<?php echo $summaries[$device['id']]['health_status'] == 'pass' ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
+                                                        <?php echo ucfirst($summaries[$device['id']]['health_status'] ?? 'unknown'); ?>
+                                                    </span>
+                                                </div>
+                                                <div><strong>Atlas:</strong> 
+                                                    <span class="status-btn status-<?php echo $summaries[$device['id']]['atlas_registered'] ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
+                                                        <?php echo $summaries[$device['id']]['atlas_registered'] ? 'Yes' : 'No'; ?>
+                                                    </span>
+                                                </div>
+                                                <div><strong>Pod:</strong> 
+                                                    <span class="status-btn status-<?php echo $summaries[$device['id']]['pod_status'] == 'active' ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
+                                                        <?php echo ucfirst($summaries[$device['id']]['pod_status'] ?? 'unknown'); ?>
+                                                    </span>
+                                                </div>
+                                                <div><strong>XandMiner:</strong> 
+                                                    <span class="status-btn status-<?php echo $summaries[$device['id']]['xandminer_status'] == 'active' ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
+                                                        <?php echo ucfirst($summaries[$device['id']]['xandminer_status'] ?? 'unknown'); ?>
+                                                    </span>
+                                                </div>
+                                                <div><strong>XandMinerD:</strong> 
+                                                    <span class="status-btn status-<?php echo $summaries[$device['id']]['xandminerd_status'] == 'active' ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
+                                                        <?php echo ucfirst($summaries[$device['id']]['xandminerd_status'] ?? 'unknown'); ?>
+                                                    </span>
+                                                </div>
+                                            </div>
                                         <?php endif; ?>
                                     </td>
                                     <td>
+                                        <?php if ($device['status'] === 'Not Initialized'): ?>
+                                            <span class="status-btn status-not-initialized">Not Initialized</span>
+                                        <?php else: ?>
+                                            <div class="version-info">
+                                                <div><strong>Controller:</strong> 
+                                                    <span class="version-value">
+                                                        <?php echo htmlspecialchars($summaries[$device['id']]['chillxand_version'] ?? 'N/A'); ?>
+                                                    </span>
+                                                </div>
+                                                <div><strong>Node:</strong> 
+                                                    <span class="version-value">
+                                                        <?php echo htmlspecialchars($summaries[$device['id']]['node_version'] ?? 'N/A'); ?>
+                                                    </span>
+                                                </div>
+                                                <div><strong>Pod:</strong> 
+                                                    <span class="version-value">
+                                                        <?php 
+                                                        // Extract pod version from health data if available
+                                                        $pod_version = 'N/A';
+                                                        if (!empty($summaries[$device['id']]['pod_status']) && $summaries[$device['id']]['pod_status'] === 'active') {
+                                                            $pod_version = 'Active'; // Could be enhanced with actual version if available
+                                                        }
+                                                        echo htmlspecialchars($pod_version);
+                                                        ?>
+                                                    </span>
+                                                </div>
+                                                <div><strong>XandMiner:</strong> 
+                                                    <span class="version-value">
+                                                        <?php 
+                                                        // Extract XandMiner version from health data if available
+                                                        $xm_version = 'N/A';
+                                                        if (!empty($summaries[$device['id']]['xandminer_status']) && $summaries[$device['id']]['xandminer_status'] === 'active') {
+                                                            $xm_version = 'Active'; // Could be enhanced with actual version if available
+                                                        }
+                                                        echo htmlspecialchars($xm_version);
+                                                        ?>
+                                                    </span>
+                                                </div>
+                                                <div><strong>XandMinerD:</strong> 
+                                                    <span class="version-value">
+                                                        <?php 
+                                                        // Extract XandMinerD version from health data if available
+                                                        $xmd_version = 'N/A';
+                                                        if (!empty($summaries[$device['id']]['xandminerd_status']) && $summaries[$device['id']]['xandminerd_status'] === 'active') {
+                                                            $xmd_version = 'Active'; // Could be enhanced with actual version if available
+                                                        }
+                                                        echo htmlspecialchars($xmd_version);
+                                                        ?>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="last-check-col">
                                         <?php if ($device['last_check']): ?>
                                             <div class="<?php echo $device['status_stale'] ? 'status-stale' : 'status-fresh'; ?>">
                                                 <?php echo $device['status_age'] ? round($device['status_age']) . ' min ago' : 'Just now'; ?>
@@ -228,7 +387,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                                 <?php echo date('M j, H:i', strtotime($device['last_check'])); ?>
                                             </div>
                                         <?php else: ?>
-                                            <div style="font-style: italic; color: #999;">Never checked</div>
+                                            <div class="never-checked">Never checked</div>
                                         <?php endif; ?>
                                     </td>
                                 </tr>
@@ -238,13 +397,22 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                 <?php endif; ?>
                 
                 <div style="margin-top: 20px; padding: 10px; background-color: #e9ecef; border-radius: 4px;">
-                    <h4>Status Information</h4>
-                    <p><small>Device status is automatically checked every 2 minutes by a background process. 
-                    The "Last Checked" column shows when the device status was last verified. Health status indicates 
-                    whether the device's internal services are functioning properly.</small></p>
+                    <h4>Dashboard Information</h4>
+                    <p><small>This dashboard provides a read-only view of your devices and their current status. 
+                    Device health status is automatically updated every 2 minutes. To manage your devices, 
+                    add new ones, or trigger updates, visit the <a href="devices.php">Manage Devices</a> page. 
+                    Click on any device name to view detailed logs and status history.</small></p>
                 </div>
             </div>
         </div>
     </div>
+
+    <script>
+        // Auto-refresh dashboard every 60 seconds
+        setInterval(function() {
+            console.log('Auto-refreshing dashboard...');
+            window.location.reload();
+        }, 60000);
+    </script>
 </body>
 </html>
