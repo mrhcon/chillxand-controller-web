@@ -132,7 +132,7 @@ try {
         
         // Fetch initial device status logs (instead of user interactions)
         $sql = "
-            SELECT status, check_time, response_time, check_method, error_message, health_status,
+            SELECT status, check_time, response_time, error_message, health_status,
                    atlas_registered, pod_status, xandminer_status, xandminerd_status,
                    cpu_load_avg, memory_percent, consecutive_failures
             FROM device_status_log 
@@ -471,7 +471,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
 
                 let html = '<table class="status-log-table"><thead><tr>';
                 html += '<th>Status</th><th>Check Time</th><th>Response</th><th>Health</th>';
-                html += '<th>Atlas</th><th>Services</th><th>System</th><th>Method</th><th>Errors</th>';
+                html += '<th>Atlas</th><th>Services</th><th>System</th><th>Errors</th>';
                 html += '</tr></thead><tbody>';
                 
                 if (data.logs.length === 0) {
@@ -501,7 +501,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         const metricsText = metrics.length > 0 ? 
                             `<span class="log-metrics">${metrics.join('<br>')}</span>` : 'N/A';
                         
-                        const method = log.check_method || 'N/A';
                         const errorMsg = log.error_message ? 
                             `<span class="log-error" title="${log.error_message}">${log.error_message.substring(0, 30)}${log.error_message.length > 30 ? '...' : ''}</span>` : 'None';
                         
@@ -513,7 +512,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                             <td>${atlasStatus}</td>
                             <td>${servicesText}</td>
                             <td>${metricsText}</td>
-                            <td>${method}</td>
                             <td>${errorMsg}</td>
                         </tr>`;
                     });
@@ -751,7 +749,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                                             <th>Atlas</th>
                                                             <th>Services</th>
                                                             <th>System</th>
-                                                            <th>Method</th>
                                                             <th>Errors</th>
                                                         </tr>
                                                     </thead>
@@ -804,7 +801,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                                                         ?>
                                                                         </span>
                                                                     </td>
-                                                                    <td><?php echo htmlspecialchars($log['check_method'] ?? 'N/A'); ?></td>
                                                                     <td>
                                                                         <?php if ($log['error_message']): ?>
                                                                             <span class="log-error" title="<?php echo htmlspecialchars($log['error_message']); ?>">
@@ -854,7 +850,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     <h4>Background Health Monitoring</h4>
                     <p><small>Device health status is automatically checked every 2 minutes by a background process. 
                     Use the refresh button (↻) next to each device for immediate status updates. The status logs show 
-                    device connectivity checks, response times, health status, and check methods used.</small></p>
+                    device connectivity checks, response times, and health status.</small></p>
                 </div>
             </div>
         </div>
