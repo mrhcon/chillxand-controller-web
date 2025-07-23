@@ -82,7 +82,7 @@ try {
     $ch = curl_init();
     curl_setopt_array($ch, [
         CURLOPT_URL => $endpoint,
-        CURLOPT_CUSTOMREQUEST => 'POST',
+        CURLOPT_CUSTOMREQUEST => 'GET',
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_TIMEOUT => 20,
         CURLOPT_CONNECTTIMEOUT => 5,
