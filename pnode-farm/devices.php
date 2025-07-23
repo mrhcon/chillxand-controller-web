@@ -1,4 +1,266 @@
-</tr>
+<script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing button handlers...');
+            console.log('Button handlers initialized successfully');
+        });
+        
+        function refreshDeviceStatus(deviceId) {
+            const statusElement = document.querySelector('#status-' + deviceId);
+            const refreshBtn = document.querySelector('#refresh-' + deviceId);
+            const lastCheckElement = document.querySelector('#lastcheck-' + deviceId);
+            
+            refreshBtn.disabled = true;
+            refreshBtn.textContent = '⟳';
+            
+            fetch('manual_device_check.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'device_id=' + deviceId
+            })
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                } else {
+                    var overallStatus = 'Unknown';
+                    var statusClass = 'unknown';
+                    
+                    if (data.status === 'Online') {
+                        statusClass = 'online';
+                        overallStatus = data.status;
+                    } else if (data.status === 'Offline') {
+                        overallStatus = 'Offline';
+                        statusClass = 'offline';
+                    } else {
+                        overallStatus = data.status;
+                        statusClass = data.status.toLowerCase().replace(' ', '-');
+                    }
+                    
+                    var statusHtml = '<span class="status-btn status-' + statusClass + '">' + overallStatus + '</span>';
+                    statusHtml += '<button class="refresh-btn" id="refresh-' + deviceId + '" onclick="refreshDeviceStatus(' + deviceId + ')" title="Refresh status">↻</button>';
+                    statusHtml += '<div class="status-age status-fresh">Just checked</div>';
+                    statusHtml += '<div class="device-details">Response: ' + data.response_time + 'ms</div>';
+                    if (data.consecutive_failures > 0) {
+                        statusHtml += '<div class="device-details" style="color: #dc3545;">Failures: ' + data.consecutive_failures + '</div>';
+                    }
+                    statusElement.innerHTML = statusHtml;
+                    
+                    var healthElement = statusElement.parentNode.nextElementSibling;
+                    if (data.status === 'Online' && data.health_status) {
+                        var healthClass = data.health_status === 'pass' ? 'online' : 'offline';
+                        healthElement.innerHTML = '<span class="status-btn status-' + healthClass + '">' + data.health_status.charAt(0).toUpperCase() + data.health_status.slice(1) + '</span>';
+                    } else {
+                        healthElement.innerHTML = '<span class="status-btn status-not-initialized">Not Initialized</span>';
+                    }
+                    
+                    lastCheckElement.innerHTML = '<div class="status-fresh">Just now</div><div style="font-size: 10px;">' + data.timestamp + '</div>';
+                }
+                refreshBtn.disabled = false;
+                refreshBtn.textContent = '↻';
+            })
+            .catch(function(error) {
+                console.error('Error:', error);
+                alert('Failed to refresh status');
+                refreshBtn.disabled = false;
+                refreshBtn.textContent = '↻';
+            });
+        }
+        
+        function openAddModal() {
+            document.getElementById('add-pnode-name').value = '';
+            document.getElementById('add-pnode-ip').value = '';
+            document.getElementById('addModal').style.display = 'block';
+        }
+        
+        function closeAddModal() {
+            document.getElementById('addModal').style.display = 'none';
+        }
+        
+        function openEditModal(deviceId, currentName, currentIp) {
+            document.getElementById('edit-device-id').value = deviceId;
+            document.getElementById('edit-pnode-name').value = currentName;
+            document.getElementById('edit-pnode-ip').value = currentIp;
+            document.getElementById('editModal').style.display = 'block';
+        }
+        
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+        
+        function openDeleteModal(deviceId, deviceName) {
+            document.getElementById('delete-device-id').value = deviceId;
+            document.getElementById('delete-device-name').textContent = deviceName;
+            document.getElementById('deleteModal').style.display = 'block';
+        }
+        
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').style.display = 'none';
+        }
+
+        function openUpdateControllerModal(deviceId, deviceIp, deviceName) {
+            window.pendingControllerUpdate = { deviceId: deviceId, deviceIp: deviceIp, deviceName: deviceName };
+            document.getElementById('update-controller-device-name').textContent = deviceName;
+            document.getElementById('update-controller-device-ip').textContent = deviceIp;
+            document.getElementById('updateControllerModal').style.display = 'block';
+        }
+        
+        function closeUpdateControllerModal() {
+            document.getElementById('updateControllerModal').style.display = 'none';
+            window.pendingControllerUpdate = null;
+        }
+
+        function openUpdatePodModal(deviceId, deviceIp, deviceName) {
+            window.pendingPodUpdate = { deviceId: deviceId, deviceIp: deviceIp, deviceName: deviceName };
+            document.getElementById('update-pod-device-name').textContent = deviceName;
+            document.getElementById('update-pod-device-ip').textContent = deviceIp;
+            document.getElementById('updatePodModal').style.display = 'block';
+        }
+        
+        function closeUpdatePodModal() {
+            document.getElementById('updatePodModal').style.display = 'none';
+            window.pendingPodUpdate = null;
+        }
+        
+        function submitAdd() {
+            document.getElementById('addForm').submit();
+        }
+        
+        function submitEdit() {
+            document.getElementById('editForm').submit();
+        }
+        
+        function submitDelete() {
+            document.getElementById('deleteForm').submit();
+        }
+        
+        function confirmUpdateController() {
+            if (!window.pendingControllerUpdate) return;
+            
+            var updateData = window.pendingControllerUpdate;
+            var deviceId = updateData.deviceId;
+            var deviceIp = updateData.deviceIp;
+            var deviceName = updateData.deviceName;
+            
+            closeUpdateControllerModal();
+            
+            console.log('User confirmed controller update for:', deviceName);
+            
+            var btn = document.querySelector('button[onclick*="openUpdateControllerModal(' + deviceId + '"]');
+            if (!btn) {
+                console.error('Could not find controller button for device', deviceId);
+                alert('Error: Could not find update button');
+                return;
+            }
+            
+            var originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Updating...';
+            
+            console.log('Sending controller update request...');
+            
+            fetch('device_update.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'action=update_controller&device_id=' + deviceId + '&device_ip=' + encodeURIComponent(deviceIp)
+            })
+            .then(function(response) {
+                console.log('Controller update response received:', response.status);
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status + ': ' + response.statusText);
+                }
+                return response.json();
+            })
+            .then(function(data) {
+                console.log('Controller update response data:', data);
+                if (data.success) {
+                    alert('✅ Controller update initiated successfully for ' + deviceName + '!\n\nResponse: ' + (data.message || 'Update started'));
+                } else {
+                    alert('❌ Controller update failed for ' + deviceName + '!\n\nError: ' + (data.error || 'Unknown error'));
+                }
+                btn.disabled = false;
+                btn.textContent = originalText;
+            })
+            .catch(function(error) {
+                console.error('Controller update error:', error);
+                alert('❌ Controller update failed for ' + deviceName + '!\n\nNetwork error: ' + error.message);
+                btn.disabled = false;
+                btn.textContent = originalText;
+            });
+        }
+        
+        function confirmUpdatePod() {
+            if (!window.pendingPodUpdate) return;
+            
+            var updateData = window.pendingPodUpdate;
+            var deviceId = updateData.deviceId;
+            var deviceIp = updateData.deviceIp;
+            var deviceName = updateData.deviceName;
+            
+            closeUpdatePodModal();
+            
+            console.log('User confirmed pod update for:', deviceName);
+            
+            var btn = document.querySelector('button[onclick*="openUpdatePodModal(' + deviceId + '"]');
+            if (!btn) {
+                console.error('Could not find pod button for device', deviceId);
+                alert('Error: Could not find update button');
+                return;
+            }
+            
+            var originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Updating...';
+            
+            console.log('Sending pod update request...');
+            
+            fetch('device_update.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'action=update_pod&device_id=' + deviceId + '&device_ip=' + encodeURIComponent(deviceIp)
+            })
+            .then(function(response) {
+                console.log('Pod update response received:', response.status);
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status + ': ' + response.statusText);
+                }
+                return response.json();
+            })
+            .then(function(data) {
+                console.log('Pod update response data:', data);
+                if (data.success) {
+                    alert('✅ Pod update initiated successfully for ' + deviceName + '!\n\nResponse: ' + (data.message || 'Update started'));
+                } else {
+                    alert('❌ Pod update failed for ' + deviceName + '!\n\nError: ' + (data.error || 'Unknown error'));
+                }
+                btn.disabled = false;
+                btn.textContent = originalText;
+            })
+            .catch(function(error) {
+                console.error('Pod update error:', error);
+                alert('❌ Pod update failed for ' + deviceName + '!\n\nNetwork error: ' + error.message);
+                btn.disabled = false;
+                btn.textContent = originalText;
+            });
+        }
+        
+        window.onclick = function(event) {
+            var addModal = document.getElementById('addModal');
+            var editModal = document.getElementById('editModal');
+            var deleteModal = document.getElementById('deleteModal');
+            var updateControllerModal = document.getElementById('updateControllerModal');
+            var updatePodModal = document.getElementById('updatePodModal');
+            
+            if (event.target == addModal) {
+                closeAddModal();
+            }
+            if (event.target == editModal) {
+                closeEditModal();
+            }
+            if (event.target == deleteModal) {
+                closeDeleteModal();
+            }
+            if (event.target == updateControllerModal) {
+                closeUpdateController                                </tr>
                                 <tr>
                                     <td colspan="8">
                                         <details>
