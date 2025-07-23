@@ -370,17 +370,115 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         .log-service-inactive { color: #dc3545; }
         .log-metrics { font-size: 10px; color: #666; }
         .log-error { color: #dc3545; font-size: 10px; }
+        
+        /* Update buttons styling */
+        .update-btn-controller { 
+            background-color: #fd7e14; 
+            color: white; 
+            border: none; 
+            padding: 5px 10px; 
+            font-size: 10px; 
+            border-radius: 3px; 
+            cursor: pointer; 
+            margin-left: 5px;
+        }
+        .update-btn-controller:hover { background-color: #e66a00; }
+        .update-btn-pod { 
+            background-color: #6f42c1; 
+            color: white; 
+            border: none; 
+            padding: 5px 10px; 
+            font-size: 10px; 
+            border-radius: 3px; 
+            cursor: pointer; 
+            margin-left: 5px;
+        }
+        .update-btn-pod:hover { background-color: #59359a; }
+        
+        /* Modal styling */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            border-radius: 5px;
+            width: 400px;
+            max-width: 90%;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover {
+            color: black;
+        }
+        .modal-form-group {
+            margin-bottom: 15px;
+        }
+        .modal-form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .modal-form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            box-sizing: border-box;
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        .modal-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .modal-btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        .modal-btn-primary:hover {
+            background-color: #0056b3;
+        }
+        .modal-btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        .modal-btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .modal-btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+        .modal-btn-danger:hover {
+            background-color: #c82333;
+        }
     </style>
     <script>
-        function toggleEdit(deviceId) {
-            document.getElementById('view-' + deviceId).style.display = 'none';
-            document.getElementById('edit-' + deviceId).style.display = 'table-row';
-        }
-        function cancelEdit(deviceId) {
-            document.getElementById('view-' + deviceId).style.display = 'table-row';
-            document.getElementById('edit-' + deviceId).style.display = 'none';
-        }
-        
         function refreshDeviceStatus(deviceId) {
             const statusElement = document.querySelector(`#status-${deviceId}`);
             const refreshBtn = document.querySelector(`#refresh-${deviceId}`);
@@ -457,7 +555,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             const moreButton = document.getElementById('more-items-' + deviceId);
             const pagination = document.getElementById('pagination-' + deviceId);
 
-            fetch('get_device_logs.php', {
+            fetch('get_device_status_logs.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: `device_id=${deviceId}&page=${page}&limit=${limit}`
@@ -546,8 +644,112 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 logContainer.innerHTML = '<p>Error fetching status logs: ' + error.message + '</p>';
             });
         }
+        
         function showMoreItems(deviceId) {
             fetchStatusLogs(deviceId, 1, 10);
+        }
+        
+        // Modal functions
+        function openEditModal(deviceId, currentName, currentIp) {
+            document.getElementById('edit-device-id').value = deviceId;
+            document.getElementById('edit-pnode-name').value = currentName;
+            document.getElementById('edit-pnode-ip').value = currentIp;
+            document.getElementById('editModal').style.display = 'block';
+        }
+        
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+        
+        function openDeleteModal(deviceId, deviceName) {
+            document.getElementById('delete-device-id').value = deviceId;
+            document.getElementById('delete-device-name').textContent = deviceName;
+            document.getElementById('deleteModal').style.display = 'block';
+        }
+        
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').style.display = 'none';
+        }
+        
+        function submitEdit() {
+            document.getElementById('editForm').submit();
+        }
+        
+        function submitDelete() {
+            document.getElementById('deleteForm').submit();
+        }
+        
+        // Update functions
+        function updateController(deviceId, deviceIp, deviceName) {
+            if (confirm(`Are you sure you want to update the controller for ${deviceName}?\n\nThis will trigger an update process on the device at ${deviceIp}.`)) {
+                const btn = document.querySelector(`[onclick*="updateController(${deviceId}"]`);
+                const originalText = btn.textContent;
+                btn.disabled = true;
+                btn.textContent = 'Updating...';
+                
+                fetch('device_update.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `action=update_controller&device_id=${deviceId}&device_ip=${deviceIp}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(`Controller update initiated successfully for ${deviceName}.\n\nResponse: ${data.message || 'Update started'}`);
+                    } else {
+                        alert(`Controller update failed for ${deviceName}.\n\nError: ${data.error || 'Unknown error'}`);
+                    }
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                })
+                .catch(error => {
+                    alert(`Controller update failed for ${deviceName}.\n\nNetwork error: ${error.message}`);
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                });
+            }
+        }
+        
+        function updatePod(deviceId, deviceIp, deviceName) {
+            if (confirm(`Are you sure you want to update the pod for ${deviceName}?\n\nThis will trigger an update process on the device at ${deviceIp}.`)) {
+                const btn = document.querySelector(`[onclick*="updatePod(${deviceId}"]`);
+                const originalText = btn.textContent;
+                btn.disabled = true;
+                btn.textContent = 'Updating...';
+                
+                fetch('device_update.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `action=update_pod&device_id=${deviceId}&device_ip=${deviceIp}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(`Pod update initiated successfully for ${deviceName}.\n\nResponse: ${data.message || 'Update started'}`);
+                    } else {
+                        alert(`Pod update failed for ${deviceName}.\n\nError: ${data.error || 'Unknown error'}`);
+                    }
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                })
+                .catch(error => {
+                    alert(`Pod update failed for ${deviceName}.\n\nNetwork error: ${error.message}`);
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                });
+            }
+        }
+        
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            const editModal = document.getElementById('editModal');
+            const deleteModal = document.getElementById('deleteModal');
+            if (event.target == editModal) {
+                closeEditModal();
+            }
+            if (event.target == deleteModal) {
+                closeDeleteModal();
+            }
         }
     </script>
 </head>
@@ -616,7 +818,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         </thead>
                         <tbody>
                             <?php foreach ($devices as $device): ?>
-                                <tr id="view-<?php echo $device['id']; ?>">
+                                <tr>
                                     <td><a href="device_details.php?device_id=<?php echo $device['id']; ?>"><?php echo htmlspecialchars($device['pnode_name']); ?></a></td>
                                     <td><?php echo htmlspecialchars($device['pnode_ip']); ?></td>
                                     <td><?php echo htmlspecialchars($device['registration_date']); ?></td>
@@ -663,12 +865,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                         <?php endif; ?>
                                     </td>
                                     <td>
-                                        <button type="button" class="action-btn-tiny action-edit" onclick="toggleEdit(<?php echo $device['id']; ?>)">Edit</button>
-                                        <form method="POST" action="" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this device?');">
-                                            <input type="hidden" name="action" value="delete">
-                                            <input type="hidden" name="device_id" value="<?php echo $device['id']; ?>">
-                                            <button type="submit" class="action-btn-tiny action-delete">Delete</button>
-                                        </form>
+                                        <button type="button" class="action-btn-tiny action-edit" 
+                                                onclick="openEditModal(<?php echo $device['id']; ?>, '<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>', '<?php echo htmlspecialchars($device['pnode_ip']); ?>')">Edit</button>
+                                        <button type="button" class="action-btn-tiny action-delete" 
+                                                onclick="openDeleteModal(<?php echo $device['id']; ?>, '<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>')">Delete</button>
+                                        <br><br>
+                                        <button type="button" class="update-btn-controller" 
+                                                onclick="updateController(<?php echo $device['id']; ?>, '<?php echo htmlspecialchars($device['pnode_ip']); ?>', '<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>')">Update Controller</button>
+                                        <button type="button" class="update-btn-pod" 
+                                                onclick="updatePod(<?php echo $device['id']; ?>, '<?php echo htmlspecialchars($device['pnode_ip']); ?>', '<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>')">Update Pod</button>
                                     </td>
                                 </tr>
                                 <tr>
@@ -823,24 +1028,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                         </details>
                                     </td>
                                 </tr>
-                                <tr id="edit-<?php echo $device['id']; ?>" style="display:none;">
-                                    <td colspan="7">
-                                        <form method="POST" action="">
-                                            <input type="hidden" name="action" value="edit">
-                                            <input type="hidden" name="device_id" value="<?php echo $device['id']; ?>">
-                                            <div class="form-group inline">
-                                                <label for="pnode_name_<?php echo $device['id']; ?>">Node Name:</label>
-                                                <input type="text" id="pnode_name_<?php echo $device['id']; ?>" name="pnode_name" value="<?php echo htmlspecialchars($device['pnode_name']); ?>" required>
-                                            </div>
-                                            <div class="form-group inline">
-                                                <label for="pnode_ip_<?php echo $device['id']; ?>">IP Address:</label>
-                                                <input type="text" id="pnode_ip_<?php echo $device['id']; ?>" name="pnode_ip" value="<?php echo htmlspecialchars($device['pnode_ip']); ?>" required>
-                                            </div>
-                                            <button type="submit" class="action-btn-tiny action-save">Save</button>
-                                            <button type="button" class="action-btn-tiny action-cancel" onclick="cancelEdit(<?php echo $device['id']; ?>)">Cancel</button>
-                                        </form>
-                                    </td>
-                                </tr>
                             <?php endforeach; ?>
                         </tbody>
                     </table>
@@ -850,9 +1037,57 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     <h4>Background Health Monitoring</h4>
                     <p><small>Device health status is automatically checked every 2 minutes by a background process. 
                     Use the refresh button (↻) next to each device for immediate status updates. The status logs show 
-                    device connectivity checks, response times, and health status.</small></p>
+                    device connectivity checks, response times, and health status. Update buttons allow you to trigger 
+                    controller or pod updates on the remote devices.</small></p>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Edit Device Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Device</h3>
+                <span class="close" onclick="closeEditModal()">&times;</span>
+            </div>
+            <form id="editForm" method="POST" action="">
+                <input type="hidden" name="action" value="edit">
+                <input type="hidden" id="edit-device-id" name="device_id">
+                <div class="modal-form-group">
+                    <label for="edit-pnode-name">Node Name:</label>
+                    <input type="text" id="edit-pnode-name" name="pnode_name" required>
+                </div>
+                <div class="modal-form-group">
+                    <label for="edit-pnode-ip">IP Address:</label>
+                    <input type="text" id="edit-pnode-ip" name="pnode_ip" required>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="modal-btn modal-btn-secondary" onclick="closeEditModal()">Cancel</button>
+                    <button type="button" class="modal-btn modal-btn-primary" onclick="submitEdit()">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Device Modal -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Delete Device</h3>
+                <span class="close" onclick="closeDeleteModal()">&times;</span>
+            </div>
+            <form id="deleteForm" method="POST" action="">
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" id="delete-device-id" name="device_id">
+                <p><strong>Are you sure you want to delete the device "<span id="delete-device-name"></span>"?</strong></p>
+                <p style="color: #dc3545; font-weight: bold;">⚠️ This has dire results and cannot be undone!</p>
+                <p>This will permanently remove the device and all its associated data from the system.</p>
+                <div class="modal-buttons">
+                    <button type="button" class="modal-btn modal-btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+                    <button type="button" class="modal-btn modal-btn-danger" onclick="submitDelete()">Delete Device</button>
+                </div>
+            </form>
         </div>
     </div>
 </body>
