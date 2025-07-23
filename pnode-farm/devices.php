@@ -1,4 +1,93 @@
-<?php
+</tr>
+                                <tr>
+                                    <td colspan="8">
+                                        <details>
+                                            <summary>Status Logs</summary>
+                                            <div id="log-container-<?php echo $device['id']; ?>">
+                                                <table class="status-log-table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Status</th>
+                                                            <th>Check Time</th>
+                                                            <th>Response</th>
+                                                            <th>Health</th>
+                                                            <th>Atlas</th>
+                                                            <th>Services</th>
+                                                            <th>System</th>
+                                                            <th>Errors</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <?php if (empty($device['logs'])): ?>
+                                                            <tr>
+                                                                <td colspan="8">No status logs for this device.</td>
+                                                            </tr>
+                                                        <?php else: ?>
+                                                            <?php foreach ($device['logs'] as $log): ?>
+                                                                <tr>
+                                                                    <td>
+                                                                        <span class="<?php echo $log['status'] === 'Online' ? 'log-status-online' : ($log['status'] === 'Offline' ? 'log-status-offline' : 'log-status-error'); ?>">
+                                                                            <?php echo htmlspecialchars($log['status']); ?>
+                                                                        </span>
+                                                                    </td>
+                                                                    <td><?php echo htmlspecialchars($log['check_time']); ?></td>
+                                                                    <td><?php echo $log['response_time'] ? round($log['response_time'] * 1000) . 'ms' : 'N/A'; ?></td>
+                                                                    <td>
+                                                                        <?php if ($log['health_status']): ?>
+                                                                            <span class="log-health-<?php echo $log['health_status']; ?>"><?php echo htmlspecialchars($log['health_status']); ?></span>
+                                                                        <?php else: ?>
+                                                                            N/A
+                                                                        <?php endif; ?>
+                                                                    </td>
+                                                                    <td>
+                                                                        <?php if (isset($log['atlas_registered'])): ?>
+                                                                            <span class="log-atlas-<?php echo $log['atlas_registered'] ? 'yes' : 'no'; ?>"><?php echo $log['atlas_registered'] ? 'Yes' : 'No'; ?></span>
+                                                                        <?php else: ?>
+                                                                            N/A
+                                                                        <?php endif; ?>
+                                                                    </td>
+                                                                    <td>
+                                                                        <?php 
+                                                                        $services = [];
+                                                                        if ($log['pod_status']) $services[] = 'Pod: <span class="log-service-' . $log['pod_status'] . '">' . htmlspecialchars($log['pod_status']) . '</span>';
+                                                                        if ($log['xandminer_status']) $services[] = 'XM: <span class="log-service-' . $log['xandminer_status'] . '">' . htmlspecialchars($log['xandminer_status']) . '</span>';
+                                                                        if ($log['xandminerd_status']) $services[] = 'XMD: <span class="log-service-' . $log['xandminerd_status'] . '">' . htmlspecialchars($log['xandminerd_status']) . '</span>';
+                                                                        echo $services ? implode('<br>', $services) : 'N/A';
+                                                                        ?>
+                                                                    </td>
+                                                                    <td>
+                                                                        <span class="log-metrics">
+                                                                        <?php 
+                                                                        $metrics = [];
+                                                                        if ($log['cpu_load_avg'] !== null) $metrics[] = 'CPU: ' . number_format($log['cpu_load_avg'], 2);
+                                                                        if ($log['memory_percent'] !== null) $metrics[] = 'Mem: ' . number_format($log['memory_percent'], 1) . '%';
+                                                                        if ($log['consecutive_failures'] > 0) $metrics[] = 'Fails: ' . $log['consecutive_failures'];
+                                                                        echo $metrics ? implode('<br>', $metrics) : 'N/A';
+                                                                        ?>
+                                                                        </span>
+                                                                    </td>
+                                                                    <td>
+                                                                        <?php if ($log['error_message']): ?>
+                                                                            <span class="log-error" title="<?php echo htmlspecialchars($log['error_message']); ?>">
+                                                                                <?php echo htmlspecialchars(strlen($log['error_message']) > 30 ? substr($log['error_message'], 0, 30) . '...' : $log['error_message']); ?>
+                                                                            </span>
+                                                                        <?php else: ?>
+                                                                            None
+                                                                        <?php endif; ?>
+                                                                    </td>
+                                                                </tr>
+                                                            <?php endforeach; ?>
+                                                        <?php endif; ?>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            <?php if ($device['total_logs'] > $limit): ?>
+                                                <button type="button" class="action-btn-tiny action-more" id="more-items-<?php echo $device['id']; ?>" onclick="showMoreItems(<?php echo $device['id']; ?>)">More Items</button>
+                                            <?php endif; ?>
+                                            <div id="pagination-<?php echo $device['id']; ?>" class="pagination-buttons"></div>
+                                        </details>
+                                    </td>
+                                <?php
 // devices.php - Updated to show device status logs instead of user interactions
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -747,15 +836,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                                 onclick="openDeleteModal(<?php echo $device['id']; ?>, '<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>')">Delete</button>
                                         <br>
                                         <button type="button" class="update-btn-controller" 
-                                                data-device-id="<?php echo $device['id']; ?>"
-                                                data-device-ip="<?php echo htmlspecialchars($device['pnode_ip']); ?>"
-                                                data-device-name="<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>">
+                                                onclick="openUpdateControllerModal(<?php echo $device['id']; ?>, '<?php echo htmlspecialchars($device['pnode_ip']); ?>', '<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>')">
                                             Update Controller
                                         </button>
                                         <button type="button" class="update-btn-pod" 
-                                                data-device-id="<?php echo $device['id']; ?>"
-                                                data-device-ip="<?php echo htmlspecialchars($device['pnode_ip']); ?>"
-                                                data-device-name="<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>">
+                                                onclick="openUpdatePodModal(<?php echo $device['id']; ?>, '<?php echo htmlspecialchars($device['pnode_ip']); ?>', '<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>')">
                                             Update Pod
                                         </button>
                                     </td>
@@ -771,6 +856,46 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     Use the refresh button (↻) next to each device for immediate status updates. The status logs show 
                     device connectivity checks, response times, and health status. Update buttons allow you to trigger 
                     controller or pod updates on the remote devices.</small></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Update Controller Modal -->
+    <div id="updateControllerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>⚠️ Update Controller</h3>
+                <span class="close" onclick="closeUpdateControllerModal()">&times;</span>
+            </div>
+            <div>
+                <p><strong>Are you sure you want to update the controller for "<span id="update-controller-device-name"></span>"?</strong></p>
+                <p>Device IP: <strong><span id="update-controller-device-ip"></span></strong></p>
+                <p style="color: #dc3545; font-weight: bold;">⚠️ WARNING: The device may be temporarily unavailable during the update process!</p>
+                <p>This will trigger an update process on the remote device.</p>
+                <div class="modal-buttons">
+                    <button type="button" class="modal-btn modal-btn-secondary" onclick="closeUpdateControllerModal()">Cancel</button>
+                    <button type="button" class="modal-btn modal-btn-danger" onclick="confirmUpdateController()">Yes, Update Controller</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Update Pod Modal -->
+    <div id="updatePodModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>⚠️ Update Pod</h3>
+                <span class="close" onclick="closeUpdatePodModal()">&times;</span>
+            </div>
+            <div>
+                <p><strong>Are you sure you want to update the pod for "<span id="update-pod-device-name"></span>"?</strong></p>
+                <p>Device IP: <strong><span id="update-pod-device-ip"></span></strong></p>
+                <p style="color: #dc3545; font-weight: bold;">⚠️ WARNING: The device may be temporarily unavailable during the update process!</p>
+                <p>This will trigger an update process on the remote device.</p>
+                <div class="modal-buttons">
+                    <button type="button" class="modal-btn modal-btn-secondary" onclick="closeUpdatePodModal()">Cancel</button>
+                    <button type="button" class="modal-btn modal-btn-danger" onclick="confirmUpdatePod()">Yes, Update Pod</button>
                 </div>
             </div>
         </div>
@@ -944,7 +1069,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             });
         }
         
-        // Modal functions
+        // Modal functions - using exact same pattern as delete
         function openAddModal() {
             document.getElementById('add-pnode-name').value = '';
             document.getElementById('add-pnode-ip').value = '';
@@ -975,6 +1100,32 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         function closeDeleteModal() {
             document.getElementById('deleteModal').style.display = 'none';
         }
+
+        // Update controller modal - same pattern as delete
+        function openUpdateControllerModal(deviceId, deviceIp, deviceName) {
+            window.pendingControllerUpdate = { deviceId, deviceIp, deviceName };
+            document.getElementById('update-controller-device-name').textContent = deviceName;
+            document.getElementById('update-controller-device-ip').textContent = deviceIp;
+            document.getElementById('updateControllerModal').style.display = 'block';
+        }
+        
+        function closeUpdateControllerModal() {
+            document.getElementById('updateControllerModal').style.display = 'none';
+            window.pendingControllerUpdate = null;
+        }
+
+        // Update pod modal - same pattern as delete
+        function openUpdatePodModal(deviceId, deviceIp, deviceName) {
+            window.pendingPodUpdate = { deviceId, deviceIp, deviceName };
+            document.getElementById('update-pod-device-name').textContent = deviceName;
+            document.getElementById('update-pod-device-ip').textContent = deviceIp;
+            document.getElementById('updatePodModal').style.display = 'block';
+        }
+        
+        function closeUpdatePodModal() {
+            document.getElementById('updatePodModal').style.display = 'none';
+            window.pendingPodUpdate = null;
+        }
         
         function submitAdd() {
             document.getElementById('addForm').submit();
@@ -988,49 +1139,221 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             document.getElementById('deleteForm').submit();
         }
         
-        // Update functions - using same pattern as delete
+        // Confirm update functions - same pattern as delete
+        function confirmUpdateController() {
+            if (!window.pendingControllerUpdate) return;
+            
+            const { deviceId, deviceIp, deviceName } = window.pendingControllerUpdate;
+            closeUpdateControllerModal();
+            
+            console.log('User confirmed controller update for:', deviceName);
+            
+            const btn = document.querySelector(`button[onclick*="openUpdateControllerModal(${deviceId}"]`);
+            if (!btn) {
+                console.error('Could not find controller button for device', deviceId);
+                alert('Error: Could not find update button');
+                return;
+            }
+            
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Updating...';
+            
+            console.log('Sending controller update request...');
+            
+            fetch('device_update.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `action=update_controller&device_id=${deviceId}&device_ip=${encodeURIComponent(deviceIp)}`
+            })
+            .then(response => {
+                console.log('Controller update response received:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Controller update response data:', data);
+                if (data.success) {
+                    alert(`✅ Controller update initiated successfully for ${deviceName}!\n\nResponse: ${data.message || 'Update started'}`);
+                } else {
+                    alert(`❌ Controller update failed for ${deviceName}!\n\nError: ${data.error || 'Unknown error'}`);
+                }
+                btn.disabled = false;
+                btn.textContent = originalText;
+            })
+            .catch(error => {
+                console.error('Controller update error:', error);
+                alert(`❌ Controller update failed for ${deviceName}!\n\nNetwork error: ${error.message}`);
+                btn.disabled = false;
+                btn.textContent = originalText;
+            });
+        }
+        
+        function confirmUpdatePod() {
+            if (!window.pendingPodUpdate) return;
+            
+            const { deviceId, deviceIp, deviceName } = window.pendingPodUpdate;
+            closeUpdatePodModal();
+            
+            console.log('User confirmed pod update for:', deviceName);
+            
+            const btn = document.querySelector(`button[onclick*="openUpdatePodModal(${deviceId}"]`);
+            if (!btn) {
+                console.error('Could not find pod button for device', deviceId);
+                alert('Error: Could not find update button');
+                return;
+            }
+            
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Updating...';
+            
+            console.log('Sending pod update request...');
+            
+            fetch('device_update.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `action=update_pod&device_id=${deviceId}&device_ip=${encodeURIComponent(deviceIp)}`
+            })
+            .then(response => {
+                console.log('Pod update response received:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Pod update response data:', data);
+                if (data.success) {
+                    alert(`✅ Pod update initiated successfully for ${deviceName}!\n\nResponse: ${data.message || 'Update started'}`);
+                } else {
+                    alert(`❌ Pod update failed for ${deviceName}!\n\nError: ${data.error || 'Unknown error'}`);
+                }
+                btn.disabled = false;
+                btn.textContent = originalText;
+            })
+            .catch(error => {
+                console.error('Pod update error:', error);
+                alert(`❌ Pod update failed for ${deviceName}!\n\nNetwork error: ${error.message}`);
+                btn.disabled = false;
+                btn.textContent = originalText;
+            });
+        }
+        
+        // Update functions - force confirmation dialog to work
         function updateController(deviceId, deviceIp, deviceName) {
             console.log('updateController called with:', deviceId, deviceIp, deviceName);
             
-            if (confirm(`⚠️ UPDATE CONTROLLER CONFIRMATION\n\nAre you sure you want to update the controller for "${deviceName}"?\n\nDevice IP: ${deviceIp}\n\n⚠️ WARNING: The device may be temporarily unavailable during the update process.\n\nClick OK to proceed or Cancel to abort.`)) {
-                console.log('User confirmed controller update');
-                const btn = document.querySelector(`[data-device-id="${deviceId}"].update-btn-controller`);
-                if (!btn) {
-                    console.error('Could not find controller button for device', deviceId);
-                    alert('Error: Could not find update button');
-                    return;
+            // Force the browser's native confirm dialog to show
+            setTimeout(function() {
+                const confirmed = window.confirm(`⚠️ UPDATE CONTROLLER CONFIRMATION\n\nAre you sure you want to update the controller for "${deviceName}"?\n\nDevice IP: ${deviceIp}\n\n⚠️ WARNING: The device may be temporarily unavailable during the update process.\n\nClick OK to proceed or Cancel to abort.`);
+                
+                if (confirmed) {
+                    console.log('User confirmed controller update');
+                    const btn = document.querySelector(`[data-device-id="${deviceId}"].update-btn-controller`);
+                    if (!btn) {
+                        console.error('Could not find controller button for device', deviceId);
+                        alert('Error: Could not find update button');
+                        return;
+                    }
+                    
+                    const originalText = btn.textContent;
+                    btn.disabled = true;
+                    btn.textContent = 'Updating...';
+                    
+                    console.log('Sending controller update request...');
+                    
+                    fetch('device_update.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: `action=update_controller&device_id=${deviceId}&device_ip=${encodeURIComponent(deviceIp)}`
+                    })
+                    .then(response => {
+                        console.log('Controller update response received:', response.status);
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Controller update response data:', data);
+                        if (data.success) {
+                            alert(`✅ Controller update initiated successfully for ${deviceName}!\n\nResponse: ${data.message || 'Update started'}`);
+                        } else {
+                            alert(`❌ Controller update failed for ${deviceName}!\n\nError: ${data.error || 'Unknown error'}`);
+                        }
+                        btn.disabled = false;
+                        btn.textContent = originalText;
+                    })
+                    .catch(error => {
+                        console.error('Controller update error:', error);
+                        alert(`❌ Controller update failed for ${deviceName}!\n\nNetwork error: ${error.message}`);
+                        btn.disabled = false;
+                        btn.textContent = originalText;
+                    });
+                } else {
+                    console.log('User cancelled controller update');
                 }
+            }, 100); // Small delay to bypass extension interference
+        }
+        
+        function updatePod(deviceId, deviceIp, deviceName) {
+            console.log('updatePod called with:', deviceId, deviceIp, deviceName);
+            
+            // Force the browser's native confirm dialog to show
+            setTimeout(function() {
+                const confirmed = window.confirm(`⚠️ UPDATE POD CONFIRMATION\n\nAre you sure you want to update the pod for "${deviceName}"?\n\nDevice IP: ${deviceIp}\n\n⚠️ WARNING: The device may be temporarily unavailable during the update process.\n\nClick OK to proceed or Cancel to abort.`);
                 
-                const originalText = btn.textContent;
-                btn.disabled = true;
-                btn.textContent = 'Updating...';
-                
-                console.log('Sending controller update request...');
-                
-                fetch('device_update.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: `action=update_controller&device_id=${deviceId}&device_ip=${encodeURIComponent(deviceIp)}`
-                })
-                .then(response => {
-                    console.log('Controller update response received:', response.status);
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                if (confirmed) {
+                    console.log('User confirmed pod update');
+                    const btn = document.querySelector(`[data-device-id="${deviceId}"].update-btn-pod`);
+                    if (!btn) {
+                        console.error('Could not find pod button for device', deviceId);
+                        alert('Error: Could not find update button');
+                        return;
                     }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('Controller update response data:', data);
-                    if (data.success) {
-                        alert(`✅ Controller update initiated successfully for ${deviceName}!\n\nResponse: ${data.message || 'Update started'}`);
-                    } else {
-                        alert(`❌ Controller update failed for ${deviceName}!\n\nError: ${data.error || 'Unknown error'}`);
-                    }
-                    btn.disabled = false;
-                    btn.textContent = originalText;
-                })
-                .catch(error => {
-                    console.error('Controller update error:', error);
+                    
+                    const originalText = btn.textContent;
+                    btn.disabled = true;
+                    btn.textContent = 'Updating...';
+                    
+                    console.log('Sending pod update request...');
+                    
+                    fetch('device_update.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: `action=update_pod&device_id=${deviceId}&device_ip=${encodeURIComponent(deviceIp)}`
+                    })
+                    .then(response => {
+                        console.log('Pod update response received:', response.status);
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Pod update response data:', data);
+                        if (data.success) {
+                            alert(`✅ Pod update initiated successfully for ${deviceName}!\n\nResponse: ${data.message || 'Update started'}`);
+                        } else {
+                            alert(`❌ Pod update failed for ${deviceName}!\n\nError: ${data.error || 'Unknown error'}`);
+                        }
+                        btn.disabled = false;
+                        btn.textContent = originalText;
+                    })
+                    .catch(error => {
+                        console.error('Pod update error:', error);
+                        alert(`❌ Pod update failed for ${deviceName}!\n\nNetwork error: ${error.message}`);
+                        btn.disabled = false;
+                        btn.textContent = originalText;
+                    });
+                } else {
+                    console.log('User cancelled pod update');
+                }
+            }, 100); // Small delay to bypass extension interference
+        }('Controller update error:', error);
                     alert(`❌ Controller update failed for ${deviceName}!\n\nNetwork error: ${error.message}`);
                     btn.disabled = false;
                     btn.textContent = originalText;
