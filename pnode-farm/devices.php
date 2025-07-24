@@ -1283,7 +1283,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         function checkUpdateProgress(monitorKey, monitor) {
             monitor.attemptCount++;
             
-            const logUrl = `http://${monitor.deviceIp}:8080/update/${monitor.updateType}/log`;
+            const logUrl = `http://${monitor.deviceIp}:3001/update/${monitor.updateType}/log`;
             
             fetch(logUrl, {
                 method: 'GET',
