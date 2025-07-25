@@ -373,9 +373,8 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                 <div style="margin-top: 20px; padding: 10px; background-color: #e9ecef; border-radius: 4px;">
                     <h4>Dashboard Information</h4>
                     <p><small>This dashboard provides a read-only view of your devices and their current status. 
-                    Device health status is automatically updated every 30 seconds per device. To manage your devices, 
-                    add new ones, or trigger updates, visit the <a href="devices.php">Manage Devices</a> page. 
-                    Click on any device name to view detailed logs and status history.</small></p>
+                    Device health status is automatically updated every 30 seconds per device. Click on any device 
+                    name to view detailed logs and status history.</small></p>
                 </div>
             </div>
         </div>
