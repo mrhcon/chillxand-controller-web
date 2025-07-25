@@ -563,11 +563,11 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                 const lastCheckedCell = row.cells[6];
                 this.updateLastCheckedCell(lastCheckedCell, data);
                 
-                // Add visual feedback for update
-                row.style.backgroundColor = '#e8f5e8';
-                setTimeout(() => {
-                    row.style.backgroundColor = '';
-                }, 1000);
+                // // Add visual feedback for update
+                // row.style.backgroundColor = '#e8f5e8';
+                // setTimeout(() => {
+                //     row.style.backgroundColor = '';
+                // }, 1000);
             }
             
             updateConnectivityCell(cell, data) {
