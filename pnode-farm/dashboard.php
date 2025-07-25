@@ -532,13 +532,13 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                     const offlineCard = summaryCards[4].querySelector('.summary-number');
                     if (offlineCard) offlineCard.textContent = offlineDevices;
                     
-                    // Add visual feedback to summary cards
-                    summaryCards.forEach(card => {
-                        card.style.backgroundColor = '#e8f5e8';
-                        setTimeout(() => {
-                            card.style.backgroundColor = '#f8f9fa';
-                        }, 800);
-                    });
+                    // // Add visual feedback to summary cards
+                    // summaryCards.forEach(card => {
+                    //     card.style.backgroundColor = '#e8f5e8';
+                    //     setTimeout(() => {
+                    //         card.style.backgroundColor = '#f8f9fa';
+                    //     }, 800);
+                    // });
                     
                     console.log(`Summary updated: ${totalDevices} total, ${onlineDevices} online, ${healthyDevices} healthy, ${issuesDevices} issues, ${offlineDevices} offline`);
                 }
