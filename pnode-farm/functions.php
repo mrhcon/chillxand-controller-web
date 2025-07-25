@@ -391,4 +391,53 @@ function parseDeviceSummary($json_data, $ip) {
 
     return $result;
 }
+
+
+
+
+
+
+
+
+
+
+/**
+ * Generate a secure reset code
+ */
+function generateResetCode() {
+    return sprintf('%06d', mt_rand(100000, 999999));
+}
+
+/**
+ * Send reset code email
+ */
+function sendResetCodeEmail($email, $username, $reset_code) {
+    $subject = "Password Reset Code - ChillXand pNode Management Console";
+    $message = "Hello " . $username . ",\n\n";
+    $message .= "You have requested a password reset for your account.\n";
+    $message .= "Your reset code is: " . $reset_code . "\n\n";
+    $message .= "This code will expire in 1 hour.\n";
+    $message .= "If you did not request this reset, please ignore this email.\n\n";
+    $message .= "Best regards,\n";
+    $message .= "ChillXand pNode Management Team";
+    
+    $headers = "From: noreply@yoursite.com\r\n";
+    $headers .= "Reply-To: noreply@yoursite.com\r\n";
+    $headers .= "X-Mailer: PHP/" . phpversion();
+    
+    // Use mail() function - you may want to use a more robust email system
+    return mail($email, $subject, $message, $headers);
+}
+
+/**
+ * Alternative email function using SMTP (recommended for production)
+ * You'll need to install PHPMailer or similar library
+ */
+function sendResetCodeEmailSMTP($email, $username, $reset_code) {
+    // This is a placeholder - implement with PHPMailer or similar
+    // For now, return true to simulate email sending
+    error_log("Reset code for $username: $reset_code"); // Log to error log for testing
+    return true;
+}
+
 ?>

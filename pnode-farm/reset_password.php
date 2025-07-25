@@ -8,6 +8,7 @@ $username = $_POST['username'] ?? '';
 $current_password = $_POST['current_password'] ?? '';
 $reset_code = $_POST['reset_code'] ?? '';
 $new_password = $_POST['new_password'] ?? '';
+$confirm_password = $_POST['confirm_password'] ?? '';
 $error = '';
 $success = '';
 
@@ -24,6 +25,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $user = $stmt->fetch(PDO::FETCH_ASSOC);
                 
                 if ($user && password_verify($current_password, $user['password'])) {
+                    // Check for existing unused reset codes and mark them as used
+                    $stmt = $pdo->prepare("UPDATE password_resets SET used = TRUE WHERE user_id = ? AND used = FALSE");
+                    $stmt->execute([$user['id']]);
+                    
                     // Generate and store reset code
                     $reset_code = generateResetCode();
                     $expires_at = date('Y-m-d H:i:s', strtotime('+1 hour'));
@@ -35,6 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     if (sendResetCodeEmail($user['email'], $user['username'], $reset_code)) {
                         $success = "A reset code has been sent to your email.";
                         $step = 'reset';
+                        logInteraction($pdo, $user['id'], $user['username'], 'reset_code_sent', 'Reset code sent successfully');
                     } else {
                         $error = "Failed to send reset code email.";
                         logInteraction($pdo, $user['id'], $user['username'], 'reset_code_email_failed', 'Email sending failed');
@@ -50,8 +56,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     } elseif ($step === 'reset') {
         // Step 2: Validate reset code and update password
-        if (empty($username) || empty($reset_code) || empty($new_password)) {
+        if (empty($username) || empty($reset_code) || empty($new_password) || empty($confirm_password)) {
             $error = "Please fill in all fields.";
+        } elseif ($new_password !== $confirm_password) {
+            $error = "Passwords do not match.";
         } elseif (strlen($new_password) < 8) {
             $error = "New password must be at least 8 characters long.";
         } else {
@@ -67,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 
                 if ($reset) {
                     // Update password
-                    $hashed_password = password_hash($new_password, PASSWORD_BCRYPT);
+                    $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
                     $stmt = $pdo->prepare("UPDATE users SET password = ? WHERE id = ?");
                     $stmt->execute([$hashed_password, $reset['user_id']]);
                     
@@ -75,9 +83,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $stmt = $pdo->prepare("UPDATE password_resets SET used = TRUE WHERE username = ? AND reset_code = ?");
                     $stmt->execute([$username, $reset_code]);
                     
-                    $success = "Password reset successfully. <a href='login.php'>Login</a>";
+                    $success = "Password reset successfully. <a href='login.php'>Login with your new password</a>";
                     logInteraction($pdo, $reset['user_id'], $username, 'password_reset_success', 'Password reset completed');
-                    $step = 'request'; // Reset form to initial state
+                    $step = 'complete'; // Show completion message
                 } else {
                     $error = "Invalid or expired reset code.";
                     logInteraction($pdo, 0, $username, 'reset_code_invalid', 'Invalid or expired reset code');
@@ -113,6 +121,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <?php endif; ?>
         
         <?php if ($step === 'request'): ?>
+            <p>Enter your username and current password to receive a reset code via email.</p>
             <form method="POST" action="reset_password.php?step=request">
                 <div class="form-group">
                     <label for="username">Username:</label>
@@ -125,20 +134,30 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <button type="submit">Request Reset Code</button>
             </form>
         <?php elseif ($step === 'reset'): ?>
+            <p>Check your email for the reset code and enter it below with your new password.</p>
             <form method="POST" action="reset_password.php?step=reset">
                 <input type="hidden" name="username" value="<?php echo htmlspecialchars($username); ?>">
                 <div class="form-group">
-                    <label for="reset_code">Reset Code:</label>
-                    <input type="text" id="reset_code" name="reset_code" required>
+                    <label for="reset_code">Reset Code (from email):</label>
+                    <input type="text" id="reset_code" name="reset_code" maxlength="6" required>
                 </div>
                 <div class="form-group">
-                    <label for="new_password">New Password:</label>
-                    <input type="password" id="new_password" name="new_password" required>
+                    <label for="new_password">New Password (min 8 characters):</label>
+                    <input type="password" id="new_password" name="new_password" minlength="8" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirm_password">Confirm New Password:</label>
+                    <input type="password" id="confirm_password" name="confirm_password" minlength="8" required>
                 </div>
                 <button type="submit">Reset Password</button>
             </form>
         <?php endif; ?>
+        
         <p><a href="login.php">Back to Login</a></p>
+        
+        <?php if ($step === 'reset'): ?>
+            <p><a href="reset_password.php">Request a new reset code</a></p>
+        <?php endif; ?>
     </div>
 </body>
 </html>

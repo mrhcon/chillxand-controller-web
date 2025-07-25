@@ -48,28 +48,31 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             if ($stmt->fetchColumn() > 0) {
                 $error = "Username already exists.";
                 logInteraction($pdo, null, $username, 'register_failed', 'Duplicate username');
-            }
-            // Check for duplicate email
-            elseif ($pdo->prepare("SELECT COUNT(*) FROM users WHERE email = ?")->execute([$email]) && $stmt->fetchColumn() > 0) {
-                $error = "Email already exists.";
-                logInteraction($pdo, null, $username, 'register_failed', 'Duplicate email');
             } else {
-                // Create new user
-                $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-                $stmt = $pdo->prepare("INSERT INTO users (username, email, first_name, last_name, country, password) VALUES (?, ?, ?, ?, ?, ?)");
-                $stmt->execute([$username, $email, $first_name, $last_name, $country, $hashed_password]);
-                
-                // Get the new user's ID
-                $user_id = $pdo->lastInsertId();
-                
-                // Log successful registration
-                logInteraction($pdo, $user_id, $username, 'register_success');
-                
-                // Automatically log in the new user
-                $_SESSION['user_id'] = $user_id;
-                $_SESSION['username'] = $username;
-                header("Location: dashboard.php");
-                exit();
+                // Check for duplicate email - FIXED
+                $stmt = $pdo->prepare("SELECT COUNT(*) FROM users WHERE email = ?");
+                $stmt->execute([$email]);
+                if ($stmt->fetchColumn() > 0) {
+                    $error = "Email already exists.";
+                    logInteraction($pdo, null, $username, 'register_failed', 'Duplicate email');
+                } else {
+                    // Create new user
+                    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+                    $stmt = $pdo->prepare("INSERT INTO users (username, email, first_name, last_name, country, password) VALUES (?, ?, ?, ?, ?, ?)");
+                    $stmt->execute([$username, $email, $first_name, $last_name, $country, $hashed_password]);
+                    
+                    // Get the new user's ID
+                    $user_id = $pdo->lastInsertId();
+                    
+                    // Log successful registration
+                    logInteraction($pdo, $user_id, $username, 'register_success');
+                    
+                    // Automatically log in the new user
+                    $_SESSION['user_id'] = $user_id;
+                    $_SESSION['username'] = $username;
+                    header("Location: dashboard.php");
+                    exit();
+                }
             }
         } catch (PDOException $e) {
             $error = "Error: " . $e->getMessage();
