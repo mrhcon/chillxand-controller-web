@@ -302,19 +302,6 @@ function pingDevice($ip, $pdo, $user_id, $username, $port = 80, $timeout = 2) {
     return ['status' => $status];
 }
 
-function generateResetCode() {
-    return bin2hex(random_bytes(16));
-}
-
-function sendResetCodeEmail($email, $username, $reset_code) {
-    $subject = "Password Reset Code";
-    $message = "Dear $username,\n\nYour password reset code is: $reset_code\n\nThis code is valid for 1 hour. Please use it on the reset password page.\n\nBest regards,\nNetwork Management Console";
-    $headers = "From: no-reply@networkconsole.example.com\r\n";
-    
-    error_log("Email to $email: Subject: $subject, Message: $message");
-    return true;
-}
-
 function fetchDeviceSummary($ip) {
     error_log("DEPRECATED: fetchDeviceSummary called from UI - health data should come from device_status_log");
     
