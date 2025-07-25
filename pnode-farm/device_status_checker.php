@@ -166,12 +166,25 @@ function parseHealthData($health_data) {
         'error' => null
     ];
     
-    // Parse NEW versions structure
+    // Parse NEW versions structure - FIXED for nested structure
     if (isset($health_data['versions']) && is_array($health_data['versions'])) {
-        $result['chillxand_version'] = $health_data['versions']['chillxand_controller'] ?? null;
-        $result['pod_version'] = $health_data['versions']['pod'] ?? null;
-        $result['xandminer_version'] = $health_data['versions']['xandminer'] ?? null;
-        $result['xandminerd_version'] = $health_data['versions']['xandminerd'] ?? null;
+        // Check if versions are nested in data object
+        $versions_data = $health_data['versions']['data'] ?? $health_data['versions'];
+        
+        if (is_array($versions_data)) {
+            $result['chillxand_version'] = $versions_data['chillxand_controller'] ?? null;
+            $result['pod_version'] = $versions_data['pod'] ?? null;
+            $result['xandminer_version'] = $versions_data['xandminer'] ?? null;
+            $result['xandminerd_version'] = $versions_data['xandminerd'] ?? null;
+            
+            // Debug logging to see what versions we're getting
+            error_log("Versions found in data: " . json_encode($versions_data));
+            error_log("Parsed versions - Controller: {$result['chillxand_version']}, Pod: {$result['pod_version']}, XandMiner: {$result['xandminer_version']}, XandMinerD: {$result['xandminerd_version']}");
+        } else {
+            error_log("Versions data is not an array: " . json_encode($health_data['versions']));
+        }
+    } else {
+        error_log("No versions array found in health data");
     }
     
     // Fallback to old format if new versions not found
@@ -322,9 +335,13 @@ try {
                 $pod_version = $parsed_health['pod_version'];
                 $xandminer_version = $parsed_health['xandminer_version'];
                 $xandminerd_version = $parsed_health['xandminerd_version'];
+                
+                // Debug logging for versions
+                echo " versions: Controller={$chillxand_version}, Pod={$pod_version}, XM={$xandminer_version}, XMD={$xandminerd_version}";
             }
         }
         
+        // Insert new status log entry - REMOVE NODE_VERSION
         $stmt = $pdo->prepare("
             INSERT INTO device_status_log (
                 device_id, status, check_time, response_time, check_method, 
