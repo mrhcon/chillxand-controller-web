@@ -23,7 +23,18 @@
     
     // Also try atlas registration for server info as backup
     if ((!$server_ip || !$server_hostname) && isset($health_data['checks']['atlas:registration']['server_info'])) {
-        $server_info<?php
+        $atlas_server_info = $health_data['checks']['atlas:registration']['server_info'];
+        $server_ip = $server_ip ?: ($atlas_server_info['ip'] ?? null);
+        $server_hostname = $server_hostname ?: ($atlas_server_info['hostname'] ?? null);
+        error_log("RAW atlas server_info: " . json_encode($atlas_server_info));
+        error_log("Atlas server info: ip='{$server_ip}', hostname='{$server_hostname}'");
+    }
+    
+    // If still no server info, use the device IP as fallback
+    if (!$server_ip) {
+        $server_ip = $ip;
+        error_log("Using device IP as fallback: {$server_ip}");
+    }<?php
 // manual_device_check.php - Fixed version with proper column mapping
 session_start();
 header('Content-Type: application/json');
