@@ -123,7 +123,7 @@ function fetchDeviceHealth($ip, $timeout = 5) {
 }
 
 /**
- * Parse health data and extract key metrics
+ * Parse health data and extract key metrics - UPDATED for new versions format
  */
 function parseHealthData($health_data) {
     if (isset($health_data['error'])) {
@@ -141,6 +141,9 @@ function parseHealthData($health_data) {
             'server_hostname' => null,
             'chillxand_version' => null,
             'node_version' => null,
+            'pod_version' => null,
+            'xandminer_version' => null,
+            'xandminerd_version' => null,
             'error' => $health_data['error']
         ];
     }
@@ -148,7 +151,6 @@ function parseHealthData($health_data) {
     $result = [
         'health_status' => $health_data['status'] ?? 'unknown',
         'node_version' => $health_data['version'] ?? null,
-        'chillxand_version' => $health_data['chillxand_controller_version'] ?? null,
         'server_ip' => $health_data['server_info']['ip'] ?? null,
         'server_hostname' => $health_data['server_info']['hostname'] ?? null,
         'atlas_registered' => null,
@@ -159,8 +161,25 @@ function parseHealthData($health_data) {
         'memory_percent' => null,
         'memory_total_bytes' => null,
         'memory_used_bytes' => null,
+        'chillxand_version' => null,
+        'pod_version' => null,
+        'xandminer_version' => null,
+        'xandminerd_version' => null,
         'error' => null
     ];
+    
+    // Parse NEW versions structure
+    if (isset($health_data['versions']) && is_array($health_data['versions'])) {
+        $result['chillxand_version'] = $health_data['versions']['chillxand_controller'] ?? null;
+        $result['pod_version'] = $health_data['versions']['pod'] ?? null;
+        $result['xandminer_version'] = $health_data['versions']['xandminer'] ?? null;
+        $result['xandminerd_version'] = $health_data['versions']['xandminerd'] ?? null;
+    }
+    
+    // Fallback to old format if new versions not found
+    if (!$result['chillxand_version']) {
+        $result['chillxand_version'] = $health_data['chillxand_controller_version'] ?? null;
+    }
     
     // Parse checks array
     if (isset($health_data['checks']) && is_array($health_data['checks'])) {
@@ -275,6 +294,9 @@ try {
         $server_hostname = null;
         $chillxand_version = null;
         $node_version = null;
+        $pod_version = null;
+        $xandminer_version = null;
+        $xandminerd_version = null;
         $health_json = null;
         
         if ($status['status'] === 'Online') {
@@ -301,18 +323,22 @@ try {
                 $server_hostname = $parsed_health['server_hostname'];
                 $chillxand_version = $parsed_health['chillxand_version'];
                 $node_version = $parsed_health['node_version'];
+                $pod_version = $parsed_health['pod_version'];
+                $xandminer_version = $parsed_health['xandminer_version'];
+                $xandminerd_version = $parsed_health['xandminerd_version'];
             }
         }
         
-        // Insert new status log entry
+        // Insert new status log entry - ADD NEW VERSION COLUMNS
         $stmt = $pdo->prepare("
             INSERT INTO device_status_log (
                 device_id, status, check_time, response_time, check_method, 
                 error_message, consecutive_failures,
                 health_status, atlas_registered, pod_status, xandminer_status, xandminerd_status,
                 cpu_load_avg, memory_percent, memory_total_bytes, memory_used_bytes,
-                server_ip, server_hostname, chillxand_version, node_version, health_json
-            ) VALUES (?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                server_ip, server_hostname, chillxand_version, node_version, 
+                pod_version, xandminer_version, xandminerd_version, health_json
+            ) VALUES (?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
         
         $success = $stmt->execute([
@@ -335,6 +361,9 @@ try {
             $server_hostname,
             $chillxand_version,
             $node_version,
+            $pod_version,
+            $xandminer_version,
+            $xandminerd_version,
             $health_json
         ]);
         

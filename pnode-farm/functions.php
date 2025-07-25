@@ -1,5 +1,5 @@
 <?php
-// functions.php - Updated for health endpoint and single table approach
+// functions.php - Updated for health endpoint and single table approach with new version fields
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -18,7 +18,7 @@ function logInteraction($pdo, $user_id, $username, $action, $details = null) {
 }
 
 /**
- * Get latest device status from log (handles missing data gracefully)
+ * Get latest device status from log (handles missing data gracefully) - UPDATED for new version fields
  */
 function getLatestDeviceStatus($pdo, $device_id) {
     try {
@@ -28,7 +28,8 @@ function getLatestDeviceStatus($pdo, $device_id) {
                    dsl.xandminer_status, dsl.xandminerd_status, dsl.cpu_load_avg, 
                    dsl.memory_percent, dsl.memory_total_bytes, dsl.memory_used_bytes,
                    dsl.server_ip, dsl.server_hostname, dsl.chillxand_version, 
-                   dsl.node_version, dsl.error_message, dsl.check_method,
+                   dsl.node_version, dsl.pod_version, dsl.xandminer_version, dsl.xandminerd_version,
+                   dsl.error_message, dsl.check_method,
                    d.pnode_name, d.pnode_ip,
                    TIMESTAMPDIFF(MINUTE, dsl.check_time, NOW()) as age_minutes
             FROM device_status_log dsl
@@ -61,6 +62,9 @@ function getLatestDeviceStatus($pdo, $device_id) {
                 'server_hostname' => null,
                 'chillxand_version' => null,
                 'node_version' => null,
+                'pod_version' => null,
+                'xandminer_version' => null,
+                'xandminerd_version' => null,
                 'error_message' => 'Device has not been checked yet',
                 'consecutive_failures' => 0,
                 'check_method' => null
@@ -90,6 +94,9 @@ function getLatestDeviceStatus($pdo, $device_id) {
             'server_hostname' => $result['server_hostname'],
             'chillxand_version' => $result['chillxand_version'],
             'node_version' => $result['node_version'],
+            'pod_version' => $result['pod_version'],
+            'xandminer_version' => $result['xandminer_version'],
+            'xandminerd_version' => $result['xandminerd_version'],
             'error_message' => $result['error_message'],
             'check_method' => $result['check_method']
         ];
@@ -109,7 +116,7 @@ function getLatestDeviceStatus($pdo, $device_id) {
 }
 
 /**
- * Get latest statuses for multiple devices efficiently
+ * Get latest statuses for multiple devices efficiently - UPDATED for new version fields
  */
 function getLatestDeviceStatuses($pdo, $device_ids) {
     if (empty($device_ids)) {
@@ -125,6 +132,7 @@ function getLatestDeviceStatuses($pdo, $device_ids) {
                    health_status, atlas_registered, pod_status, xandminer_status, xandminerd_status,
                    cpu_load_avg, memory_percent, memory_total_bytes, memory_used_bytes,
                    server_ip, server_hostname, chillxand_version, node_version,
+                   pod_version, xandminer_version, xandminerd_version,
                    error_message, check_method,
                    TIMESTAMPDIFF(MINUTE, check_time, NOW()) as age_minutes
             FROM (
@@ -132,6 +140,7 @@ function getLatestDeviceStatuses($pdo, $device_ids) {
                        health_status, atlas_registered, pod_status, xandminer_status, xandminerd_status,
                        cpu_load_avg, memory_percent, memory_total_bytes, memory_used_bytes,
                        server_ip, server_hostname, chillxand_version, node_version,
+                       pod_version, xandminer_version, xandminerd_version,
                        error_message, check_method,
                        ROW_NUMBER() OVER (PARTITION BY device_id ORDER BY check_time DESC) as rn
                 FROM device_status_log
@@ -167,6 +176,9 @@ function getLatestDeviceStatuses($pdo, $device_ids) {
                 'server_hostname' => $result['server_hostname'],
                 'chillxand_version' => $result['chillxand_version'],
                 'node_version' => $result['node_version'],
+                'pod_version' => $result['pod_version'],
+                'xandminer_version' => $result['xandminer_version'],
+                'xandminerd_version' => $result['xandminerd_version'],
                 'error_message' => $result['error_message'],
                 'check_method' => $result['check_method']
             ];
@@ -195,7 +207,10 @@ function getLatestDeviceStatuses($pdo, $device_ids) {
                     'server_ip' => null,
                     'server_hostname' => null,
                     'chillxand_version' => null,
-                    'node_version' => null
+                    'node_version' => null,
+                    'pod_version' => null,
+                    'xandminer_version' => null,
+                    'xandminerd_version' => null
                 ];
             }
         }
@@ -209,7 +224,7 @@ function getLatestDeviceStatuses($pdo, $device_ids) {
 }
 
 /**
- * Parse cached device health data from the single table
+ * Parse cached device health data from the single table - UPDATED for new version fields
  */
 function parseCachedDeviceHealth($cached_status) {
     $result = [
@@ -227,6 +242,9 @@ function parseCachedDeviceHealth($cached_status) {
         'server_hostname' => $cached_status['server_hostname'],
         'chillxand_version' => $cached_status['chillxand_version'],
         'node_version' => $cached_status['node_version'],
+        'pod_version' => $cached_status['pod_version'],
+        'xandminer_version' => $cached_status['xandminer_version'],
+        'xandminerd_version' => $cached_status['xandminerd_version'],
         'last_update' => $cached_status['check_time']
     ];
 
