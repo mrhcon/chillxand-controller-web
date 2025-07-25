@@ -398,8 +398,6 @@ function generateResetCode() {
 /**
  * Send reset code email
  */
-<?php
-// Replace your sendResetCodeEmail function with this
 function sendResetCodeEmail($email, $username, $reset_code) {
     $to = $email;
     $subject = "Password Reset Code - ChillXand pNode Management Console";
@@ -445,6 +443,4 @@ function sendResetCodeEmail($email, $username, $reset_code) {
     
     return $result;
 }
-?>
-
 ?>
