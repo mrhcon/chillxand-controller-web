@@ -85,7 +85,6 @@ try {
     $server_ip = null;
     $server_hostname = null;
     $chillxand_version = null;
-    $node_version = null;
     $health_json = null;
     
     $debug[] = "Testing connectivity to $ip:3001";
@@ -140,10 +139,9 @@ try {
                 
                 // Parse health data
                 $health_status = $health_data['status'] ?? null;
-                $node_version = $health_data['version'] ?? null;
                 $chillxand_version = $health_data['chillxand_controller_version'] ?? null;
                 
-                $debug[] = "Basic health: status=$health_status, version=$node_version, chillxand=$chillxand_version";
+                $debug[] = "Basic health: status=$health_status, chillxand=$chillxand_version";
                 
                 if (isset($health_data['server_info'])) {
                     $server_ip = $health_data['server_info']['ip'] ?? null;
@@ -252,7 +250,7 @@ try {
             device_id, status, check_time, response_time, check_method, 
             error_message, health_status, atlas_registered, pod_status, xandminer_status, xandminerd_status,
             cpu_load_avg, memory_percent, memory_total_bytes, memory_used_bytes,
-            server_ip, server_hostname, chillxand_version, node_version, health_json, consecutive_failures
+            server_ip, server_hostname, chillxand_version, health_json, consecutive_failures
         ) VALUES (?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ");
     
@@ -260,7 +258,7 @@ try {
         $device_id, $status, $response_time, $check_method, $error_message,
         $health_status, $atlas_registered, $pod_status, $xandminer_status, $xandminerd_status,
         $cpu_load_avg, $memory_percent, $memory_total_bytes, $memory_used_bytes,
-        $server_ip, $server_hostname, $chillxand_version, $node_version, $health_json, $consecutive_failures
+        $server_ip, $server_hostname, $chillxand_version, $health_json, $consecutive_failures
     ]);
     
     if ($success) {

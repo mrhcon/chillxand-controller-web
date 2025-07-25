@@ -695,11 +695,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                                        <?php echo htmlspecialchars($summaries[$device['id']]['chillxand_version'] ?? 'N/A'); ?>
                                                    </span>
                                                </div>
-                                               <div><strong>Node:</strong> 
-                                                   <span class="version-value">
-                                                       <?php echo htmlspecialchars($summaries[$device['id']]['node_version'] ?? 'N/A'); ?>
-                                                   </span>
-                                               </div>
                                                <div><strong>Pod:</strong> 
                                                    <span class="version-value">
                                                        <?php 

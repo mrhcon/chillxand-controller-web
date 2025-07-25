@@ -325,7 +325,6 @@ try {
             }
         }
         
-        // Insert new status log entry - REMOVE NODE_VERSION
         $stmt = $pdo->prepare("
             INSERT INTO device_status_log (
                 device_id, status, check_time, response_time, check_method, 
