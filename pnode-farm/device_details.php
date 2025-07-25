@@ -392,16 +392,10 @@ try {
                                 <div>
                                     <h4>Version Information</h4>
                                     <ul style="list-style: none; padding: 0;">
-                                        <?php if ($current_status['chillxand_version']): ?>
-                                            <li><strong>ChillXand Controller:</strong> <span class="version-info"><?php echo htmlspecialchars($current_status['chillxand_version']); ?></span></li>
-                                        <?php endif; ?>
-                                        <?php if ($current_status['pod_version']): ?>
-                                            <li><strong>Pod:</strong> <span class="version-info"><?php echo htmlspecialchars($current_status['pod_version']); ?></span></li>
-                                        <?php endif; ?>
+                                        <li><strong>ChillXand Controller:</strong> <span class="version-info"><?php echo htmlspecialchars($current_status['chillxand_version'] ?? 'N/A'); ?></span></li>
+                                        <li><strong>Pod:</strong> <span class="version-info"><?php echo htmlspecialchars($current_status['pod_version'] ?? 'N/A'); ?></span></li>
                                         <li><strong>XandMiner:</strong> <span class="version-info"><?php echo htmlspecialchars($current_status['xandminer_version'] ?? 'N/A'); ?></span></li>
-                                        <?php if ($current_status['xandminerd_version']): ?>
-                                            <li><strong>XandMinerD:</strong> <span class="version-info"><?php echo htmlspecialchars($current_status['xandminerd_version']); ?></span></li>
-                                        <?php endif; ?>
+                                        <li><strong>XandMinerD:</strong> <span class="version-info"><?php echo htmlspecialchars($current_status['xandminerd_version'] ?? 'N/A'); ?></span></li>
                                     </ul>
                                 </div>
                             </div>
