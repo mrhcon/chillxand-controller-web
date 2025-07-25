@@ -1,4 +1,29 @@
-<?php
+// Extract version information from the versions section
+    if (isset($health_data['versions']['data']) && is_array($health_data['versions']['data'])) {
+        $versions = $health_data['versions']['data'];
+        $pod_version = $versions['pod'] ?? null;
+        $xandminer_version = $versions['xandminer'] ?? null;
+        $xandminerd_version = $versions['xandminerd'] ?? null;
+        error_log("RAW versions data: " . json_encode($versions));
+        error_log("Extracted versions: pod='{$pod_version}', xandminer='{$xandminer_version}', xandminerd='{$xandminerd_version}'");
+    } else {
+        error_log("No versions.data found or not an array");
+    }
+    
+    // Extract server info from connectivity check (this is where the real server info is)
+    if (isset($health_data['checks']['connectivity']['server_info'])) {
+        $server_info = $health_data['checks']['connectivity']['server_info'];
+        $server_ip = $server_info['ip'] ?? null;
+        $server_hostname = $server_info['hostname'] ?? null;
+        error_log("RAW connectivity server_info: " . json_encode($server_info));
+        error_log("Server info from connectivity: ip='{$server_ip}', hostname='{$server_hostname}'");
+    } else {
+        error_log("No connectivity.server_info found");
+    }
+    
+    // Also try atlas registration for server info as backup
+    if ((!$server_ip || !$server_hostname) && isset($health_data['checks']['atlas:registration']['server_info'])) {
+        $server_info<?php
 // manual_device_check.php - Fixed version with proper column mapping
 session_start();
 header('Content-Type: application/json');
@@ -254,6 +279,7 @@ try {
         error_log("Versions section found: " . json_encode($health_data['versions']));
         if (isset($health_data['versions']['data'])) {
             error_log("Versions data keys: " . implode(', ', array_keys($health_data['versions']['data'])));
+            error_log("Versions data content: " . json_encode($health_data['versions']['data']));
         }
     }
     
@@ -262,6 +288,9 @@ try {
         error_log("Checks section keys: " . implode(', ', array_keys($health_data['checks'])));
         if (isset($health_data['checks']['connectivity'])) {
             error_log("Connectivity check: " . json_encode($health_data['checks']['connectivity']));
+        }
+        if (isset($health_data['checks']['atlas:registration'])) {
+            error_log("Atlas registration check: " . json_encode($health_data['checks']['atlas:registration']));
         }
     }
     
