@@ -249,6 +249,22 @@ try {
     error_log("JSON decode result: SUCCESS");
     error_log("Health data keys: " . implode(', ', array_keys($health_data)));
     
+    // Debug the versions section specifically
+    if (isset($health_data['versions'])) {
+        error_log("Versions section found: " . json_encode($health_data['versions']));
+        if (isset($health_data['versions']['data'])) {
+            error_log("Versions data keys: " . implode(', ', array_keys($health_data['versions']['data'])));
+        }
+    }
+    
+    // Debug the checks section
+    if (isset($health_data['checks'])) {
+        error_log("Checks section keys: " . implode(', ', array_keys($health_data['checks'])));
+        if (isset($health_data['checks']['connectivity'])) {
+            error_log("Connectivity check: " . json_encode($health_data['checks']['connectivity']));
+        }
+    }
+    
     // Extract health information with safe defaults
     $status = 'Online';
     $health_status = $health_data['status'] ?? null;
@@ -325,12 +341,15 @@ try {
     }
     
     error_log("About to insert into database...");
-    error_log("Values: health_status={$health_status}, atlas={$atlas_registered}, pod={$pod_status}, xandminer={$xandminer_status}, xandminerd={$xandminerd_status}");
+    error_log("Final values: health_status={$health_status}, atlas={$atlas_registered}, pod={$pod_status}, xandminer={$xandminer_status}, xandminerd={$xandminerd_status}");
+    error_log("Server info: ip={$server_ip}, hostname={$server_hostname}");
+    error_log("Versions: chillxand={$chillxand_version}, pod={$pod_version}, xandminer={$xandminer_version}, xandminerd={$xandminerd_version}");
+    error_log("Memory: total_bytes={$memory_total_bytes}, used_bytes={$memory_used_bytes}, percent={$memory_percent}");
     
     // Extract additional data for the full table structure
     $memory_total_bytes = null;
     $memory_used_bytes = null;
-    $server_ip = $ip; // Use the device IP as fallback
+    $server_ip = null; // Don't use fallback initially
     $server_hostname = null;
     $pod_version = null;
     $xandminer_version = null;
@@ -340,7 +359,7 @@ try {
     if (isset($health_data['versions']['data']) && is_array($health_data['versions']['data'])) {
         $versions = $health_data['versions']['data'];
         $pod_version = $versions['pod'] ?? null;
-        $xandminer_version = $versions['xandminer'] ?? null;  // This might not exist in response
+        $xandminer_version = $versions['xandminer'] ?? null;
         $xandminerd_version = $versions['xandminerd'] ?? null;
         error_log("Extracted versions: pod={$pod_version}, xandminer={$xandminer_version}, xandminerd={$xandminerd_version}");
     }
@@ -348,17 +367,23 @@ try {
     // Extract server info from connectivity check (this is where the real server info is)
     if (isset($health_data['checks']['connectivity']['server_info'])) {
         $server_info = $health_data['checks']['connectivity']['server_info'];
-        $server_ip = $server_info['ip'] ?? $ip;
+        $server_ip = $server_info['ip'] ?? null;
         $server_hostname = $server_info['hostname'] ?? null;
-        error_log("Server info: ip={$server_ip}, hostname={$server_hostname}");
+        error_log("Server info from connectivity: ip={$server_ip}, hostname={$server_hostname}");
     }
     
     // Also try atlas registration for server info as backup
-    if (!$server_hostname && isset($health_data['checks']['atlas:registration']['server_info'])) {
+    if ((!$server_ip || !$server_hostname) && isset($health_data['checks']['atlas:registration']['server_info'])) {
         $server_info = $health_data['checks']['atlas:registration']['server_info'];
-        $server_ip = $server_info['ip'] ?? $server_ip;
-        $server_hostname = $server_info['hostname'] ?? $server_hostname;
+        $server_ip = $server_ip ?: ($server_info['ip'] ?? null);
+        $server_hostname = $server_hostname ?: ($server_info['hostname'] ?? null);
         error_log("Atlas server info: ip={$server_ip}, hostname={$server_hostname}");
+    }
+    
+    // If still no server info, use the device IP as fallback
+    if (!$server_ip) {
+        $server_ip = $ip;
+        error_log("Using device IP as fallback: {$server_ip}");
     }
     
     // Insert the complete record with ALL table columns
