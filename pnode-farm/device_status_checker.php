@@ -140,7 +140,6 @@ function parseHealthData($health_data) {
             'server_ip' => null,
             'server_hostname' => null,
             'chillxand_version' => null,
-            'node_version' => null,
             'pod_version' => null,
             'xandminer_version' => null,
             'xandminerd_version' => null,
@@ -150,7 +149,6 @@ function parseHealthData($health_data) {
     
     $result = [
         'health_status' => $health_data['status'] ?? 'unknown',
-        'node_version' => $health_data['version'] ?? null,
         'server_ip' => $health_data['server_info']['ip'] ?? null,
         'server_hostname' => $health_data['server_info']['hostname'] ?? null,
         'atlas_registered' => null,
@@ -293,7 +291,6 @@ try {
         $server_ip = null;
         $server_hostname = null;
         $chillxand_version = null;
-        $node_version = null;
         $pod_version = null;
         $xandminer_version = null;
         $xandminerd_version = null;
@@ -322,23 +319,22 @@ try {
                 $server_ip = $parsed_health['server_ip'];
                 $server_hostname = $parsed_health['server_hostname'];
                 $chillxand_version = $parsed_health['chillxand_version'];
-                $node_version = $parsed_health['node_version'];
                 $pod_version = $parsed_health['pod_version'];
                 $xandminer_version = $parsed_health['xandminer_version'];
                 $xandminerd_version = $parsed_health['xandminerd_version'];
             }
         }
         
-        // Insert new status log entry - ADD NEW VERSION COLUMNS
+        // Insert new status log entry - REMOVE NODE_VERSION
         $stmt = $pdo->prepare("
             INSERT INTO device_status_log (
                 device_id, status, check_time, response_time, check_method, 
                 error_message, consecutive_failures,
                 health_status, atlas_registered, pod_status, xandminer_status, xandminerd_status,
                 cpu_load_avg, memory_percent, memory_total_bytes, memory_used_bytes,
-                server_ip, server_hostname, chillxand_version, node_version, 
+                server_ip, server_hostname, chillxand_version, 
                 pod_version, xandminer_version, xandminerd_version, health_json
-            ) VALUES (?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
         
         $success = $stmt->execute([
@@ -360,7 +356,6 @@ try {
             $server_ip,
             $server_hostname,
             $chillxand_version,
-            $node_version,
             $pod_version,
             $xandminer_version,
             $xandminerd_version,

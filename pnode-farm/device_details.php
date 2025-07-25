@@ -123,13 +123,13 @@ try {
     error_log("PDOException in device status log count: " . $e->getMessage());
 }
 
-// Fetch paginated device status logs - ADD NEW VERSION COLUMNS
+// Fetch paginated device status logs - REMOVE NODE_VERSION
 try {
     $sql = "
         SELECT status, check_time, response_time, check_method, error_message, consecutive_failures,
                health_status, atlas_registered, pod_status, xandminer_status, xandminerd_status,
                cpu_load_avg, memory_percent, memory_total_bytes, memory_used_bytes,
-               server_ip, server_hostname, chillxand_version, node_version,
+               server_ip, server_hostname, chillxand_version,
                pod_version, xandminer_version, xandminerd_version
         FROM device_status_log 
         WHERE device_id = :device_id
@@ -394,9 +394,6 @@ try {
                                     <ul style="list-style: none; padding: 0;">
                                         <?php if ($current_status['chillxand_version']): ?>
                                             <li><strong>ChillXand Controller:</strong> <span class="version-info"><?php echo htmlspecialchars($current_status['chillxand_version']); ?></span></li>
-                                        <?php endif; ?>
-                                        <?php if ($current_status['node_version']): ?>
-                                            <li><strong>Node:</strong> <span class="version-info"><?php echo htmlspecialchars($current_status['node_version']); ?></span></li>
                                         <?php endif; ?>
                                         <?php if ($current_status['pod_version']): ?>
                                             <li><strong>Pod:</strong> <span class="version-info"><?php echo htmlspecialchars($current_status['pod_version']); ?></span></li>

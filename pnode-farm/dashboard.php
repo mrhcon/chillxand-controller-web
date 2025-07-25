@@ -334,11 +334,6 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                                         <?php echo htmlspecialchars($summaries[$device['id']]['chillxand_version'] ?? 'N/A'); ?>
                                                     </span>
                                                 </div>
-                                                <div><strong>Node:</strong> 
-                                                    <span class="version-value">
-                                                        <?php echo htmlspecialchars($summaries[$device['id']]['node_version'] ?? 'N/A'); ?>
-                                                    </span>
-                                                </div>
                                                 <div><strong>Pod:</strong> 
                                                     <span class="version-value">
                                                         <?php 
