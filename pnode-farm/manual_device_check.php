@@ -260,7 +260,7 @@ try {
     $cpu_load_avg = null;
     $memory_percent = null;
     
-    // Extract ChillXand version
+    // Extract ChillXand version (try multiple paths)
     if (isset($health_data['chillxand_controller_version'])) {
         $chillxand_version = $health_data['chillxand_controller_version'];
     } elseif (isset($health_data['versions']['data']['chillxand_controller'])) {
@@ -330,30 +330,35 @@ try {
     // Extract additional data for the full table structure
     $memory_total_bytes = null;
     $memory_used_bytes = null;
-    $server_ip = $ip; // Use the device IP
+    $server_ip = $ip; // Use the device IP as fallback
     $server_hostname = null;
     $pod_version = null;
     $xandminer_version = null;
     $xandminerd_version = null;
     
-    // Extract version information
-    if (isset($health_data['versions']['data'])) {
+    // Extract version information from the versions section
+    if (isset($health_data['versions']['data']) && is_array($health_data['versions']['data'])) {
         $versions = $health_data['versions']['data'];
         $pod_version = $versions['pod'] ?? null;
-        $xandminer_version = $versions['xandminer'] ?? null;
+        $xandminer_version = $versions['xandminer'] ?? null;  // This might not exist in response
         $xandminerd_version = $versions['xandminerd'] ?? null;
+        error_log("Extracted versions: pod={$pod_version}, xandminer={$xandminer_version}, xandminerd={$xandminerd_version}");
     }
     
-    // Extract memory bytes if available
-    if (isset($health_data['checks']['system:memory'])) {
-        $memory_check = $health_data['checks']['system:memory'];
-        $memory_total_bytes = $memory_check['total'] ?? null;
-        $memory_used_bytes = $memory_check['used'] ?? null;
+    // Extract server info from connectivity check (this is where the real server info is)
+    if (isset($health_data['checks']['connectivity']['server_info'])) {
+        $server_info = $health_data['checks']['connectivity']['server_info'];
+        $server_ip = $server_info['ip'] ?? $ip;
+        $server_hostname = $server_info['hostname'] ?? null;
+        error_log("Server info: ip={$server_ip}, hostname={$server_hostname}");
     }
     
-    // Extract server info if available  
-    if (isset($health_data['server_info'])) {
-        $server_hostname = $health_data['server_info']['hostname'] ?? null;
+    // Also try atlas registration for server info as backup
+    if (!$server_hostname && isset($health_data['checks']['atlas:registration']['server_info'])) {
+        $server_info = $health_data['checks']['atlas:registration']['server_info'];
+        $server_ip = $server_info['ip'] ?? $server_ip;
+        $server_hostname = $server_info['hostname'] ?? $server_hostname;
+        error_log("Atlas server info: ip={$server_ip}, hostname={$server_hostname}");
     }
     
     // Insert the complete record with ALL table columns
