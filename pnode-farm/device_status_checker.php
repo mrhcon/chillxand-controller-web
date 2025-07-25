@@ -123,9 +123,9 @@ function fetchDeviceHealth($ip, $timeout = 5) {
 }
 
 /**
- * Parse health data and extract key metrics - UPDATED for new versions format
+ * Parse health data and extract key metrics - FIXED for correct extraction
  */
-function parseHealthData($health_data) {
+function parseHealthData($health_data, $device_ip) {
     if (isset($health_data['error'])) {
         return [
             'health_status' => 'unknown',
@@ -137,7 +137,7 @@ function parseHealthData($health_data) {
             'memory_percent' => null,
             'memory_total_bytes' => null,
             'memory_used_bytes' => null,
-            'server_ip' => null,
+            'server_ip' => $device_ip,
             'server_hostname' => null,
             'chillxand_version' => null,
             'pod_version' => null,
@@ -149,8 +149,8 @@ function parseHealthData($health_data) {
     
     $result = [
         'health_status' => $health_data['status'] ?? 'unknown',
-        'server_ip' => $health_data['server_info']['ip'] ?? null,
-        'server_hostname' => $health_data['server_info']['hostname'] ?? null,
+        'server_ip' => $device_ip, // Fallback to device IP
+        'server_hostname' => null,
         'atlas_registered' => null,
         'pod_status' => 'unknown',
         'xandminer_status' => 'unknown', 
@@ -166,30 +166,23 @@ function parseHealthData($health_data) {
         'error' => null
     ];
     
-    // Parse NEW versions structure - FIXED for nested structure
-    if (isset($health_data['versions']) && is_array($health_data['versions'])) {
-        // Check if versions are nested in data object
-        $versions_data = $health_data['versions']['data'] ?? $health_data['versions'];
-        
-        if (is_array($versions_data)) {
-            $result['chillxand_version'] = $versions_data['chillxand_controller'] ?? null;
-            $result['pod_version'] = $versions_data['pod'] ?? null;
-            $result['xandminer_version'] = $versions_data['xandminer'] ?? null;
-            $result['xandminerd_version'] = $versions_data['xandminerd'] ?? null;
-            
-            // Debug logging to see what versions we're getting
-            error_log("Versions found in data: " . json_encode($versions_data));
-            error_log("Parsed versions - Controller: {$result['chillxand_version']}, Pod: {$result['pod_version']}, XandMiner: {$result['xandminer_version']}, XandMinerD: {$result['xandminerd_version']}");
-        } else {
-            error_log("Versions data is not an array: " . json_encode($health_data['versions']));
-        }
-    } else {
-        error_log("No versions array found in health data");
+    // Extract ChillXand version - try both paths
+    $result['chillxand_version'] = $health_data['chillxand_controller_version'] ?? null;
+    if (!$result['chillxand_version'] && isset($health_data['versions']['data']['chillxand_controller'])) {
+        $result['chillxand_version'] = $health_data['versions']['data']['chillxand_controller'];
     }
     
-    // Fallback to old format if new versions not found
-    if (!$result['chillxand_version']) {
-        $result['chillxand_version'] = $health_data['chillxand_controller_version'] ?? null;
+    // Extract versions from versions.data
+    if (isset($health_data['versions']['data'])) {
+        $result['pod_version'] = $health_data['versions']['data']['pod'] ?? null;
+        $result['xandminer_version'] = $health_data['versions']['data']['xandminer'] ?? null;
+        $result['xandminerd_version'] = $health_data['versions']['data']['xandminerd'] ?? null;
+    }
+    
+    // Extract server info from connectivity check
+    if (isset($health_data['checks']['connectivity']['server_info'])) {
+        $result['server_ip'] = $health_data['checks']['connectivity']['server_info']['ip'] ?? $device_ip;
+        $result['server_hostname'] = $health_data['checks']['connectivity']['server_info']['hostname'] ?? null;
     }
     
     // Parse checks array
@@ -197,43 +190,29 @@ function parseHealthData($health_data) {
         foreach ($health_data['checks'] as $check_name => $check_data) {
             switch ($check_name) {
                 case 'system:cpu':
-                    if (isset($check_data['observedValue'])) {
-                        $result['cpu_load_avg'] = (float)$check_data['observedValue'];
-                    }
+                    $result['cpu_load_avg'] = $check_data['observedValue'] ?? null;
                     break;
                     
                 case 'system:memory':
-                    if (isset($check_data['observedValue'])) {
-                        $result['memory_percent'] = (float)$check_data['observedValue'];
-                    }
-                    if (isset($check_data['memory_total_bytes'])) {
-                        $result['memory_total_bytes'] = (int)$check_data['memory_total_bytes'];
-                    }
-                    if (isset($check_data['memory_used_bytes'])) {
-                        $result['memory_used_bytes'] = (int)$check_data['memory_used_bytes'];
-                    }
+                    $result['memory_percent'] = $check_data['observedValue'] ?? null;
+                    $result['memory_total_bytes'] = $check_data['memory_total_bytes'] ?? null;
+                    $result['memory_used_bytes'] = $check_data['memory_used_bytes'] ?? null;
                     break;
                     
                 case 'atlas:registration':
-                    $result['atlas_registered'] = isset($check_data['registered']) ? (bool)$check_data['registered'] : false;
+                    $result['atlas_registered'] = ($check_data['status'] ?? '') === 'pass' && ($check_data['registered'] ?? false);
                     break;
                     
                 case 'service:pod':
-                    if (isset($check_data['observedValue'])) {
-                        $result['pod_status'] = strtolower($check_data['observedValue']);
-                    }
+                    $result['pod_status'] = ($check_data['status'] ?? '') === 'pass' ? ($check_data['observedValue'] ?? 'active') : 'inactive';
                     break;
                     
                 case 'service:xandminer':
-                    if (isset($check_data['observedValue'])) {
-                        $result['xandminer_status'] = strtolower($check_data['observedValue']);
-                    }
+                    $result['xandminer_status'] = ($check_data['status'] ?? '') === 'pass' ? ($check_data['observedValue'] ?? 'active') : 'inactive';
                     break;
                     
                 case 'service:xandminerd':
-                    if (isset($check_data['observedValue'])) {
-                        $result['xandminerd_status'] = strtolower($check_data['observedValue']);
-                    }
+                    $result['xandminerd_status'] = ($check_data['status'] ?? '') === 'pass' ? ($check_data['observedValue'] ?? 'active') : 'inactive';
                     break;
             }
         }
@@ -244,7 +223,7 @@ function parseHealthData($health_data) {
 
 // Main execution
 try {
-    // Get devices that need checking (haven't been checked in last 5 minutes)
+    // Get devices that need checking (haven't been checked in last 2 minutes)
     $stmt = $pdo->prepare("
         SELECT d.id, d.pnode_name, d.pnode_ip, d.username,
                latest.last_check, latest.consecutive_failures
@@ -290,8 +269,7 @@ try {
             $consecutive_failures = ($device['consecutive_failures'] ?? 0) + 1;
         }
         
-        // If online, try to get health data
-        $health_data = null;
+        // Initialize all variables
         $health_status = 'unknown';
         $atlas_registered = null;
         $pod_status = 'unknown';
@@ -301,7 +279,7 @@ try {
         $memory_percent = null;
         $memory_total_bytes = null;
         $memory_used_bytes = null;
-        $server_ip = null;
+        $server_ip = $ip; // Default to device IP
         $server_hostname = null;
         $chillxand_version = null;
         $pod_version = null;
@@ -309,6 +287,7 @@ try {
         $xandminerd_version = null;
         $health_json = null;
         
+        // If online, try to get health data
         if ($status['status'] === 'Online') {
             echo " -> fetching health... ";
             $health_response = fetchDeviceHealth($ip);
@@ -319,7 +298,7 @@ try {
                 $health_json = json_encode($health_response);
                 
                 // Parse health data
-                $parsed_health = parseHealthData($health_response);
+                $parsed_health = parseHealthData($health_response, $ip);
                 $health_status = $parsed_health['health_status'];
                 $atlas_registered = $parsed_health['atlas_registered'];
                 $pod_status = $parsed_health['pod_status'];
@@ -336,52 +315,60 @@ try {
                 $xandminer_version = $parsed_health['xandminer_version'];
                 $xandminerd_version = $parsed_health['xandminerd_version'];
                 
-                // Debug logging for versions
-                echo " versions: Controller={$chillxand_version}, Pod={$pod_version}, XM={$xandminer_version}, XMD={$xandminerd_version}";
+                echo " [V: {$chillxand_version}/{$pod_version}/{$xandminerd_version}]";
             }
         }
         
-        // Insert new status log entry - REMOVE NODE_VERSION
+        // Insert new status log entry with ALL columns
         $stmt = $pdo->prepare("
             INSERT INTO device_status_log (
                 device_id, status, check_time, response_time, check_method, 
-                error_message, consecutive_failures,
-                health_status, atlas_registered, pod_status, xandminer_status, xandminerd_status,
-                cpu_load_avg, memory_percent, memory_total_bytes, memory_used_bytes,
-                server_ip, server_hostname, chillxand_version, 
-                pod_version, xandminer_version, xandminerd_version, health_json
-            ) VALUES (?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                error_message, health_status, atlas_registered, pod_status, 
+                xandminer_status, xandminerd_status, cpu_load_avg, memory_percent, 
+                memory_total_bytes, memory_used_bytes, server_ip, server_hostname, 
+                chillxand_version, pod_version, xandminer_version, xandminerd_version, 
+                health_json, consecutive_failures
+            ) VALUES (
+                :device_id, :status, NOW(), :response_time, :check_method, 
+                :error_message, :health_status, :atlas_registered, :pod_status, 
+                :xandminer_status, :xandminerd_status, :cpu_load_avg, :memory_percent, 
+                :memory_total_bytes, :memory_used_bytes, :server_ip, :server_hostname, 
+                :chillxand_version, :pod_version, :xandminer_version, :xandminerd_version, 
+                :health_json, :consecutive_failures
+            )
         ");
         
         $success = $stmt->execute([
-            $device_id,
-            $status['status'],
-            $status['response_time'],
-            $status['method'],
-            $status['error'],
-            $consecutive_failures,
-            $health_status,
-            $atlas_registered,
-            $pod_status,
-            $xandminer_status,
-            $xandminerd_status,
-            $cpu_load_avg,
-            $memory_percent,
-            $memory_total_bytes,
-            $memory_used_bytes,
-            $server_ip,
-            $server_hostname,
-            $chillxand_version,
-            $pod_version,
-            $xandminer_version,
-            $xandminerd_version,
-            $health_json
+            ':device_id' => $device_id,
+            ':status' => $status['status'],
+            ':response_time' => $status['response_time'],
+            ':check_method' => $status['method'],
+            ':error_message' => $status['error'],
+            ':health_status' => $health_status,
+            ':atlas_registered' => $atlas_registered,
+            ':pod_status' => $pod_status,
+            ':xandminer_status' => $xandminer_status,
+            ':xandminerd_status' => $xandminerd_status,
+            ':cpu_load_avg' => $cpu_load_avg,
+            ':memory_percent' => $memory_percent,
+            ':memory_total_bytes' => $memory_total_bytes,
+            ':memory_used_bytes' => $memory_used_bytes,
+            ':server_ip' => $server_ip,
+            ':server_hostname' => $server_hostname,
+            ':chillxand_version' => $chillxand_version,
+            ':pod_version' => $pod_version,
+            ':xandminer_version' => $xandminer_version,
+            ':xandminerd_version' => $xandminerd_version,
+            ':health_json' => $health_json,
+            ':consecutive_failures' => $consecutive_failures
         ]);
         
         if ($success) {
             echo " -> logged";
         } else {
             echo " -> log failed";
+            $errorInfo = $stmt->errorInfo();
+            echo " (Error: " . $errorInfo[2] . ")";
         }
         
         echo "\n";
