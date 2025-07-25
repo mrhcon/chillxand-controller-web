@@ -387,11 +387,12 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                 this.devices = [];
                 this.updateInterval = 30000; // 30 seconds per device
                 this.staggerDelay = 2000; // 2 seconds between device updates
+                this.deviceStatuses = new Map(); // Track current status of each device
                 this.init();
             }
             
             init() {
-                // Collect all device IDs from the table
+                // Collect all device IDs from the table and their initial statuses
                 const deviceRows = document.querySelectorAll('tbody tr');
                 deviceRows.forEach((row, index) => {
                     const deviceLink = row.querySelector('td:first-child a');
@@ -399,6 +400,10 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                         const url = new URL(deviceLink.href);
                         const deviceId = url.searchParams.get('device_id');
                         if (deviceId) {
+                            // Get initial status from the row
+                            const initialStatus = this.getRowStatus(row);
+                            this.deviceStatuses.set(deviceId, initialStatus);
+                            
                             this.devices.push({
                                 id: deviceId,
                                 row: row,
@@ -412,6 +417,38 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                 
                 // Start staggered updates
                 this.startStaggeredUpdates();
+            }
+            
+            getRowStatus(row) {
+                // Extract current status from a table row
+                const connectivityCell = row.cells[3];
+                const statusBtn = connectivityCell.querySelector('.status-btn');
+                const status = statusBtn ? statusBtn.textContent.trim() : 'Unknown';
+                
+                // Determine overall status based on current row content
+                const healthCell = row.cells[4];
+                let overallStatus = 'Unknown';
+                
+                if (status === 'Online') {
+                    // Check if health shows "Pass" for healthy status
+                    const healthText = healthCell.textContent;
+                    if (healthText.includes('Pass')) {
+                        overallStatus = 'Healthy';
+                    } else if (healthText.includes('Fail')) {
+                        overallStatus = 'Online (Issues)';
+                    } else {
+                        overallStatus = 'Online';
+                    }
+                } else if (status === 'Offline') {
+                    overallStatus = 'Offline';
+                } else {
+                    overallStatus = status;
+                }
+                
+                return {
+                    status: status,
+                    overallStatus: overallStatus
+                };
             }
             
             startStaggeredUpdates() {
@@ -433,7 +470,26 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                     const data = await response.json();
                     
                     if (data.success) {
+                        // Store old status for comparison
+                        const oldStatus = this.deviceStatuses.get(device.id);
+                        
+                        // Update the row
                         this.updateDeviceRow(device, data);
+                        
+                        // Store new status
+                        const newStatus = {
+                            status: data.status,
+                            overallStatus: data.overall_status
+                        };
+                        this.deviceStatuses.set(device.id, newStatus);
+                        
+                        // Update summary cards if status changed or on first update
+                        if (!oldStatus || 
+                            oldStatus.status !== newStatus.status || 
+                            oldStatus.overallStatus !== newStatus.overallStatus) {
+                            this.updateSummaryCards();
+                        }
+                        
                         device.lastUpdate = Date.now();
                         console.log(`Device ${device.id} updated successfully`);
                     } else {
@@ -441,6 +497,51 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                     }
                 } catch (error) {
                     console.error(`Failed to update device ${device.id}:`, error);
+                }
+            }
+            
+            updateSummaryCards() {
+                const statuses = Array.from(this.deviceStatuses.values());
+                
+                // Calculate totals
+                const totalDevices = statuses.length;
+                const onlineDevices = statuses.filter(s => s.status === 'Online').length;
+                const offlineDevices = statuses.filter(s => s.status === 'Offline').length;
+                const healthyDevices = statuses.filter(s => s.overallStatus === 'Healthy').length;
+                const issuesDevices = statuses.filter(s => s.overallStatus === 'Online (Issues)').length;
+                
+                // Update the summary cards
+                const summaryCards = document.querySelectorAll('.summary-card');
+                if (summaryCards.length >= 5) {
+                    // Total Devices
+                    const totalCard = summaryCards[0].querySelector('.summary-number');
+                    if (totalCard) totalCard.textContent = totalDevices;
+                    
+                    // Online
+                    const onlineCard = summaryCards[1].querySelector('.summary-number');
+                    if (onlineCard) onlineCard.textContent = onlineDevices;
+                    
+                    // Healthy
+                    const healthyCard = summaryCards[2].querySelector('.summary-number');
+                    if (healthyCard) healthyCard.textContent = healthyDevices;
+                    
+                    // With Issues
+                    const issuesCard = summaryCards[3].querySelector('.summary-number');
+                    if (issuesCard) issuesCard.textContent = issuesDevices;
+                    
+                    // Offline
+                    const offlineCard = summaryCards[4].querySelector('.summary-number');
+                    if (offlineCard) offlineCard.textContent = offlineDevices;
+                    
+                    // Add visual feedback to summary cards
+                    summaryCards.forEach(card => {
+                        card.style.backgroundColor = '#e8f5e8';
+                        setTimeout(() => {
+                            card.style.backgroundColor = '#f8f9fa';
+                        }, 800);
+                    });
+                    
+                    console.log(`Summary updated: ${totalDevices} total, ${onlineDevices} online, ${healthyDevices} healthy, ${issuesDevices} issues, ${offlineDevices} offline`);
                 }
             }
             
