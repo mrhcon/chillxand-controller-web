@@ -185,18 +185,19 @@ try {
         .tab-content.active { display: block; }
         .version-info { font-family: 'Courier New', monospace; font-size: 11px; }
         
-        /* Fix for status button text visibility */
+        /* Fix for status button text visibility - FORCE TEXT TO SHOW */
         .status-btn {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 3px;
-            font-size: 11px;
-            font-weight: bold;
+            display: inline-block !important;
+            padding: 4px 8px !important;
+            border-radius: 3px !important;
+            font-size: 11px !important;
+            font-weight: bold !important;
             color: white !important;
-            text-decoration: none;
-            border: none;
-            min-width: 60px;
-            text-align: center;
+            text-decoration: none !important;
+            border: none !important;
+            min-width: 60px !important;
+            text-align: center !important;
+            line-height: 1.2 !important;
         }
         
         .status-btn.status-online { 
@@ -213,6 +214,7 @@ try {
         .status-btn.status-unknown { 
             background-color: #ffc107 !important; 
             color: #212529 !important; 
+            font-weight: bold !important;
         }
         
         .status-btn.status-not-initialized { 
@@ -228,33 +230,39 @@ try {
         .status-btn.status-online-issues { 
             background-color: #ffc107 !important; 
             color: #212529 !important; 
-        }
-        
-        /* Ensure text is visible in small status indicators */
-        .status-btn[style*="font-size: 9px"],
-        .status-btn[style*="font-size: 10px"] {
-            color: white !important;
             font-weight: bold !important;
         }
         
-        /* Fix for status indicators in health section */
+        /* FORCE text visibility on ALL status indicators regardless of inline styles */
+        span[class*="status-btn"],
+        .status-btn[style],
+        .status-btn * {
+            color: inherit !important;
+            font-weight: bold !important;
+            text-shadow: none !important;
+        }
+        
+        /* Fix for health status indicators */
         .health-status-indicator {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 3px;
-            font-size: 10px;
-            font-weight: bold;
+            display: inline-block !important;
+            padding: 2px 8px !important;
+            border-radius: 3px !important;
+            font-size: 10px !important;
+            font-weight: bold !important;
             color: white !important;
-            min-width: 40px;
-            text-align: center;
+            min-width: 40px !important;
+            text-align: center !important;
+            line-height: 1.2 !important;
         }
         
         .health-status-indicator.status-online { 
             background-color: #28a745 !important; 
+            color: white !important;
         }
         
         .health-status-indicator.status-offline { 
             background-color: #dc3545 !important; 
+            color: white !important;
         }
     </style>
 </head>
@@ -570,26 +578,6 @@ try {
     </div>
 
     <script>
-        function showTab(tabName) {
-            // Hide all tab contents
-            var tabContents = document.querySelectorAll('.tab-content');
-            tabContents.forEach(function(content) {
-                content.classList.remove('active');
-            });
-            
-            // Remove active class from all tab buttons
-            var tabButtons = document.querySelectorAll('.tab-button');
-            tabButtons.forEach(function(button) {
-                button.classList.remove('active');
-            });
-            
-            // Show the selected tab content
-            document.getElementById(tabName).classList.add('active');
-            
-            // Add active class to the clicked button
-            event.target.classList.add('active');
-        }
-
         // Auto-refresh current status every 30 seconds
         setInterval(function() {
             // Only refresh if we're on the device details page
