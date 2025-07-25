@@ -336,38 +336,17 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                                 </div>
                                                 <div><strong>Pod:</strong> 
                                                     <span class="version-value">
-                                                        <?php 
-                                                        // Extract pod version from health data if available
-                                                        $pod_version = 'N/A';
-                                                        if (!empty($summaries[$device['id']]['pod_status']) && $summaries[$device['id']]['pod_status'] === 'active') {
-                                                            $pod_version = 'Active'; // Could be enhanced with actual version if available
-                                                        }
-                                                        echo htmlspecialchars($pod_version);
-                                                        ?>
+                                                        <?php echo htmlspecialchars($summaries[$device['id']]['pod_version'] ?? 'N/A'); ?>
                                                     </span>
                                                 </div>
                                                 <div><strong>XandMiner:</strong> 
                                                     <span class="version-value">
-                                                        <?php 
-                                                        // Extract XandMiner version from health data if available
-                                                        $xm_version = 'N/A';
-                                                        if (!empty($summaries[$device['id']]['xandminer_status']) && $summaries[$device['id']]['xandminer_status'] === 'active') {
-                                                            $xm_version = 'Active'; // Could be enhanced with actual version if available
-                                                        }
-                                                        echo htmlspecialchars($xm_version);
-                                                        ?>
+                                                        <?php echo htmlspecialchars($summaries[$device['id']]['xandminer_version'] ?? 'N/A'); ?>
                                                     </span>
                                                 </div>
                                                 <div><strong>XandMinerD:</strong> 
                                                     <span class="version-value">
-                                                        <?php 
-                                                        // Extract XandMinerD version from health data if available
-                                                        $xmd_version = 'N/A';
-                                                        if (!empty($summaries[$device['id']]['xandminerd_status']) && $summaries[$device['id']]['xandminerd_status'] === 'active') {
-                                                            $xmd_version = 'Active'; // Could be enhanced with actual version if available
-                                                        }
-                                                        echo htmlspecialchars($xmd_version);
-                                                        ?>
+                                                        <?php echo htmlspecialchars($summaries[$device['id']]['xandminerd_version'] ?? 'N/A'); ?>
                                                     </span>
                                                 </div>
                                             </div>
