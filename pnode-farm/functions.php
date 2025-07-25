@@ -398,33 +398,39 @@ function generateResetCode() {
 /**
  * Send reset code email
  */
-function sendResetCodeEmail($email, $username, $reset_code) {
-    $subject = "Password Reset Code - ChillXand pNode Management Console";
-    $message = "Hello " . $username . ",\n\n";
-    $message .= "You have requested a password reset for your account.\n";
-    $message .= "Your reset code is: " . $reset_code . "\n\n";
-    $message .= "This code will expire in 1 hour.\n";
-    $message .= "If you did not request this reset, please ignore this email.\n\n";
-    $message .= "Best regards,\n";
-    $message .= "ChillXand pNode Management Team";
-    
-    $headers = "From: noreply@yoursite.com\r\n";
-    $headers .= "Reply-To: noreply@yoursite.com\r\n";
-    $headers .= "X-Mailer: PHP/" . phpversion();
-    
-    // Use mail() function - you may want to use a more robust email system
-    return mail($email, $subject, $message, $headers);
-}
+// EMAIL CONFIGURATION - UPDATE THESE VALUES
+define('SMTP_HOST', 'mail.control.chillxand.com');
+define('SMTP_USERNAME', 'noreply@control.chillxand.com');
+define('SMTP_PASSWORD', '?zN676xs9');  // ← YOUR PASSWORD HERE
+define('SMTP_PORT', 587);
 
-/**
- * Alternative email function using SMTP (recommended for production)
- * You'll need to install PHPMailer or similar library
- */
-function sendResetCodeEmailSMTP($email, $username, $reset_code) {
-    // This is a placeholder - implement with PHPMailer or similar
-    // For now, return true to simulate email sending
-    error_log("Reset code for $username: $reset_code"); // Log to error log for testing
-    return true;
+function sendResetCodeEmail($email, $username, $reset_code) {
+    $to = $email;
+    $subject = "Password Reset Code - ChillXand pNode Management Console";
+    $message = "Hello " . $username . ",\n\n" .
+              "You have requested a password reset for your account.\n" .
+              "Your reset code is: " . $reset_code . "\n\n" .
+              "This code will expire in 1 hour.\n" .
+              "If you did not request this reset, please ignore this email.\n\n" .
+              "Best regards,\n" .
+              "ChillXand pNode Management Team";
+    
+    // Try basic mail() first
+    $headers = "From: " . SMTP_USERNAME . "\r\n";
+    $headers .= "Reply-To: support@control.chillxand.com\r\n";
+    $headers .= "X-Mailer: PHP/" . phpversion() . "\r\n";
+    $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
+    
+    $result = mail($to, $subject, $message, $headers);
+    
+    if ($result) {
+        error_log("SUCCESS: Password reset email sent to: $email");
+    } else {
+        error_log("FAILED: Could not send email to: $email");
+        error_log("SMTP Config - Host: " . SMTP_HOST . ", Username: " . SMTP_USERNAME . ", Port: " . SMTP_PORT);
+    }
+    
+    return $result;
 }
 
 ?>
