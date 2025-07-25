@@ -400,6 +400,8 @@ try {
                                         <?php endif; ?>
                                         <?php if ($current_status['xandminer_version']): ?>
                                             <li><strong>XandMiner:</strong> <span class="version-info"><?php echo htmlspecialchars($current_status['xandminer_version']); ?></span></li>
+                                        <?php else; ?>  
+                                            <li><strong>XandMiner:</strong> <span class="version-info">N/A</span></li>  
                                         <?php endif; ?>
                                         <?php if ($current_status['xandminerd_version']): ?>
                                             <li><strong>XandMinerD:</strong> <span class="version-info"><?php echo htmlspecialchars($current_status['xandminerd_version']); ?></span></li>
@@ -496,8 +498,8 @@ try {
                                                     $versions = [];
                                                     if ($log['chillxand_version']) $versions[] = 'CX: ' . htmlspecialchars($log['chillxand_version']);
                                                     if ($log['pod_version']) $versions[] = 'Pod: ' . htmlspecialchars($log['pod_version']);
-                                                    if ($log['xandminer_version']) $versions[] = 'CX: ' . htmlspecialchars($log['xandminer_version']);
-                                                    if ($log['xandminerd_version']) $versions[] = 'Pod: ' . htmlspecialchars($log['xandminerd_version']);
+                                                    if ($log['xandminer_version']) $versions[] = 'XM: ' . htmlspecialchars($log['xandminer_version']);
+                                                    if ($log['xandminerd_version']) $versions[] = 'XMD: ' . htmlspecialchars($log['xandminerd_version']);
                                                     echo $versions ? implode('<br>', $versions) : 'N/A';
                                                     ?>
                                                 </td>
