@@ -291,7 +291,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                             <div class="device-status-details" style="color: #dc3545;">Failures: <?php echo $device['consecutive_failures']; ?></div>
                                         <?php endif; ?>
                                     </td>
-                                    <td>
+                                    <!-- <td>
                                         <?php if ($device['status'] === 'Not Initialized'): ?>
                                             <span class="status-btn status-not-initialized">Not Initialized</span>
                                         <?php else: ?>
@@ -323,8 +323,41 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                                 </div>
                                             </div>
                                         <?php endif; ?>
-                                    </td>
-                                    <td>
+                                    </td> -->
+<td>
+    <?php if ($device['status'] === 'Not Initialized'): ?>
+        <span class="status-btn status-not-initialized">Not Initialized</span>
+    <?php else: ?>
+        <div class="health-status-container">
+            <div><strong>Health:</strong> 
+                <span class="status-btn status-<?php echo $summaries[$device['id']]['health_status'] == 'pass' ? 'online' : 'offline'; ?>">
+                    <?php echo ucfirst($summaries[$device['id']]['health_status'] ?? 'unknown'); ?>
+                </span>
+            </div>
+            <div><strong>Atlas:</strong> 
+                <span class="status-btn status-<?php echo $summaries[$device['id']]['atlas_registered'] ? 'online' : 'offline'; ?>">
+                    <?php echo $summaries[$device['id']]['atlas_registered'] ? 'Yes' : 'No'; ?>
+                </span>
+            </div>
+            <div><strong>Pod:</strong> 
+                <span class="status-btn status-<?php echo $summaries[$device['id']]['pod_status'] == 'active' ? 'online' : 'offline'; ?>">
+                    <?php echo ucfirst($summaries[$device['id']]['pod_status'] ?? 'unknown'); ?>
+                </span>
+            </div>
+            <div><strong>XandMiner:</strong> 
+                <span class="status-btn status-<?php echo $summaries[$device['id']]['xandminer_status'] == 'active' ? 'online' : 'offline'; ?>">
+                    <?php echo ucfirst($summaries[$device['id']]['xandminer_status'] ?? 'unknown'); ?>
+                </span>
+            </div>
+            <div><strong>XandMinerD:</strong> 
+                <span class="status-btn status-<?php echo $summaries[$device['id']]['xandminerd_status'] == 'active' ? 'online' : 'offline'; ?>">
+                    <?php echo ucfirst($summaries[$device['id']]['xandminerd_status'] ?? 'unknown'); ?>
+                </span>
+            </div>
+        </div>
+    <?php endif; ?>
+</td>                                    
+                                    <!-- <td>
                                         <?php if ($device['status'] === 'Not Initialized'): ?>
                                             <span class="status-btn status-not-initialized">Not Initialized</span>
                                         <?php else: ?>
@@ -351,7 +384,35 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                                 </div>
                                             </div>
                                         <?php endif; ?>
-                                    </td>
+                                    </td> -->
+<td>
+    <?php if ($device['status'] === 'Not Initialized'): ?>
+        <span class="status-btn status-not-initialized">Not Initialized</span>
+    <?php else: ?>
+        <div class="version-info">
+            <div><strong>Controller:</strong> 
+                <span class="version-value">
+                    <?php echo htmlspecialchars($summaries[$device['id']]['chillxand_version'] ?? 'N/A'); ?>
+                </span>
+            </div>
+            <div><strong>Pod:</strong> 
+                <span class="version-value">
+                    <?php echo htmlspecialchars($summaries[$device['id']]['pod_version'] ?? 'N/A'); ?>
+                </span>
+            </div>
+            <div><strong>XandMiner:</strong> 
+                <span class="version-value">
+                    <?php echo htmlspecialchars($summaries[$device['id']]['xandminer_version'] ?? 'N/A'); ?>
+                </span>
+            </div>
+            <div><strong>XandMinerD:</strong> 
+                <span class="version-value">
+                    <?php echo htmlspecialchars($summaries[$device['id']]['xandminerd_version'] ?? 'N/A'); ?>
+                </span>
+            </div>
+        </div>
+    <?php endif; ?>
+</td>                                    
                                     <td class="last-check-col">
                                         <?php if ($device['last_check']): ?>
                                             <div class="<?php echo $device['status_stale'] ? 'status-stale' : 'status-fresh'; ?>">
