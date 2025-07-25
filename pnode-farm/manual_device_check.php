@@ -276,11 +276,51 @@ try {
     $cpu_load_avg = null;
     $memory_percent = null;
     
+    // Initialize all additional variables early
+    $memory_total_bytes = null;
+    $memory_used_bytes = null;
+    $server_ip = null;
+    $server_hostname = null;
+    $pod_version = null;
+    $xandminer_version = null;
+    $xandminerd_version = null;
+    
     // Extract ChillXand version (try multiple paths)
     if (isset($health_data['chillxand_controller_version'])) {
         $chillxand_version = $health_data['chillxand_controller_version'];
     } elseif (isset($health_data['versions']['data']['chillxand_controller'])) {
         $chillxand_version = $health_data['versions']['data']['chillxand_controller'];
+    }
+    
+    // Extract version information from the versions section
+    if (isset($health_data['versions']['data']) && is_array($health_data['versions']['data'])) {
+        $versions = $health_data['versions']['data'];
+        $pod_version = $versions['pod'] ?? null;
+        $xandminer_version = $versions['xandminer'] ?? null;
+        $xandminerd_version = $versions['xandminerd'] ?? null;
+        error_log("Extracted versions: pod={$pod_version}, xandminer={$xandminer_version}, xandminerd={$xandminerd_version}");
+    }
+    
+    // Extract server info from connectivity check (this is where the real server info is)
+    if (isset($health_data['checks']['connectivity']['server_info'])) {
+        $server_info = $health_data['checks']['connectivity']['server_info'];
+        $server_ip = $server_info['ip'] ?? null;
+        $server_hostname = $server_info['hostname'] ?? null;
+        error_log("Server info from connectivity: ip={$server_ip}, hostname={$server_hostname}");
+    }
+    
+    // Also try atlas registration for server info as backup
+    if ((!$server_ip || !$server_hostname) && isset($health_data['checks']['atlas:registration']['server_info'])) {
+        $server_info = $health_data['checks']['atlas:registration']['server_info'];
+        $server_ip = $server_ip ?: ($server_info['ip'] ?? null);
+        $server_hostname = $server_hostname ?: ($server_info['hostname'] ?? null);
+        error_log("Atlas server info: ip={$server_ip}, hostname={$server_hostname}");
+    }
+    
+    // If still no server info, use the device IP as fallback
+    if (!$server_ip) {
+        $server_ip = $ip;
+        error_log("Using device IP as fallback: {$server_ip}");
     }
     
     error_log("Basic health: status={$health_status}, chillxand={$chillxand_version}");
