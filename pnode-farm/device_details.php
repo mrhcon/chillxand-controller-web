@@ -495,7 +495,9 @@ try {
                                                     <?php 
                                                     $versions = [];
                                                     if ($log['chillxand_version']) $versions[] = 'CX: ' . htmlspecialchars($log['chillxand_version']);
-                                                    if ($log['node_version']) $versions[] = 'Node: ' . htmlspecialchars($log['node_version']);
+                                                    if ($log['pod_version']) $versions[] = 'Pod: ' . htmlspecialchars($log['pod_version']);
+                                                    if ($log['xandminer_version']) $versions[] = 'CX: ' . htmlspecialchars($log['xandminer_version']);
+                                                    if ($log['xandminerd_version']) $versions[] = 'Pod: ' . htmlspecialchars($log['xandminerd_version']);
                                                     echo $versions ? implode('<br>', $versions) : 'N/A';
                                                     ?>
                                                 </td>
