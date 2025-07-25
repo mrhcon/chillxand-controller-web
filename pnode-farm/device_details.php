@@ -398,11 +398,7 @@ try {
                                         <?php if ($current_status['pod_version']): ?>
                                             <li><strong>Pod:</strong> <span class="version-info"><?php echo htmlspecialchars($current_status['pod_version']); ?></span></li>
                                         <?php endif; ?>
-                                        <?php if ($current_status['xandminer_version']): ?>
-                                            <li><strong>XandMiner:</strong> <span class="version-info"><?php echo htmlspecialchars($current_status['xandminer_version']); ?></span></li>
-                                        <?php else; ?>  
-                                            <li><strong>XandMiner:</strong> <span class="version-info">N/A</span></li>  
-                                        <?php endif; ?>
+                                        <li><strong>XandMiner:</strong> <span class="version-info"><?php echo htmlspecialchars($current_status['xandminer_version'] ?? 'N/A'); ?></span></li>
                                         <?php if ($current_status['xandminerd_version']): ?>
                                             <li><strong>XandMinerD:</strong> <span class="version-info"><?php echo htmlspecialchars($current_status['xandminerd_version']); ?></span></li>
                                         <?php endif; ?>
