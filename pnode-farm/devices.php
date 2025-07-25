@@ -697,35 +697,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                                </div>
                                                <div><strong>Pod:</strong> 
                                                    <span class="version-value">
-                                                       <?php 
-                                                       $pod_version = 'N/A';
-                                                       if (!empty($summaries[$device['id']]['pod_status']) && $summaries[$device['id']]['pod_status'] === 'active') {
-                                                           $pod_version = 'Active';
-                                                       }
-                                                       echo htmlspecialchars($pod_version);
-                                                       ?>
+                                                        <?php echo htmlspecialchars($summaries[$device['id']]['pod_version'] ?? 'N/A'); ?>   
                                                    </span>
                                                </div>
                                                <div><strong>XandMiner:</strong> 
                                                    <span class="version-value">
-                                                       <?php 
-                                                       $xm_version = 'N/A';
-                                                       if (!empty($summaries[$device['id']]['xandminer_status']) && $summaries[$device['id']]['xandminer_status'] === 'active') {
-                                                           $xm_version = 'Active';
-                                                       }
-                                                       echo htmlspecialchars($xm_version);
-                                                       ?>
+                                                        <?php echo htmlspecialchars($summaries[$device['id']]['xandminer_version'] ?? 'N/A'); ?>   
                                                    </span>
                                                </div>
                                                <div><strong>XandMinerD:</strong> 
                                                    <span class="version-value">
-                                                       <?php 
-                                                       $xmd_version = 'N/A';
-                                                       if (!empty($summaries[$device['id']]['xandminerd_status']) && $summaries[$device['id']]['xandminerd_status'] === 'active') {
-                                                           $xmd_version = 'Active';
-                                                       }
-                                                       echo htmlspecialchars($xmd_version);
-                                                       ?>
+                                                        <?php echo htmlspecialchars($summaries[$device['id']]['xandminerd_version'] ?? 'N/A'); ?>   
                                                    </span>
                                                </div>
                                            </div>
