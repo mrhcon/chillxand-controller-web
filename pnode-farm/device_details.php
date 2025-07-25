@@ -56,28 +56,24 @@ $device_logs_page = isset($_GET['device_logs_page']) ? (int)$_GET['device_logs_p
 $device_logs_limit = isset($_GET['device_logs_limit']) ? (int)$_GET['device_logs_limit'] : 10;
 $device_logs_offset = ($device_logs_page - 1) * $device_logs_limit;
 
-// Fetch total user interaction log count
+// Fetch total user interaction log count (ALL interactions, not just device-specific)
 try {
-    $pnode_name = $device['pnode_name'] ?? '';
-    $pnode_ip = $device['pnode_ip'] ?? '';
-    
-    // Get ALL actions related to this device, not just specific ones
     $count_sql = "
         SELECT COUNT(*) 
         FROM user_interactions ui
-        WHERE (ui.details LIKE :device_name_pattern OR ui.details LIKE :ip_pattern)
+        WHERE ui.user_id = :user_id
     ";
     
     if (!$_SESSION['admin']) {
-        $count_sql .= " AND ui.user_id = :user_id";
-    }
-
-    $stmt = $pdo->prepare($count_sql);
-    $stmt->bindValue(':device_name_pattern', "%{$pnode_name}%", PDO::PARAM_STR);
-    $stmt->bindValue(':ip_pattern', "%{$pnode_ip}%", PDO::PARAM_STR);
-    if (!$_SESSION['admin']) {
+        // For non-admin users, only show their own interactions
+        $stmt = $pdo->prepare($count_sql);
         $stmt->bindValue(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
+    } else {
+        // For admin users, show all interactions
+        $count_sql = "SELECT COUNT(*) FROM user_interactions ui";
+        $stmt = $pdo->prepare($count_sql);
     }
+    
     $stmt->execute();
     $total_user_logs = $stmt->fetchColumn();
     $total_user_pages = ceil($total_user_logs / $user_logs_limit);
@@ -92,18 +88,15 @@ try {
     $sql = "
         SELECT ui.action, ui.timestamp, ui.details, ui.username
         FROM user_interactions ui
-        WHERE (ui.details LIKE :device_name_pattern OR ui.details LIKE :ip_pattern)
     ";
     
     if (!$_SESSION['admin']) {
-        $sql .= " AND ui.user_id = :user_id";
+        $sql .= " WHERE ui.user_id = :user_id";
     }
     
     $sql .= " ORDER BY ui.timestamp DESC LIMIT :limit OFFSET :offset";
 
     $stmt = $pdo->prepare($sql);
-    $stmt->bindValue(':device_name_pattern', "%{$pnode_name}%", PDO::PARAM_STR);
-    $stmt->bindValue(':ip_pattern', "%{$pnode_ip}%", PDO::PARAM_STR);
     $stmt->bindValue(':limit', (int)$user_logs_limit, PDO::PARAM_INT);
     $stmt->bindValue(':offset', (int)$user_logs_offset, PDO::PARAM_INT);
     if (!$_SESSION['admin']) {
@@ -191,6 +184,78 @@ try {
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         .version-info { font-family: 'Courier New', monospace; font-size: 11px; }
+        
+        /* Fix for status button text visibility */
+        .status-btn {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: bold;
+            color: white !important;
+            text-decoration: none;
+            border: none;
+            min-width: 60px;
+            text-align: center;
+        }
+        
+        .status-btn.status-online { 
+            background-color: #28a745 !important; 
+            color: white !important; 
+        }
+        
+        .status-btn.status-offline { 
+            background-color: #dc3545 !important; 
+            color: white !important; 
+        }
+        
+        .status-btn.status-error,
+        .status-btn.status-unknown { 
+            background-color: #ffc107 !important; 
+            color: #212529 !important; 
+        }
+        
+        .status-btn.status-not-initialized { 
+            background-color: #6c757d !important; 
+            color: white !important; 
+        }
+        
+        .status-btn.status-healthy { 
+            background-color: #28a745 !important; 
+            color: white !important; 
+        }
+        
+        .status-btn.status-online-issues { 
+            background-color: #ffc107 !important; 
+            color: #212529 !important; 
+        }
+        
+        /* Ensure text is visible in small status indicators */
+        .status-btn[style*="font-size: 9px"],
+        .status-btn[style*="font-size: 10px"] {
+            color: white !important;
+            font-weight: bold !important;
+        }
+        
+        /* Fix for status indicators in health section */
+        .health-status-indicator {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: bold;
+            color: white !important;
+            min-width: 40px;
+            text-align: center;
+        }
+        
+        .health-status-indicator.status-online { 
+            background-color: #28a745 !important; 
+        }
+        
+        .health-status-indicator.status-offline { 
+            background-color: #dc3545 !important; 
+        }
     </style>
 </head>
 <body>
@@ -209,7 +274,7 @@ try {
             <div class="menu-column">
                 <img src="images/logo.png">
                 <ul>
-                    <li><button class="menu-button" onclick="window.location.href='updated_dashboard.php'">Dashboard</button></li>
+                    <li><button class="menu-button" onclick="window.location.href='dashboard.php'">Dashboard</button></li>
                     <li><button class="menu-button" onclick="window.location.href='devices.php'">Manage Devices</button></li>
                     <li><button class="menu-button active" onclick="window.location.href='device_logs.php'">Device Logs</button></li>
                     <?php if ($_SESSION['admin']): ?>
@@ -268,27 +333,27 @@ try {
                                     <h4>Service Status</h4>
                                     <ul style="list-style: none; padding: 0;">
                                         <li><strong>Overall Health:</strong> 
-                                            <span class="status-btn status-<?php echo $current_status['health_status'] == 'pass' ? 'online' : 'offline'; ?>" style="padding: 2px 8px; font-size: 10px;">
+                                            <span class="health-status-indicator status-<?php echo $current_status['health_status'] == 'pass' ? 'online' : 'offline'; ?>">
                                                 <?php echo ucfirst($current_status['health_status'] ?? 'unknown'); ?>
                                             </span>
                                         </li>
                                         <li><strong>Atlas Registered:</strong> 
-                                            <span class="status-btn status-<?php echo $current_status['atlas_registered'] ? 'online' : 'offline'; ?>" style="padding: 2px 8px; font-size: 10px;">
+                                            <span class="health-status-indicator status-<?php echo $current_status['atlas_registered'] ? 'online' : 'offline'; ?>">
                                                 <?php echo $current_status['atlas_registered'] ? 'Yes' : 'No'; ?>
                                             </span>
                                         </li>
                                         <li><strong>Pod:</strong> 
-                                            <span class="status-btn status-<?php echo $current_status['pod_status'] == 'active' ? 'online' : 'offline'; ?>" style="padding: 2px 8px; font-size: 10px;">
+                                            <span class="health-status-indicator status-<?php echo $current_status['pod_status'] == 'active' ? 'online' : 'offline'; ?>">
                                                 <?php echo ucfirst($current_status['pod_status'] ?? 'unknown'); ?>
                                             </span>
                                         </li>
                                         <li><strong>XandMiner:</strong> 
-                                            <span class="status-btn status-<?php echo $current_status['xandminer_status'] == 'active' ? 'online' : 'offline'; ?>" style="padding: 2px 8px; font-size: 10px;">
+                                            <span class="health-status-indicator status-<?php echo $current_status['xandminer_status'] == 'active' ? 'online' : 'offline'; ?>">
                                                 <?php echo ucfirst($current_status['xandminer_status'] ?? 'unknown'); ?>
                                             </span>
                                         </li>
                                         <li><strong>XandMinerD:</strong> 
-                                            <span class="status-btn status-<?php echo $current_status['xandminerd_status'] == 'active' ? 'online' : 'offline'; ?>" style="padding: 2px 8px; font-size: 10px;">
+                                            <span class="health-status-indicator status-<?php echo $current_status['xandminerd_status'] == 'active' ? 'online' : 'offline'; ?>">
                                                 <?php echo ucfirst($current_status['xandminerd_status'] ?? 'unknown'); ?>
                                             </span>
                                         </li>
@@ -332,66 +397,14 @@ try {
 
                     <!-- Tabbed Logs Section -->
                     <div class="logs">
-                        <h3>Device Logs</h3>
+                        <h3>Logs</h3>
                         <div class="tab-buttons">
-                            <button class="tab-button active" onclick="showTab('user-actions')">All User Actions (<?php echo $total_user_logs; ?>)</button>
-                            <button class="tab-button" onclick="showTab('device-status')">Device Status Logs (<?php echo $total_device_logs; ?>)</button>
+                            <button class="tab-button active" onclick="showTab('device-status')">Device Status Logs (<?php echo $total_device_logs; ?>)</button>
+                            <button class="tab-button" onclick="showTab('user-actions')">All User Actions (<?php echo $total_user_logs; ?>)</button>
                         </div>
 
-                        <!-- User Actions Tab -->
-                        <div id="user-actions" class="tab-content active">
-                            <?php if (empty($user_logs)): ?>
-                                <p>No user action logs available for this device.</p>
-                            <?php else: ?>
-                                <table class="log-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Action</th>
-                                            <th>Timestamp</th>
-                                            <th>User</th>
-                                            <th>Details</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php foreach ($user_logs as $log): ?>
-                                            <tr>
-                                                <td><?php echo htmlspecialchars($log['action']); ?></td>
-                                                <td><?php echo htmlspecialchars($log['timestamp']); ?></td>
-                                                <td><?php echo htmlspecialchars($log['username']); ?></td>
-                                                <td><?php echo htmlspecialchars($log['details'] ?? 'N/A'); ?></td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                                <!-- User Actions Pagination -->
-                                <?php if ($total_user_pages > 1): ?>
-                                    <div class="pagination">
-                                        <?php if ($user_logs_page > 1): ?>
-                                            <a href="?device_id=<?php echo $device_id; ?>&user_logs_page=1&user_logs_limit=<?php echo $user_logs_limit; ?>&device_logs_page=<?php echo $device_logs_page; ?>&device_logs_limit=<?php echo $device_logs_limit; ?>">First</a>
-                                            <a href="?device_id=<?php echo $device_id; ?>&user_logs_page=<?php echo $user_logs_page - 1; ?>&user_logs_limit=<?php echo $user_logs_limit; ?>&device_logs_page=<?php echo $device_logs_page; ?>&device_logs_limit=<?php echo $device_logs_limit; ?>">Previous</a>
-                                        <?php endif; ?>
-                                        <select onchange="window.location.href='?device_id=<?php echo $device_id; ?>&user_logs_page=' + this.value + '&user_logs_limit=<?php echo $user_logs_limit; ?>&device_logs_page=<?php echo $device_logs_page; ?>&device_logs_limit=<?php echo $device_logs_limit; ?>'">
-                                            <?php for ($i = 1; $i <= $total_user_pages; $i++): ?>
-                                                <option value="<?php echo $i; ?>" <?php echo $i === $user_logs_page ? 'selected' : ''; ?>><?php echo $i; ?></option>
-                                            <?php endfor; ?>
-                                        </select>
-                                        <span>of <?php echo $total_user_pages; ?></span>
-                                        <?php if ($user_logs_page < $total_user_pages): ?>
-                                            <a href="?device_id=<?php echo $device_id; ?>&user_logs_page=<?php echo $user_logs_page + 1; ?>&user_logs_limit=<?php echo $user_logs_limit; ?>&device_logs_page=<?php echo $device_logs_page; ?>&device_logs_limit=<?php echo $device_logs_limit; ?>">Next</a>
-                                            <a href="?device_id=<?php echo $device_id; ?>&user_logs_page=<?php echo $total_user_pages; ?>&user_logs_limit=<?php echo $user_logs_limit; ?>&device_logs_page=<?php echo $device_logs_page; ?>&device_logs_limit=<?php echo $device_logs_limit; ?>">Last</a>
-                                        <?php endif; ?>
-                                        <select onchange="window.location.href='?device_id=<?php echo $device_id; ?>&user_logs_page=1&user_logs_limit=' + this.value + '&device_logs_page=<?php echo $device_logs_page; ?>&device_logs_limit=<?php echo $device_logs_limit; ?>'">
-                                            <?php foreach ([5, 10, 20, 50] as $l): ?>
-                                                <option value="<?php echo $l; ?>" <?php echo $l === $user_logs_limit ? 'selected' : ''; ?>><?php echo $l; ?></option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    </div>
-                                <?php endif; ?>
-                            <?php endif; ?>
-                        </div>
-
-                        <!-- Device Status Logs Tab -->
-                        <div id="device-status" class="tab-content">
+                        <!-- Device Status Logs Tab (Now First/Default) -->
+                        <div id="device-status" class="tab-content active">
                             <?php if (empty($device_status_logs)): ?>
                                 <p>No device status logs available.</p>
                             <?php else: ?>
@@ -487,22 +500,63 @@ try {
                                 <?php if ($total_device_pages > 1): ?>
                                     <div class="pagination">
                                         <?php if ($device_logs_page > 1): ?>
-                                            <a href="?device_id=<?php echo $device_id; ?>&user_logs_page=<?php echo $user_logs_page; ?>&user_logs_limit=<?php echo $user_logs_limit; ?>&device_logs_page=1&device_logs_limit=<?php echo $device_logs_limit; ?>">First</a>
-                                            <a href="?device_id=<?php echo $device_id; ?>&user_logs_page=<?php echo $user_logs_page; ?>&user_logs_limit=<?php echo $user_logs_limit; ?>&device_logs_page=<?php echo $device_logs_page - 1; ?>&device_logs_limit=<?php echo $device_logs_limit; ?>">Previous</a>
-                                        <?php endif; ?>
-                                        <select onchange="window.location.href='?device_id=<?php echo $device_id; ?>&user_logs_page=<?php echo $user_logs_page; ?>&user_logs_limit=<?php echo $user_logs_limit; ?>&device_logs_page=' + this.value + '&device_logs_limit=<?php echo $device_logs_limit; ?>'">
-                                            <?php for ($i = 1; $i <= $total_device_pages; $i++): ?>
-                                                <option value="<?php echo $i; ?>" <?php echo $i === $device_logs_page ? 'selected' : ''; ?>><?php echo $i; ?></option>
-                                            <?php endfor; ?>
-                                        </select>
-                                        <span>of <?php echo $total_device_pages; ?></span>
-                                        <?php if ($device_logs_page < $total_device_pages): ?>
-                                            <a href="?device_id=<?php echo $device_id; ?>&user_logs_page=<?php echo $user_logs_page; ?>&user_logs_limit=<?php echo $user_logs_limit; ?>&device_logs_page=<?php echo $device_logs_page + 1; ?>&device_logs_limit=<?php echo $device_logs_limit; ?>">Next</a>
                                             <a href="?device_id=<?php echo $device_id; ?>&user_logs_page=<?php echo $user_logs_page; ?>&user_logs_limit=<?php echo $user_logs_limit; ?>&device_logs_page=<?php echo $total_device_pages; ?>&device_logs_limit=<?php echo $device_logs_limit; ?>">Last</a>
                                         <?php endif; ?>
                                         <select onchange="window.location.href='?device_id=<?php echo $device_id; ?>&user_logs_page=<?php echo $user_logs_page; ?>&user_logs_limit=<?php echo $user_logs_limit; ?>&device_logs_page=1&device_logs_limit=' + this.value">
                                             <?php foreach ([5, 10, 20, 50] as $l): ?>
                                                 <option value="<?php echo $l; ?>" <?php echo $l === $device_logs_limit ? 'selected' : ''; ?>><?php echo $l; ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                <?php endif; ?>
+                            <?php endif; ?>
+                        </div>
+
+                        <!-- User Actions Tab (Now Second) -->
+                        <div id="user-actions" class="tab-content">
+                            <?php if (empty($user_logs)): ?>
+                                <p>No user action logs available.</p>
+                            <?php else: ?>
+                                <table class="log-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Action</th>
+                                            <th>Timestamp</th>
+                                            <th>User</th>
+                                            <th>Details</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($user_logs as $log): ?>
+                                            <tr>
+                                                <td><?php echo htmlspecialchars($log['action']); ?></td>
+                                                <td><?php echo htmlspecialchars($log['timestamp']); ?></td>
+                                                <td><?php echo htmlspecialchars($log['username']); ?></td>
+                                                <td><?php echo htmlspecialchars($log['details'] ?? 'N/A'); ?></td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                                <!-- User Actions Pagination -->
+                                <?php if ($total_user_pages > 1): ?>
+                                    <div class="pagination">
+                                        <?php if ($user_logs_page > 1): ?>
+                                            <a href="?device_id=<?php echo $device_id; ?>&user_logs_page=1&user_logs_limit=<?php echo $user_logs_limit; ?>&device_logs_page=<?php echo $device_logs_page; ?>&device_logs_limit=<?php echo $device_logs_limit; ?>">First</a>
+                                            <a href="?device_id=<?php echo $device_id; ?>&user_logs_page=<?php echo $user_logs_page - 1; ?>&user_logs_limit=<?php echo $user_logs_limit; ?>&device_logs_page=<?php echo $device_logs_page; ?>&device_logs_limit=<?php echo $device_logs_limit; ?>">Previous</a>
+                                        <?php endif; ?>
+                                        <select onchange="window.location.href='?device_id=<?php echo $device_id; ?>&user_logs_page=' + this.value + '&user_logs_limit=<?php echo $user_logs_limit; ?>&device_logs_page=<?php echo $device_logs_page; ?>&device_logs_limit=<?php echo $device_logs_limit; ?>'">
+                                            <?php for ($i = 1; $i <= $total_user_pages; $i++): ?>
+                                                <option value="<?php echo $i; ?>" <?php echo $i === $user_logs_page ? 'selected' : ''; ?>><?php echo $i; ?></option>
+                                            <?php endfor; ?>
+                                        </select>
+                                        <span>of <?php echo $total_user_pages; ?></span>
+                                        <?php if ($user_logs_page < $total_user_pages): ?>
+                                            <a href="?device_id=<?php echo $device_id; ?>&user_logs_page=<?php echo $user_logs_page + 1; ?>&user_logs_limit=<?php echo $user_logs_limit; ?>&device_logs_page=<?php echo $device_logs_page; ?>&device_logs_limit=<?php echo $device_logs_limit; ?>">Next</a>
+                                            <a href="?device_id=<?php echo $device_id; ?>&user_logs_page=<?php echo $total_user_pages; ?>&user_logs_limit=<?php echo $user_logs_limit; ?>&device_logs_page=<?php echo $device_logs_page; ?>&device_logs_limit=<?php echo $device_logs_limit; ?>">Last</a>
+                                        <?php endif; ?>
+                                        <select onchange="window.location.href='?device_id=<?php echo $device_id; ?>&user_logs_page=1&user_logs_limit=' + this.value + '&device_logs_page=<?php echo $device_logs_page; ?>&device_logs_limit=<?php echo $device_logs_limit; ?>'">
+                                            <?php foreach ([5, 10, 20, 50] as $l): ?>
+                                                <option value="<?php echo $l; ?>" <?php echo $l === $user_logs_limit ? 'selected' : ''; ?>><?php echo $l; ?></option>
                                             <?php endforeach; ?>
                                         </select>
                                     </div>
