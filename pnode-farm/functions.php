@@ -398,39 +398,53 @@ function generateResetCode() {
 /**
  * Send reset code email
  */
-// EMAIL CONFIGURATION - UPDATE THESE VALUES
-define('SMTP_HOST', 'mail.control.chillxand.com');
-define('SMTP_USERNAME', 'noreply@control.chillxand.com');
-define('SMTP_PASSWORD', '?zN676xs9');  // ← YOUR PASSWORD HERE
-define('SMTP_PORT', 587);
-
+<?php
+// Replace your sendResetCodeEmail function with this
 function sendResetCodeEmail($email, $username, $reset_code) {
     $to = $email;
     $subject = "Password Reset Code - ChillXand pNode Management Console";
-    $message = "Hello " . $username . ",\n\n" .
-              "You have requested a password reset for your account.\n" .
-              "Your reset code is: " . $reset_code . "\n\n" .
-              "This code will expire in 1 hour.\n" .
-              "If you did not request this reset, please ignore this email.\n\n" .
-              "Best regards,\n" .
-              "ChillXand pNode Management Team";
     
-    // Try basic mail() first
-    $headers = "From: " . SMTP_USERNAME . "\r\n";
-    $headers .= "Reply-To: support@control.chillxand.com\r\n";
-    $headers .= "X-Mailer: PHP/" . phpversion() . "\r\n";
-    $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
+    $message = "Hello " . $username . ",\n\n";
+    $message .= "You have requested a password reset for your account.\n";
+    $message .= "Your reset code is: " . $reset_code . "\n\n";
+    $message .= "This code will expire in 1 hour.\n";
+    $message .= "If you did not request this reset, please ignore this email.\n\n";
+    $message .= "Best regards,\n";
+    $message .= "ChillXand pNode Management Team\n";
+    $message .= "https://control.chillxand.com";
     
-    $result = mail($to, $subject, $message, $headers);
+    // Improved headers for better delivery
+    $headers = array();
+    $headers[] = "From: ChillXand pNode Management <noreply@control.chillxand.com>";
+    $headers[] = "Reply-To: support@control.chillxand.com";
+    $headers[] = "Return-Path: noreply@control.chillxand.com";
+    $headers[] = "X-Mailer: PHP/" . phpversion();
+    $headers[] = "Content-Type: text/plain; charset=UTF-8";
+    $headers[] = "MIME-Version: 1.0";
     
+    // Add authentication headers to prevent spam
+    $headers[] = "Message-ID: <" . time() . "." . md5($email . $reset_code) . "@control.chillxand.com>";
+    $headers[] = "Date: " . date('r');
+    $headers[] = "X-Priority: 1";
+    
+    // Convert headers array to string
+    $header_string = implode("\r\n", $headers);
+    
+    // Send the email
+    $result = mail($to, $subject, $message, $header_string);
+    
+    // Enhanced logging
     if ($result) {
-        error_log("SUCCESS: Password reset email sent to: $email");
+        error_log("SUCCESS: Password reset email sent to: $email for user: $username at " . date('Y-m-d H:i:s'));
     } else {
-        error_log("FAILED: Could not send email to: $email");
-        error_log("SMTP Config - Host: " . SMTP_HOST . ", Username: " . SMTP_USERNAME . ", Port: " . SMTP_PORT);
+        error_log("FAILED: Could not send password reset email to: $email for user: $username at " . date('Y-m-d H:i:s'));
+        
+        // Log system information for debugging
+        error_log("Mail system: localhost:25, sendmail_path: /usr/sbin/sendmail -t -i");
     }
     
     return $result;
 }
+?>
 
 ?>
