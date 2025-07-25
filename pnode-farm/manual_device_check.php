@@ -1,314 +1,427 @@
 <?php
-/**
- * manual_device_check.php - Browser debug version (debug info in JSON response)
- */
-
+// manual_device_check.php - Fixed version with proper column mapping
 session_start();
-require_once 'db_connect.php';
-
 header('Content-Type: application/json');
-set_time_limit(10);
 
-// Debug array to collect info - use global to ensure persistence
-$GLOBALS['debug_messages'] = [];
+require_once 'db_connect.php';
+require_once 'functions.php';
 
-function addDebug($message) {
-    $GLOBALS['debug_messages'][] = $message;
-    error_log("DEBUG: " . $message);
+if (!isset($_SESSION['user_id'])) {
+    echo json_encode(['error' => 'Not authenticated']);
+    exit();
 }
 
-function getDebugMessages() {
-    return $GLOBALS['debug_messages'];
-}
-
-if (!isset($_SESSION['user_id']) || !isset($_POST['device_id'])) {
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['device_id'])) {
     echo json_encode(['error' => 'Invalid request']);
     exit();
 }
 
 $device_id = (int)$_POST['device_id'];
-addDebug("Checking device ID: $device_id");
-$debug[] = "Checking device ID: $device_id";
 
 try {
-    // Verify user has access to this device
+    // Get device details
     $stmt = $pdo->prepare("
-        SELECT d.pnode_name, d.pnode_ip, d.username 
+        SELECT d.id, d.pnode_name, d.pnode_ip 
         FROM devices d 
-        WHERE d.id = ? AND (d.username = ? OR ? = 1)
+        WHERE d.id = :device_id AND (d.username = :username OR :admin = 1)
     ");
-    $stmt->execute([$device_id, $_SESSION['username'], $_SESSION['admin'] ?? 0]);
-    $device = $stmt->fetch(PDO::FETCH_ASSOC);
+    $stmt->bindValue(':device_id', $device_id, PDO::PARAM_INT);
+    $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
+    $stmt->bindValue(':admin', $_SESSION['admin'] ?? 0, PDO::PARAM_INT);
+    $stmt->execute();
     
+    $device = $stmt->fetch(PDO::FETCH_ASSOC);
     if (!$device) {
         echo json_encode(['error' => 'Device not found or access denied']);
         exit();
     }
     
-    $debug[] = "Found device: {$device['pnode_name']} at {$device['pnode_ip']}";
+    error_log("Checking device ID: {$device['id']}");
+    error_log("Found device: {$device['pnode_name']} at {$device['pnode_ip']}");
     
-    if (!filter_var($device['pnode_ip'], FILTER_VALIDATE_IP)) {
-        echo json_encode(['error' => 'Invalid IP address']);
+    // Test connectivity
+    $ip = $device['pnode_ip'];
+    $port = 3001;
+    
+    error_log("Testing connectivity to {$ip}:{$port}");
+    
+    // Test if port is open
+    $connection = @fsockopen($ip, $port, $errno, $errstr, 5);
+    if (!$connection) {
+        // Port is closed - device is offline
+        $stmt = $pdo->prepare("
+            INSERT INTO device_status_log (
+                device_id, status, check_time, response_time, check_method, error_message, 
+                health_status, atlas_registered, pod_status, xandminer_status, 
+                xandminerd_status, cpu_load_avg, memory_percent, memory_total_bytes,
+                memory_used_bytes, server_ip, server_hostname, chillxand_version,
+                pod_version, xandminer_version, xandminerd_version, health_json,
+                consecutive_failures
+            ) VALUES (
+                :device_id, :status, NOW(), :response_time, :check_method, :error_message,
+                :health_status, :atlas_registered, :pod_status, :xandminer_status,
+                :xandminerd_status, :cpu_load_avg, :memory_percent, :memory_total_bytes,
+                :memory_used_bytes, :server_ip, :server_hostname, :chillxand_version,
+                :pod_version, :xandminer_version, :xandminerd_version, :health_json,
+                :consecutive_failures
+            )
+        ");
+        
+        $stmt->execute([
+            ':device_id' => $device_id,
+            ':status' => 'Offline',
+            ':response_time' => null,
+            ':check_method' => 'manual',
+            ':error_message' => "Connection failed: {$errstr} ({$errno})",
+            ':health_status' => null,
+            ':atlas_registered' => false,
+            ':pod_status' => null,
+            ':xandminer_status' => null,
+            ':xandminerd_status' => null,
+            ':cpu_load_avg' => null,
+            ':memory_percent' => null,
+            ':memory_total_bytes' => null,
+            ':memory_used_bytes' => null,
+            ':server_ip' => $ip,
+            ':server_hostname' => null,
+            ':chillxand_version' => null,
+            ':pod_version' => null,
+            ':xandminer_version' => null,
+            ':xandminerd_version' => null,
+            ':health_json' => null,
+            ':consecutive_failures' => 0
+        ]);
+        
+        echo json_encode([
+            'success' => true,
+            'status' => 'Offline',
+            'response_time' => 0,
+            'consecutive_failures' => 0,
+            'timestamp' => date('M j, H:i')
+        ]);
         exit();
     }
     
-    // Get consecutive failures from last check
-    $stmt = $pdo->prepare("
-        SELECT consecutive_failures 
-        FROM device_status_log 
-        WHERE device_id = ? 
-        ORDER BY check_time DESC 
-        LIMIT 1
-    ");
-    $stmt->execute([$device_id]);
-    $last_check = $stmt->fetch(PDO::FETCH_ASSOC);
-    $last_consecutive_failures = $last_check['consecutive_failures'] ?? 0;
+    fclose($connection);
+    error_log("Port {$port} is open, fetching health data");
     
-    // Perform status check on port 3001 (health endpoint port)
-    $ip = $device['pnode_ip'];
+    // Get health data
+    $url = "http://{$ip}:{$port}/health";
+    error_log("Making request to: {$url}");
+    
     $start_time = microtime(true);
-    $status = 'Unknown';
-    $response_time = null;
-    $error_message = null;
-    $check_method = 'manual';
     
-    // Health data variables
-    $health_status = null;
-    $atlas_registered = null;
+    $context = stream_context_create([
+        'http' => [
+            'method' => 'GET',
+            'timeout' => 15,
+            'header' => [
+                'Accept: application/json',
+                'User-Agent: ChillXand-Management-Console'
+            ]
+        ]
+    ]);
+    
+    $response = @file_get_contents($url, false, $context);
+    $response_time = microtime(true) - $start_time;
+    
+    if ($response === false) {
+        $http_error = error_get_last()['message'] ?? 'Unknown HTTP error';
+        error_log("Health error: {$http_error}");
+        
+        // HTTP request failed but port was open - partial connectivity
+        $stmt = $pdo->prepare("
+            INSERT INTO device_status_log (
+                device_id, status, check_time, response_time, check_method, error_message, 
+                health_status, atlas_registered, pod_status, xandminer_status, 
+                xandminerd_status, cpu_load_avg, memory_percent, memory_total_bytes,
+                memory_used_bytes, server_ip, server_hostname, chillxand_version,
+                pod_version, xandminer_version, xandminerd_version, health_json,
+                consecutive_failures
+            ) VALUES (
+                :device_id, :status, NOW(), :response_time, :check_method, :error_message,
+                :health_status, :atlas_registered, :pod_status, :xandminer_status,
+                :xandminerd_status, :cpu_load_avg, :memory_percent, :memory_total_bytes,
+                :memory_used_bytes, :server_ip, :server_hostname, :chillxand_version,
+                :pod_version, :xandminer_version, :xandminerd_version, :health_json,
+                :consecutive_failures
+            )
+        ");
+        
+        $stmt->execute([
+            ':device_id' => $device_id,
+            ':status' => 'Error',
+            ':response_time' => $response_time,
+            ':check_method' => 'manual',
+            ':error_message' => "HTTP request failed: {$http_error}",
+            ':health_status' => null,
+            ':atlas_registered' => false,
+            ':pod_status' => null,
+            ':xandminer_status' => null,
+            ':xandminerd_status' => null,
+            ':cpu_load_avg' => null,
+            ':memory_percent' => null,
+            ':memory_total_bytes' => null,
+            ':memory_used_bytes' => null,
+            ':server_ip' => $ip,
+            ':server_hostname' => null,
+            ':chillxand_version' => null,
+            ':pod_version' => null,
+            ':xandminer_version' => null,
+            ':xandminerd_version' => null,
+            ':health_json' => null,
+            ':consecutive_failures' => 0
+        ]);
+        
+        echo json_encode([
+            'success' => true,
+            'status' => 'Error',
+            'response_time' => round($response_time * 1000, 1),
+            'consecutive_failures' => 0,
+            'timestamp' => date('M j, H:i')
+        ]);
+        exit();
+    }
+    
+    error_log("Health HTTP code: 200");
+    error_log("Health error: none");
+    error_log("Response length: " . strlen($response));
+    error_log("Response preview: " . substr($response, 0, 200) . "...");
+    
+    // Parse JSON response
+    $health_data = json_decode($response, true);
+    if ($health_data === null) {
+        error_log("JSON decode failed: " . json_last_error_msg());
+        
+        $stmt = $pdo->prepare("
+            INSERT INTO device_status_log (
+                device_id, status, check_time, response_time, check_method, error_message, 
+                health_status, atlas_registered, pod_status, xandminer_status, 
+                xandminerd_status, cpu_load_avg, memory_percent, memory_total_bytes,
+                memory_used_bytes, server_ip, server_hostname, chillxand_version,
+                pod_version, xandminer_version, xandminerd_version, health_json,
+                consecutive_failures
+            ) VALUES (
+                :device_id, :status, NOW(), :response_time, :check_method, :error_message,
+                :health_status, :atlas_registered, :pod_status, :xandminer_status,
+                :xandminerd_status, :cpu_load_avg, :memory_percent, :memory_total_bytes,
+                :memory_used_bytes, :server_ip, :server_hostname, :chillxand_version,
+                :pod_version, :xandminer_version, :xandminerd_version, :health_json,
+                :consecutive_failures
+            )
+        ");
+        
+        $stmt->execute([
+            ':device_id' => $device_id,
+            ':status' => 'Error',
+            ':response_time' => $response_time,
+            ':check_method' => 'manual',
+            ':error_message' => 'Invalid JSON response from health endpoint',
+            ':health_status' => null,
+            ':atlas_registered' => false,
+            ':pod_status' => null,
+            ':xandminer_status' => null,
+            ':xandminerd_status' => null,
+            ':cpu_load_avg' => null,
+            ':memory_percent' => null,
+            ':memory_total_bytes' => null,
+            ':memory_used_bytes' => null,
+            ':server_ip' => $ip,
+            ':server_hostname' => null,
+            ':chillxand_version' => null,
+            ':pod_version' => null,
+            ':xandminer_version' => null,
+            ':xandminerd_version' => null,
+            ':health_json' => null,
+            ':consecutive_failures' => 0
+        ]);
+        
+        echo json_encode([
+            'success' => true,
+            'status' => 'Error',
+            'response_time' => round($response_time * 1000, 1),
+            'consecutive_failures' => 0,
+            'timestamp' => date('M j, H:i')
+        ]);
+        exit();
+    }
+    
+    error_log("JSON decode result: SUCCESS");
+    error_log("Health data keys: " . implode(', ', array_keys($health_data)));
+    
+    // Extract health information with safe defaults
+    $status = 'Online';
+    $health_status = $health_data['status'] ?? null;
+    $chillxand_version = null;
+    $atlas_registered = false;
     $pod_status = null;
     $xandminer_status = null;
     $xandminerd_status = null;
     $cpu_load_avg = null;
     $memory_percent = null;
+    
+    // Extract ChillXand version
+    if (isset($health_data['chillxand_controller_version'])) {
+        $chillxand_version = $health_data['chillxand_controller_version'];
+    } elseif (isset($health_data['versions']['data']['chillxand_controller'])) {
+        $chillxand_version = $health_data['versions']['data']['chillxand_controller'];
+    }
+    
+    error_log("Basic health: status={$health_status}, chillxand={$chillxand_version}");
+    
+    // Process checks if available
+    if (isset($health_data['checks']) && is_array($health_data['checks'])) {
+        error_log("Found " . count($health_data['checks']) . " checks");
+        error_log("Check names: " . implode(', ', array_keys($health_data['checks'])));
+        
+        foreach ($health_data['checks'] as $check_name => $check_data) {
+            switch ($check_name) {
+                case 'system:cpu':
+                    if (isset($check_data['load_average'])) {
+                        $cpu_load_avg = (float)$check_data['load_average'];
+                        error_log("CPU load: {$cpu_load_avg}");
+                    }
+                    break;
+                    
+                case 'system:memory':
+                    if (isset($check_data['percent'])) {
+                        $memory_percent = (float)$check_data['percent'];
+                        error_log("Memory percent: {$memory_percent}");
+                    }
+                    if (isset($check_data['total'])) {
+                        error_log("Memory total: {$check_data['total']}");
+                    }
+                    if (isset($check_data['used'])) {
+                        error_log("Memory used: {$check_data['used']}");
+                    }
+                    break;
+                    
+                case 'atlas:registration':
+                    $atlas_registered = ($check_data['status'] ?? '') === 'pass';
+                    error_log("Atlas registered: " . ($atlas_registered ? 'true' : 'false'));
+                    break;
+                    
+                case 'service:pod':
+                    $pod_status = $check_data['status'] ?? null;
+                    if ($pod_status === 'pass') {
+                        $pod_status = 'active';
+                    } elseif ($pod_status === 'fail') {
+                        $pod_status = isset($check_data['activating']) && $check_data['activating'] ? 'activating' : 'inactive';
+                    }
+                    error_log("Pod status: {$pod_status}");
+                    break;
+                    
+                case 'service:xandminer':
+                    $xandminer_status = ($check_data['status'] ?? '') === 'pass' ? 'active' : 'inactive';
+                    error_log("Xandminer status: {$xandminer_status}");
+                    break;
+                    
+                case 'service:xandminerd':
+                    $xandminerd_status = ($check_data['status'] ?? '') === 'pass' ? 'active' : 'inactive';
+                    error_log("Xandminerd status: {$xandminerd_status}");
+                    break;
+            }
+        }
+    }
+    
+    error_log("About to insert into database...");
+    error_log("Values: health_status={$health_status}, atlas={$atlas_registered}, pod={$pod_status}, xandminer={$xandminer_status}, xandminerd={$xandminerd_status}");
+    
+    // Extract additional data for the full table structure
     $memory_total_bytes = null;
     $memory_used_bytes = null;
-    $server_ip = null;
+    $server_ip = $ip; // Use the device IP
     $server_hostname = null;
-    $chillxand_version = null;
-    $health_json = null;
+    $pod_version = null;
+    $xandminer_version = null;
+    $xandminerd_version = null;
     
-    $debug[] = "Testing connectivity to $ip:3001";
-    
-    // Try port 3001 first (where health endpoint lives)
-    $connection = @fsockopen($ip, 3001, $errno, $errstr, 3);
-    if ($connection) {
-        fclose($connection);
-        $status = 'Online';
-        $response_time = microtime(true) - $start_time;
-        $check_method = 'manual:fsockopen:3001';
-        
-        $debug[] = "Port 3001 is open, fetching health data";
-        
-        // Since port 3001 is open, try to fetch health data
-        $health_url = "http://$ip:3001/health";
-        $debug[] = "Making request to: $health_url";
-        
-        $ch = curl_init();
-        curl_setopt_array($ch, [
-            CURLOPT_URL => $health_url,
-            CURLOPT_CUSTOMREQUEST  => 'GET',
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => 5,
-            CURLOPT_CONNECTTIMEOUT => 2,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_FAILONERROR => false,
-            CURLOPT_USERAGENT => 'Device-Status-Checker/1.0'    
-        ]);
-        
-        $health_response = curl_exec($ch);
-        $health_http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $health_error = curl_error($ch);
-        curl_close($ch);
-        
-        $debug[] = "Health HTTP code: $health_http_code";
-        $debug[] = "Health error: " . ($health_error ?: 'none');
-        $debug[] = "Response length: " . strlen($health_response ?: '');
-        $debug[] = "Response preview: " . substr($health_response ?: '', 0, 200) . '...';
-        
-        if ($health_response !== false && $health_http_code === 200 && empty($health_error)) {
-            $health_data = json_decode($health_response, true);
-            $json_error = json_last_error();
-            
-            $debug[] = "JSON decode result: " . ($json_error === JSON_ERROR_NONE ? 'SUCCESS' : json_last_error_msg());
-            
-            if ($json_error === JSON_ERROR_NONE && is_array($health_data)) {
-                $health_json = $health_response;
-                $check_method .= '+health';
-                
-                $debug[] = "Health data keys: " . implode(', ', array_keys($health_data));
-                
-                // Parse health data
-                $health_status = $health_data['status'] ?? null;
-                $chillxand_version = $health_data['chillxand_controller_version'] ?? null;
-                
-                $debug[] = "Basic health: status=$health_status, chillxand=$chillxand_version";
-                
-                if (isset($health_data['server_info'])) {
-                    $server_ip = $health_data['server_info']['ip'] ?? null;
-                    $server_hostname = $health_data['server_info']['hostname'] ?? null;
-                    $debug[] = "Server info: IP=$server_ip, hostname=$server_hostname";
-                } else {
-                    $debug[] = "No server_info found in response";
-                }
-                
-                // Parse checks array
-                if (isset($health_data['checks']) && is_array($health_data['checks'])) {
-                    $debug[] = "Found " . count($health_data['checks']) . " checks";
-                    $debug[] = "Check names: " . implode(', ', array_keys($health_data['checks']));
-                    
-                    foreach ($health_data['checks'] as $check_name => $check_data) {
-                        switch ($check_name) {
-                            case 'system:cpu':
-                                if (isset($check_data['observedValue'])) {
-                                    $cpu_load_avg = (float)$check_data['observedValue'];
-                                    $debug[] = "CPU load: $cpu_load_avg";
-                                }
-                                break;
-                                
-                            case 'system:memory':
-                                if (isset($check_data['observedValue'])) {
-                                    $memory_percent = (float)$check_data['observedValue'];
-                                    $debug[] = "Memory percent: $memory_percent";
-                                }
-                                if (isset($check_data['memory_total_bytes'])) {
-                                    $memory_total_bytes = (int)$check_data['memory_total_bytes'];
-                                    $debug[] = "Memory total: $memory_total_bytes";
-                                }
-                                if (isset($check_data['memory_used_bytes'])) {
-                                    $memory_used_bytes = (int)$check_data['memory_used_bytes'];
-                                    $debug[] = "Memory used: $memory_used_bytes";
-                                }
-                                break;
-                                
-                            case 'atlas:registration':
-                                $atlas_registered = isset($check_data['registered']) ? (bool)$check_data['registered'] : false;
-                                $debug[] = "Atlas registered: " . ($atlas_registered ? 'true' : 'false');
-                                break;
-                                
-                            case 'service:pod':
-                                if (isset($check_data['observedValue'])) {
-                                    $pod_status = strtolower($check_data['observedValue']);
-                                    $debug[] = "Pod status: $pod_status";
-                                }
-                                break;
-                                
-                            case 'service:xandminer':
-                                if (isset($check_data['observedValue'])) {
-                                    $xandminer_status = strtolower($check_data['observedValue']);
-                                    $debug[] = "Xandminer status: $xandminer_status";
-                                }
-                                break;
-                                
-                            case 'service:xandminerd':
-                                if (isset($check_data['observedValue'])) {
-                                    $xandminerd_status = strtolower($check_data['observedValue']);
-                                    $debug[] = "Xandminerd status: $xandminerd_status";
-                                }
-                                break;
-                        }
-                    }
-                } else {
-                    $debug[] = "No 'checks' array found in health data";
-                }
-            } else {
-                $debug[] = "JSON parsing failed or result is not an array";
-            }
-        } else {
-            $debug[] = "Health endpoint request failed";
-        }
-    } else {
-        $debug[] = "Port 3001 connection failed: $errstr ($errno)";
-        // Try port 80 as fallback
-        $connection = @fsockopen($ip, 80, $errno2, $errstr2, 2);
-        if ($connection) {
-            fclose($connection);
-            $status = 'Online';
-            $response_time = microtime(true) - $start_time;
-            $check_method = 'manual:fsockopen:80';
-            $debug[] = "Port 80 connection successful (fallback)";
-        } else {
-            $status = 'Offline';
-            $response_time = microtime(true) - $start_time;
-            $error_message = "Port 3001/80 unreachable: 3001($errstr), 80($errstr2)";
-            $check_method = 'manual:fsockopen:failed';
-            $debug[] = "Both ports failed";
-        }
+    // Extract version information
+    if (isset($health_data['versions']['data'])) {
+        $versions = $health_data['versions']['data'];
+        $pod_version = $versions['pod'] ?? null;
+        $xandminer_version = $versions['xandminer'] ?? null;
+        $xandminerd_version = $versions['xandminerd'] ?? null;
     }
     
-    // Calculate consecutive failures
-    $consecutive_failures = 0;
-    if ($status === 'Offline' || $status === 'Error') {
-        $consecutive_failures = $last_consecutive_failures + 1;
+    // Extract memory bytes if available
+    if (isset($health_data['checks']['system:memory'])) {
+        $memory_check = $health_data['checks']['system:memory'];
+        $memory_total_bytes = $memory_check['total'] ?? null;
+        $memory_used_bytes = $memory_check['used'] ?? null;
     }
     
-    $debug[] = "About to insert into database...";
-    $debug[] = "Values: health_status=$health_status, atlas=" . ($atlas_registered ? 'true' : 'false') . ", pod=$pod_status, xandminer=$xandminer_status, xandminerd=$xandminerd_status";
+    // Extract server info if available  
+    if (isset($health_data['server_info'])) {
+        $server_hostname = $health_data['server_info']['hostname'] ?? null;
+    }
     
-    // Insert new status log entry with full health data
+    // Insert the complete record with ALL table columns
     $stmt = $pdo->prepare("
         INSERT INTO device_status_log (
-            device_id, status, check_time, response_time, check_method, 
-            error_message, health_status, atlas_registered, pod_status, xandminer_status, xandminerd_status,
-            cpu_load_avg, memory_percent, memory_total_bytes, memory_used_bytes,
-            server_ip, server_hostname, chillxand_version, health_json, consecutive_failures
-        ) VALUES (?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            device_id, status, check_time, response_time, check_method, error_message, 
+            health_status, atlas_registered, pod_status, xandminer_status, 
+            xandminerd_status, cpu_load_avg, memory_percent, memory_total_bytes,
+            memory_used_bytes, server_ip, server_hostname, chillxand_version,
+            pod_version, xandminer_version, xandminerd_version, health_json,
+            consecutive_failures
+        ) VALUES (
+            :device_id, :status, NOW(), :response_time, :check_method, :error_message,
+            :health_status, :atlas_registered, :pod_status, :xandminer_status,
+            :xandminerd_status, :cpu_load_avg, :memory_percent, :memory_total_bytes,
+            :memory_used_bytes, :server_ip, :server_hostname, :chillxand_version,
+            :pod_version, :xandminer_version, :xandminerd_version, :health_json,
+            :consecutive_failures
+        )
     ");
     
-    $success = $stmt->execute([
-        $device_id, $status, $response_time, $check_method, $error_message,
-        $health_status, $atlas_registered, $pod_status, $xandminer_status, $xandminerd_status,
-        $cpu_load_avg, $memory_percent, $memory_total_bytes, $memory_used_bytes,
-        $server_ip, $server_hostname, $chillxand_version, $health_json, $consecutive_failures
+    $result = $stmt->execute([
+        ':device_id' => $device_id,
+        ':status' => $status,
+        ':response_time' => $response_time,
+        ':check_method' => 'manual',
+        ':error_message' => null,
+        ':health_status' => $health_status,
+        ':atlas_registered' => $atlas_registered,
+        ':pod_status' => $pod_status,
+        ':xandminer_status' => $xandminer_status,
+        ':xandminerd_status' => $xandminerd_status,
+        ':cpu_load_avg' => $cpu_load_avg,
+        ':memory_percent' => $memory_percent,
+        ':memory_total_bytes' => $memory_total_bytes,
+        ':memory_used_bytes' => $memory_used_bytes,
+        ':server_ip' => $server_ip,
+        ':server_hostname' => $server_hostname,
+        ':chillxand_version' => $chillxand_version,
+        ':pod_version' => $pod_version,
+        ':xandminer_version' => $xandminer_version,
+        ':xandminerd_version' => $xandminerd_version,
+        ':health_json' => json_encode($health_data),
+        ':consecutive_failures' => 0
     ]);
     
-    if ($success) {
-        $debug[] = "Database insert successful";
-    } else {
+    if (!$result) {
         $error_info = $stmt->errorInfo();
-        $debug[] = "Database insert failed: " . json_encode($error_info);
+        error_log("Database insert failed: " . print_r($error_info, true));
+        throw new Exception("Database insert failed: " . $error_info[2]);
     }
     
-    // Log the manual check
-    require_once 'functions.php';
-    logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 
-                   'manual_device_check', 
-                   "Device: {$device['pnode_name']}, IP: $ip, Status: $status");
+    error_log("Database insert successful");
     
-    $debug[] = "Final debug array has " . count($debug) . " entries";
-    
-    // Force array to be re-indexed to ensure proper JSON encoding
-    $debug_clean = array_values($debug);
-    
-    // Alternative: If you prefer the var_dump output as a string
-    ob_start();
-    var_dump($debug);
-    $debug_dump = ob_get_clean();
-    
+    // Return success response
     echo json_encode([
+        'success' => true,
         'status' => $status,
-        'response_time' => round($response_time * 1000, 1),
-        'device_name' => $device['pnode_name'],
-        'timestamp' => date('Y-m-d H:i:s'),
-        'consecutive_failures' => $consecutive_failures,
-        'check_method' => $check_method,
         'health_status' => $health_status,
-        'atlas_registered' => $atlas_registered,
-        'pod_status' => $pod_status,
-        'xandminer_status' => $xandminer_status,
-        'xandminerd_status' => $xandminerd_status,
-        'cpu_load_avg' => $cpu_load_avg,
-        'memory_percent' => $memory_percent,
-        'server_hostname' => $server_hostname,
-        'chillxand_version' => $chillxand_version,
-        'debug_info' => $debug_clean, // Re-indexed array
-        'debug_count' => count($debug),
-        'debug_dump' => $debug_dump // var_dump output as string if you prefer
+        'response_time' => round($response_time * 1000, 1),
+        'consecutive_failures' => 0,
+        'timestamp' => date('M j, H:i')
     ]);
     
 } catch (Exception $e) {
+    error_log("Check failed: " . $e->getMessage());
     echo json_encode([
         'error' => 'Check failed: ' . $e->getMessage(),
-        'debug_info' => $debug
+        'debug_info' => error_get_last()
     ]);
 }
-?>
