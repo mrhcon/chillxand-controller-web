@@ -181,8 +181,9 @@ try {
         .tab-buttons { margin-bottom: 15px; }
         .tab-button { padding: 8px 16px; margin-right: 5px; border: 1px solid #ddd; background: #f8f9fa; cursor: pointer; border-radius: 3px 3px 0 0; }
         .tab-button.active { background: #007bff; color: white; border-bottom: 1px solid #007bff; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
+        /* REMOVED TAB CONTENT HIDING - Show all content now */
+        .tab-content { display: block !important; }
+        .tab-content.active { display: block !important; }
         .version-info { font-family: 'Courier New', monospace; font-size: 11px; }
         
         /* Fix for status button text visibility - FORCE TEXT TO SHOW */
