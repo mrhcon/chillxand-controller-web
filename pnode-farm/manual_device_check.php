@@ -427,54 +427,28 @@ try {
         $cached_health = parseCachedDeviceHealth($cached_status);
     }
     
-    // Return response with both live and cached data
-    if ($status === 'Online') {
-        // For online devices, return the fresh data we just collected
-        echo json_encode([
-            'success' => true,
-            'status' => $status,
-            'health_status' => $health_status,
-            'response_time' => round($response_time * 1000, 1),
-            'consecutive_failures' => 0,
-            'timestamp' => date('M j, H:i'),
-            'health_data' => [
-                'health_status' => $health_status,
-                'atlas_registered' => $atlas_registered,
-                'pod_status' => $pod_status ?: 'unknown',
-                'xandminer_status' => $xandminer_status ?: 'unknown',
-                'xandminerd_status' => $xandminerd_status ?: 'unknown'
-            ],
-            'version_data' => [
-                'chillxand_version' => $chillxand_version ?: 'N/A',
-                'pod_version' => $pod_version ?: 'N/A',
-                'xandminer_version' => $xandminer_version ?: 'N/A',
-                'xandminerd_version' => $xandminerd_version ?: 'N/A'
-            ]
-        ]);
-    } else {
-        // For offline/error devices, return the cached data (same as main page shows)
-        echo json_encode([
-            'success' => true,
-            'status' => $status,
-            'health_status' => $cached_health['health_status'] ?? 'unknown',
-            'response_time' => round($response_time * 1000, 1),
-            'consecutive_failures' => 0,
-            'timestamp' => date('M j, H:i'),
-            'health_data' => [
-                'health_status' => $cached_health['health_status'] ?? 'unknown',
-                'atlas_registered' => $cached_health['atlas_registered'] ?? false,
-                'pod_status' => $cached_health['pod_status'] ?? 'unknown',
-                'xandminer_status' => $cached_health['xandminer_status'] ?? 'unknown',
-                'xandminerd_status' => $cached_health['xandminerd_status'] ?? 'unknown'
-            ],
-            'version_data' => [
-                'chillxand_version' => $cached_health['chillxand_version'] ?? 'N/A',
-                'pod_version' => $cached_health['pod_version'] ?? 'N/A',
-                'xandminer_version' => $cached_health['xandminer_version'] ?? 'N/A',
-                'xandminerd_version' => $cached_health['xandminerd_version'] ?? 'N/A'
-            ]
-        ]);
-    }
+    // For successful health check, always return the fresh data we just collected
+    echo json_encode([
+        'success' => true,
+        'status' => 'Online',  // Explicitly set to Online since we got here successfully
+        'health_status' => $health_status,
+        'response_time' => round($response_time * 1000, 1),
+        'consecutive_failures' => 0,
+        'timestamp' => date('M j, H:i'),
+        'health_data' => [
+            'health_status' => $health_status ?: 'unknown',
+            'atlas_registered' => $atlas_registered,
+            'pod_status' => $pod_status ?: 'unknown',
+            'xandminer_status' => $xandminer_status ?: 'unknown',
+            'xandminerd_status' => $xandminerd_status ?: 'unknown'
+        ],
+        'version_data' => [
+            'chillxand_version' => $chillxand_version ?: 'N/A',
+            'pod_version' => $pod_version ?: 'N/A',
+            'xandminer_version' => $xandminer_version ?: 'N/A',
+            'xandminerd_version' => $xandminerd_version ?: 'N/A'
+        ]
+    ]);
     
 } catch (Exception $e) {
     echo json_encode([
