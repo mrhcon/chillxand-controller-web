@@ -1245,11 +1245,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 maxAttempts: 120, // 120 × 5 seconds = 10 minutes
                 lastLogLength: 0,
                 consecutiveFailures: 0,
-                maxConsecutiveFailures: 5, // Allow more failures during restart
+                maxConsecutiveFailures: 10, // Increased from 5 to 10 to be more tolerant
                 updateStarted: false,
                 restartDetected: false,
                 postRestartAttempts: 0,
-                maxPostRestartAttempts: 20 // 20 × 5 seconds = 1.5 minutes after restart
+                maxPostRestartAttempts: 60, // Increased from 20 to 60 (5 minutes after restart)
+                lastSuccessfulLogFetch: Date.now(),
+                serviceRestartDetected: false, // New flag to track actual service restart
+                restartConfirmed: false // New flag to confirm restart is real
             };
             
             monitor.interval = setInterval(() => {
@@ -1277,25 +1280,39 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 return response.text();
             })
             .then(logData => {
+                // Reset failure counters on successful log fetch
                 monitor.consecutiveFailures = 0;
+                monitor.lastSuccessfulLogFetch = Date.now();
                 
                 const lines = logData.trim().split('\n').filter(line => line.trim());
                 const currentLogLength = lines.length;
                 
                 if (lines.length > 0) {
                     const lastLine = lines[lines.length - 1].trim().toLowerCase();
-                    const lastFewLines = lines.slice(-3).join(' ').toLowerCase(); // Check last 3 lines
+                    const lastFewLines = lines.slice(-3).join(' ').toLowerCase();
                     
                     // Mark that update has started
                     if (!monitor.updateStarted && (
                         lastLine.includes('downloading') || 
                         lastLine.includes('installing') || 
                         lastLine.includes('updating') ||
-                        lastLine.includes('upgrade'))) {
+                        lastLine.includes('upgrade') ||
+                        lastLine.includes('running installer'))) {
                         monitor.updateStarted = true;
+                        console.log(`${monitor.updateType} update started for ${monitor.deviceName}`);
                     }
                     
-                    // Check for completion patterns (more comprehensive)
+                    // Check for service restart indicators in logs
+                    if (!monitor.serviceRestartDetected && (
+                        lastLine.includes('reloading systemd daemon') ||
+                        lastLine.includes('service will restart') ||
+                        lastLine.includes('restarting service') ||
+                        lastLine.includes('systemctl restart'))) {
+                        monitor.serviceRestartDetected = true;
+                        console.log(`Service restart initiated for ${monitor.deviceName}`);
+                    }
+                    
+                    // Check for completion patterns
                     if (lastFewLines.includes('no upgrade required') || 
                         lastFewLines.includes('no update required') ||
                         lastFewLines.includes('already up to date') ||
@@ -1315,8 +1332,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         lastFewLines.includes('successfully updated') ||
                         lastFewLines.includes('upgrade completed') ||
                         lastFewLines.includes('installation completed') ||
+                        lastFewLines.includes('service started successfully') ||
                         lastFewLines.includes('restart complete') ||
-                        lastFewLines.includes('service started') ||
                         (lastLine.includes('started') && monitor.restartDetected)) {
                         
                         monitor.btn.textContent = 'Update Complete';
@@ -1342,15 +1359,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         monitor.btn.textContent = 'Downloading...';
                     } else if (lastLine.includes('installing') || lastLine.includes('install')) {
                         monitor.btn.textContent = 'Installing...';
+                    } else if (lastLine.includes('configuring') || lastLine.includes('configuration')) {
+                        monitor.btn.textContent = 'Configuring...';
                     } else if (lastLine.includes('restarting') || lastLine.includes('restart')) {
                         monitor.btn.textContent = 'Restarting...';
                         monitor.restartDetected = true;
+                        monitor.restartConfirmed = true;
                     } else if (lastLine.includes('updating') || lastLine.includes('upgrade')) {
                         monitor.btn.textContent = 'Updating...';
                     } else if (lastLine.includes('starting') || lastLine.includes('start')) {
                         monitor.btn.textContent = 'Starting Services...';
                     } else if (monitor.restartDetected) {
-                        monitor.btn.textContent = 'Post-Restart Check...';
+                        monitor.btn.textContent = `Post-Restart Check... (${monitor.postRestartAttempts})`;
                         monitor.postRestartAttempts++;
                     } else {
                         monitor.btn.textContent = 'In Progress...';
@@ -1379,7 +1399,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     finishUpdateMonitoring(monitorKey, monitor, 'timeout');
                 }
                 
-                // If we've detected restart and are in post-restart phase
+                // If we've detected restart and are in post-restart phase, check if we should continue
                 if (monitor.restartDetected && monitor.postRestartAttempts >= monitor.maxPostRestartAttempts) {
                     console.log(`Post-restart monitoring complete for ${monitor.deviceName} ${monitor.updateType}`);
                     monitor.btn.textContent = 'Update Likely Complete';
@@ -1389,66 +1409,66 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             .catch(error => {
                 monitor.consecutiveFailures++;
                 
-                // During updates, ALL connection failures are EXPECTED during restart
-                const isExpectedFailure = error.message.includes('500') || 
+                const timeSinceLastSuccess = Date.now() - monitor.lastSuccessfulLogFetch;
+                const minutesSinceSuccess = Math.floor(timeSinceLastSuccess / 60000);
+                
+                // More sophisticated failure detection
+                const isConnectionError = error.message.includes('500') || 
                                         error.message.includes('503') || 
                                         error.message.includes('502') ||
                                         error.message.includes('Failed to fetch') ||
                                         error.message.includes('Network request failed') ||
                                         error.message.includes('Unable to connect') ||
                                         error.message.includes('Connection refused') ||
-                                        error.message.includes('ECONNREFUSED') ||
-                                        error.message.includes('ERR_CONNECTION_REFUSED') ||
-                                        error.message.includes('No connection could be made') ||
-                                        error.message.includes('temporarily unavailable') ||
-                                        error.message.includes('establish a connection') ||
                                         error.message.toLowerCase().includes('connection') ||
                                         error.message.toLowerCase().includes('timeout') ||
                                         error.message.toLowerCase().includes('network');
                 
-                if (isExpectedFailure && monitor.updateStarted) {
-                    console.log(`Expected connection failure during update for ${monitor.deviceName}: ${error.message} (this is normal during pNode restart)`);
-                } else if (isExpectedFailure && !monitor.updateStarted) {
-                    console.log(`Connection issue for ${monitor.deviceName}: ${error.message} (may be normal if device is busy)`);
-                } else {
-                    console.log(`Unexpected error for ${monitor.deviceName}: ${error.message} (failure ${monitor.consecutiveFailures}/${monitor.maxConsecutiveFailures})`);
-                }
+                console.log(`Connection error for ${monitor.deviceName}: ${error.message} (failure ${monitor.consecutiveFailures}, ${minutesSinceSuccess}m since last success)`);
                 
-                // Handle different phases of monitoring
+                // Handle different phases of monitoring with more intelligent logic
                 if (monitor.updateStarted && !monitor.restartDetected) {
-                    // Update has started, so ANY connection failures likely mean restart has begun
-                    if (monitor.consecutiveFailures >= 2) { // Even lower threshold - any connection failure after update starts
-                        console.log(`Device ${monitor.deviceName} appears to be restarting after update (expected - pNode services restarting)`);
+                    // Update has started - only detect restart if we have strong indicators
+                    if (monitor.serviceRestartDetected && monitor.consecutiveFailures >= 3) {
+                        // We saw restart in logs AND multiple connection failures
+                        console.log(`Service restart confirmed for ${monitor.deviceName} - service is restarting`);
                         monitor.btn.textContent = 'pNode Restarting...';
                         monitor.restartDetected = true;
-                        monitor.consecutiveFailures = 0; // Reset for post-restart monitoring
+                        monitor.restartConfirmed = true;
+                        monitor.consecutiveFailures = 0;
+                    } else if (monitor.consecutiveFailures >= 8) {
+                        // Many failures but no restart in logs - might be restart anyway
+                        console.log(`Possible restart detected for ${monitor.deviceName} (no log confirmation)`);
+                        monitor.btn.textContent = 'Possible Restart...';
+                        monitor.restartDetected = true;
+                        monitor.consecutiveFailures = 0;
                     } else {
-                        monitor.btn.textContent = `Update in Progress...`;
+                        monitor.btn.textContent = `Update in Progress... (checking ${monitor.consecutiveFailures})`;
                     }
                 } else if (monitor.restartDetected) {
-                    // We're in restart phase - connection failures are completely normal and expected
+                    // We're in restart phase - connection failures are expected
                     monitor.postRestartAttempts++;
                     const totalSeconds = monitor.postRestartAttempts * 5;
                     const minutesWaiting = Math.floor(totalSeconds / 60);
                     const secondsWaiting = totalSeconds % 60;
                     const timeDisplay = minutesWaiting > 0 ? `${minutesWaiting}m${secondsWaiting}s` : `${secondsWaiting}s`;
                     
-                    if (monitor.consecutiveFailures <= 6) { // 30 seconds
+                    if (monitor.consecutiveFailures <= 12) { // 1 minute
                         monitor.btn.textContent = `pNode Restarting... (${timeDisplay})`;
-                    } else if (monitor.consecutiveFailures <= 18) { // 90 seconds  
+                    } else if (monitor.consecutiveFailures <= 36) { // 3 minutes  
                         monitor.btn.textContent = `Still Restarting... (${timeDisplay})`;
-                    } else if (monitor.consecutiveFailures <= 36) { // 3 minutes
-                        monitor.btn.textContent = `Long Restart... (${timeDisplay})`;
-                    } else {
+                    } else if (monitor.consecutiveFailures <= 60) { // 5 minutes
                         monitor.btn.textContent = `Extended Restart... (${timeDisplay})`;
+                    } else {
+                        monitor.btn.textContent = `Long Restart... (${timeDisplay})`;
                     }
                     
-                    // During restart, we NEVER give up due to connection failures - only timeout
-                    // This is because "Unable to connect" is exactly what we expect during pNode restart
+                    // During restart, connection failures are completely normal
+                    // Only exit on overall timeout, not connection failures
                 } else {
                     // Update hasn't started yet
                     if (monitor.consecutiveFailures >= monitor.maxConsecutiveFailures) {
-                        console.log(`Pre-update connection failure for ${monitor.deviceName} - device may be unreachable before update started`);
+                        console.log(`Pre-update connection failure for ${monitor.deviceName} - device may be unreachable`);
                         finishUpdateMonitoring(monitorKey, monitor, 'connection_failed');
                         return;
                     } else {
@@ -1456,22 +1476,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     }
                 }
                 
-                // Check for overall timeout (this is our ONLY exit condition during restart phase)
+                // Check for overall timeout (this is our main exit condition)
                 if (monitor.attemptCount >= monitor.maxAttempts) {
                     console.log(`Update monitoring timeout for ${monitor.deviceName} ${monitor.updateType} after 10 minutes`);
                     
-                    if (monitor.restartDetected) {
-                        // If we detected a restart, assume update probably succeeded but device needs more time
-                        console.log(`Restart was detected for ${monitor.deviceName} - update likely completed successfully`);
+                    if (monitor.restartConfirmed) {
+                        // We confirmed a restart happened, likely successful
+                        console.log(`Restart confirmed for ${monitor.deviceName} - update likely completed successfully`);
                         monitor.btn.textContent = 'Update Likely Complete';
                         finishUpdateMonitoring(monitorKey, monitor, 'timeout_after_restart');
                     } else if (monitor.updateStarted) {
-                        // Update started but no restart detected yet
-                        console.log(`Update started for ${monitor.deviceName} but no restart detected - may still be in progress`);
-                        monitor.btn.textContent = 'Update May Be Complete';
+                        // Update started but unclear status
+                        console.log(`Update started for ${monitor.deviceName} but status unclear`);
+                        monitor.btn.textContent = 'Update Status Unknown';
                         finishUpdateMonitoring(monitorKey, monitor, 'timeout_after_update_start');
                     } else {
-                        // Never got past the starting phase
+                        // Never got started properly
                         finishUpdateMonitoring(monitorKey, monitor, 'timeout');
                     }
                 }
@@ -1491,73 +1511,75 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 case 'completed':
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
-                        // Wait longer before checking device status after successful completion
+                        // Wait before checking device status after successful completion
                         setTimeout(() => {
-                            refreshDeviceStatus(monitor.deviceId, true); // Mark as post-update check
-                        }, 10000); // Wait 10 seconds before first check
+                            refreshDeviceStatus(monitor.deviceId);
+                        }, 15000); // Wait 15 seconds before first check
                     }, 3000);
                     break;
                 case 'no_update':
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
-                        // No need for extended wait if no update was needed
-                        refreshDeviceStatus(monitor.deviceId, false);
+                        // Quick refresh if no update was needed
+                        setTimeout(() => {
+                            refreshDeviceStatus(monitor.deviceId);
+                        }, 3000);
                     }, 3000);
                     break;
                 case 'failed':
                 case 'connection_failed':
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
-                        // Still wait a bit in case device is recovering
+                        // Wait a bit in case device is recovering
                         setTimeout(() => {
-                            refreshDeviceStatus(monitor.deviceId, true);
-                        }, 5000);
+                            refreshDeviceStatus(monitor.deviceId);
+                        }, 10000);
                     }, 5000);
                     break;
                 case 'timeout':
-                    monitor.btn.textContent = 'Check Device Manually';
+                    monitor.btn.textContent = 'Timed Out - Check Manually';
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
                         // Give extra time before refreshing after timeout
                         setTimeout(() => {
-                            refreshDeviceStatus(monitor.deviceId, true);
-                        }, 10000);
+                            refreshDeviceStatus(monitor.deviceId);
+                        }, 15000);
                     }, 5000);
                     break;
                 case 'timeout_after_restart':
                     monitor.btn.textContent = 'Update Likely Complete';
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
-                        // After a restart was detected, wait longer before checking
+                        // After restart was confirmed, wait longer before checking
                         setTimeout(() => {
-                            refreshDeviceStatus(monitor.deviceId, true);
-                        }, 20000); // Wait 20 seconds before checking
+                            refreshDeviceStatus(monitor.deviceId);
+                        }, 30000); // Wait 30 seconds before checking
                     }, 4000);
                     break;
                 case 'timeout_after_update_start':
                     monitor.btn.textContent = 'Check Device Status';
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
-                        // Update started but unclear if completed - wait before checking
+                        // Update started but status unclear
                         setTimeout(() => {
-                            refreshDeviceStatus(monitor.deviceId, true);
-                        }, 15000); // Wait 15 seconds
+                            refreshDeviceStatus(monitor.deviceId);
+                        }, 20000); // Wait 20 seconds
                     }, 4000);
                     break;
                 case 'post_restart_complete':
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
-                        // Wait longer after restart to ensure device is fully ready
+                        // Wait after restart to ensure device is fully ready
                         setTimeout(() => {
                             refreshDeviceStatus(monitor.deviceId);
-                        }, 5000);
+                        }, 10000);
                     }, 3000);
                     break;
                 default:
                     monitor.btn.textContent = monitor.originalText;
                     setTimeout(() => {
                         refreshDeviceStatus(monitor.deviceId);
-                    }, 2000);
+                    }, 5000);
             }
             
             console.log(`Finished monitoring ${monitor.updateType} update for ${monitor.deviceName} - reason: ${reason}`);
