@@ -147,7 +147,6 @@ try {
                 'xandminerd_version' => $cached_health['xandminerd_version'] ?? 'N/A'
             ]
         ]);
-        fclose($connection);
         exit();
     }
     

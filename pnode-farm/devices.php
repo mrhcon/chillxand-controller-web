@@ -1326,10 +1326,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 btn: btn,
                 originalText: originalText,
                 attemptCount: 0,
-                maxAttempts: 120, // 120 × 5 seconds = 10 minutes
+                maxAttempts: 60, // 120 × 5 seconds = 10 minutes
                 lastLogLength: 0,
                 consecutiveFailures: 0,
-                maxConsecutiveFailures: 10, // Increased from 5 to 10 to be more tolerant
+                maxConsecutiveFailures: 60, // Increased from 5 to 10 to be more tolerant
                 updateStarted: false,
                 restartDetected: false,
                 postRestartAttempts: 0,
@@ -1341,7 +1341,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             
             monitor.interval = setInterval(() => {
                 checkUpdateProgress(monitorKey, monitor);
-            }, 5000);
+            }, 10000);
             
             updateMonitors[monitorKey] = monitor;
             
@@ -1556,7 +1556,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         finishUpdateMonitoring(monitorKey, monitor, 'connection_failed');
                         return;
                     } else {
-                        monitor.btn.textContent = `Connecting... (${monitor.consecutiveFailures})`;
+                        // Show the current failure count (but cap display at maxConsecutiveFailures - 1)
+                        const displayCount = Math.min(monitor.consecutiveFailures, monitor.maxConsecutiveFailures - 1);
+                        monitor.btn.textContent = `Connecting... (${displayCount})`;
                     }
                 }
                 
@@ -1589,16 +1591,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             
             delete updateMonitors[monitorKey];
             
-            monitor.btn.disabled = false;
-            
             switch (reason) {
                 case 'completed':
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
+                        monitor.btn.disabled = false;
                         // Wait before checking device status after successful completion
                         setTimeout(() => {
                             refreshDeviceStatus(monitor.deviceId);
-                        }, 15000); // Wait 15 seconds before first check
+                        }, 1000); // Wait 1 seconds before first check
                     }, 3000);
                     break;
                 case 'no_update':
