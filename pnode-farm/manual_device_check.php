@@ -138,8 +138,49 @@ try {
     
     // For ERROR responses (HTTP failed, JSON parse failed) - also return cached data
     if ($response === false || $health_data === null) {
-        // Insert the error record
-        $stmt->execute([/* your existing error parameters */]);
+        // Port is closed - device is offline
+        $stmt = $pdo->prepare("
+            INSERT INTO device_status_log (
+                device_id, status, check_time, response_time, check_method, error_message, 
+                health_status, atlas_registered, pod_status, xandminer_status, 
+                xandminerd_status, cpu_load_avg, memory_percent, memory_total_bytes,
+                memory_used_bytes, server_ip, server_hostname, chillxand_version,
+                pod_version, xandminer_version, xandminerd_version, health_json,
+                consecutive_failures
+            ) VALUES (
+                :device_id, :status, NOW(), :response_time, :check_method, :error_message,
+                :health_status, :atlas_registered, :pod_status, :xandminer_status,
+                :xandminerd_status, :cpu_load_avg, :memory_percent, :memory_total_bytes,
+                :memory_used_bytes, :server_ip, :server_hostname, :chillxand_version,
+                :pod_version, :xandminer_version, :xandminerd_version, :health_json,
+                :consecutive_failures
+            )
+        ");
+        
+        $stmt->execute([
+            ':device_id' => $device_id,
+            ':status' => 'Offline',
+            ':response_time' => null,
+            ':check_method' => 'manual',
+            ':error_message' => "Connection failed: {$errstr} ({$errno})",
+            ':health_status' => null,
+            ':atlas_registered' => false,
+            ':pod_status' => null,
+            ':xandminer_status' => null,
+            ':xandminerd_status' => null,
+            ':cpu_load_avg' => null,
+            ':memory_percent' => null,
+            ':memory_total_bytes' => null,
+            ':memory_used_bytes' => null,
+            ':server_ip' => $ip,
+            ':server_hostname' => null,
+            ':chillxand_version' => null,
+            ':pod_version' => null,
+            ':xandminer_version' => null,
+            ':xandminerd_version' => null,
+            ':health_json' => null,
+            ':consecutive_failures' => 0
+        ]);
         
         // Get cached data to return
         $cached_statuses = getLatestDeviceStatuses($pdo, [$device_id]);
