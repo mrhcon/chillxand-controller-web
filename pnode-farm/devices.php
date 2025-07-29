@@ -1492,23 +1492,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 case 'completed':
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
-                        // Wait a bit longer before refreshing to ensure device is fully ready
+                        // Wait longer before checking device status after successful completion
                         setTimeout(() => {
-                            refreshDeviceStatus(monitor.deviceId);
-                        }, 2000);
+                            refreshDeviceStatus(monitor.deviceId, true); // Mark as post-update check
+                        }, 10000); // Wait 10 seconds before first check
                     }, 3000);
                     break;
                 case 'no_update':
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
-                        refreshDeviceStatus(monitor.deviceId);
+                        // No need for extended wait if no update was needed
+                        refreshDeviceStatus(monitor.deviceId, false);
                     }, 3000);
                     break;
                 case 'failed':
                 case 'connection_failed':
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
-                        refreshDeviceStatus(monitor.deviceId);
+                        // Still wait a bit in case device is recovering
+                        setTimeout(() => {
+                            refreshDeviceStatus(monitor.deviceId, true);
+                        }, 5000);
                     }, 5000);
                     break;
                 case 'timeout':
@@ -1517,28 +1521,28 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         monitor.btn.textContent = monitor.originalText;
                         // Give extra time before refreshing after timeout
                         setTimeout(() => {
-                            refreshDeviceStatus(monitor.deviceId);
-                        }, 3000);
+                            refreshDeviceStatus(monitor.deviceId, true);
+                        }, 10000);
                     }, 5000);
                     break;
                 case 'timeout_after_restart':
-                    monitor.btn.textContent = 'Check Device Status';
+                    monitor.btn.textContent = 'Update Likely Complete';
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
-                        // After a restart was detected, assume update likely succeeded
+                        // After a restart was detected, wait longer before checking
                         setTimeout(() => {
-                            refreshDeviceStatus(monitor.deviceId);
-                        }, 3000);
+                            refreshDeviceStatus(monitor.deviceId, true);
+                        }, 20000); // Wait 20 seconds before checking
                     }, 4000);
                     break;
                 case 'timeout_after_update_start':
                     monitor.btn.textContent = 'Check Device Status';
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
-                        // Update started but unclear if completed - check device status
+                        // Update started but unclear if completed - wait before checking
                         setTimeout(() => {
-                            refreshDeviceStatus(monitor.deviceId);
-                        }, 2000);
+                            refreshDeviceStatus(monitor.deviceId, true);
+                        }, 15000); // Wait 15 seconds
                     }, 4000);
                     break;
                 case 'post_restart_complete':
