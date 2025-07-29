@@ -1227,7 +1227,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             });
         }
 
-
         function startUpdateMonitoring(deviceId, deviceIp, deviceName, updateType, btn, originalText) {
             const monitorKey = `${deviceId}_${updateType}`;
             
@@ -1563,6 +1562,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             
             console.log(`Finished monitoring ${monitor.updateType} update for ${monitor.deviceName} - reason: ${reason}`);
         }
+
 
         window.onclick = function(event) {
             const addModal = document.getElementById('addModal');
