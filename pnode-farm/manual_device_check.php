@@ -427,14 +427,41 @@ try {
         $cached_health = parseCachedDeviceHealth($cached_status);
     }
     
-    // For successful health check, always return the fresh data we just collected
+    // Determine overall status based on connectivity AND health
+    $overall_status = 'Online';
+    
+    // Check if we have significant health issues
+    $health_issues = [];
+    if ($health_status && $health_status !== 'pass') {
+        $health_issues[] = 'health_check';
+    }
+    if (!$atlas_registered) {
+        $health_issues[] = 'atlas';
+    }
+    if ($pod_status && $pod_status === 'inactive') {
+        $health_issues[] = 'pod';
+    }
+    if ($xandminer_status && $xandminer_status === 'inactive') {
+        $health_issues[] = 'xandminer';
+    }
+    if ($xandminerd_status && $xandminerd_status === 'inactive') {
+        $health_issues[] = 'xandminerd';
+    }
+    
+    // If we have health issues, adjust the status
+    if (count($health_issues) > 0) {
+        $overall_status = 'Online with Issues';
+    }
+    
+    // For successful connectivity, return the fresh data we just collected
     echo json_encode([
         'success' => true,
-        'status' => 'Online',  // Explicitly set to Online since we got here successfully
+        'status' => $overall_status,
         'health_status' => $health_status,
         'response_time' => round($response_time * 1000, 1),
         'consecutive_failures' => 0,
         'timestamp' => date('M j, H:i'),
+        'health_issues' => $health_issues, // Include for debugging
         'health_data' => [
             'health_status' => $health_status ?: 'unknown',
             'atlas_registered' => $atlas_registered,
