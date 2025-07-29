@@ -921,35 +921,94 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             const refreshBtn = document.querySelector(`#refresh-${deviceId}`);
             const lastCheckElement = document.querySelector(`#lastcheck-${deviceId}`);
             
+            // Create or update debug display
+            let debugDiv = document.getElementById(`debug-${deviceId}`);
+            if (!debugDiv) {
+                debugDiv = document.createElement('div');
+                debugDiv.id = `debug-${deviceId}`;
+                debugDiv.style.cssText = 'position:fixed; top:10px; right:10px; background:white; border:2px solid red; padding:10px; max-width:400px; z-index:9999; font-family:monospace; font-size:12px; max-height:80vh; overflow-y:auto;';
+                document.body.appendChild(debugDiv);
+            }
+            
+            function addDebug(msg) {
+                debugDiv.innerHTML += msg + '<br>';
+                debugDiv.scrollTop = debugDiv.scrollHeight;
+            }
+            
+            debugDiv.innerHTML = `<strong>DEBUG Device ${deviceId}:</strong><br>`;
+            
             refreshBtn.disabled = true;
             refreshBtn.textContent = '⟳';
+            
+            addDebug('Starting fetch...');
             
             fetch('manual_device_check.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: `device_id=${deviceId}`
             })
-            .then(response => response.json())
-            .then(data => {
+            .then(response => {
+                addDebug(`HTTP Status: ${response.status} ${response.ok ? 'OK' : 'NOT OK'}`);
+                return response.text();
+            })
+            .then(responseText => {
+                addDebug(`Response Length: ${responseText.length}`);
+                addDebug(`First 200 chars: ${responseText.substring(0, 200)}`);
+                
+                // Try to parse JSON
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                    addDebug('✅ JSON parsed successfully');
+                } catch (parseError) {
+                    addDebug(`❌ JSON Error: ${parseError.message}`);
+                    addDebug(`Full Response: ${responseText}`);
+                    alert('JSON Parse Error - Check debug window');
+                    refreshBtn.disabled = false;
+                    refreshBtn.textContent = '↻';
+                    return;
+                }
+                
+                addDebug(`data.success: ${data.success}`);
+                addDebug(`data.status: "${data.status}" (type: ${typeof data.status})`);
+                addDebug(`data.status === 'Online': ${data.status === 'Online'}`);
+                
+                if (data.debug_info) {
+                    addDebug(`Debug Info: ${JSON.stringify(data.debug_info)}`);
+                }
+                
                 if (data.error) {
+                    addDebug(`❌ Error: ${data.error}`);
                     alert('Error: ' + data.error);
                 } else {
                     let overallStatus = 'Unknown';
                     let statusClass = 'unknown';
                     
+                    addDebug('Starting status classification...');
+                    
                     if (data.status === 'Online') {
                         statusClass = 'online';
-                        overallStatus = data.status;
+                        overallStatus = 'Online';
+                        addDebug(`✅ Matched Online - statusClass: ${statusClass}`);
                     } else if (data.status === 'Offline') {
+                        statusClass = 'offline'; 
                         overallStatus = 'Offline';
-                        statusClass = 'offline';
+                        addDebug(`⚠️ Matched Offline - statusClass: ${statusClass}`);
+                    } else if (data.status === 'Error') {
+                        statusClass = 'error';
+                        overallStatus = 'Error';
+                        addDebug(`❌ Matched Error - statusClass: ${statusClass}`);
                     } else {
-                        overallStatus = data.status;
-                        statusClass = data.status.toLowerCase().replace(' ', '-');
+                        statusClass = 'unknown';
+                        overallStatus = data.status || 'Unknown';
+                        addDebug(`❓ No match - statusClass: ${statusClass}, overallStatus: ${overallStatus}`);
+                        addDebug(`Original data.status: "${data.status}"`);
                     }
                     
+                    addDebug(`Final: overallStatus="${overallStatus}", statusClass="${statusClass}"`);
+                    
                     // Update connectivity status
-                    statusElement.innerHTML = `
+                    const newStatusHTML = `
                         <span class="status-btn status-${statusClass}">${overallStatus}</span>
                         <button class="refresh-btn" id="refresh-${deviceId}" onclick="refreshDeviceStatus(${deviceId})" title="Refresh status">↻</button>
                         <div class="status-age status-fresh">Just checked</div>
@@ -957,14 +1016,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         ${data.consecutive_failures > 0 ? `<div class="device-details" style="color: #dc3545;">Failures: ${data.consecutive_failures}</div>` : ''}
                     `;
                     
-                    // CORRECT WAY: Get the next table cell, not the next table row
+                    addDebug(`Setting HTML with class: status-${statusClass}`);
+                    statusElement.innerHTML = newStatusHTML;
+                    
+                    // Add close button to debug window
+                    if (!debugDiv.querySelector('.close-debug')) {
+                        const closeBtn = document.createElement('button');
+                        closeBtn.textContent = 'Close';
+                        closeBtn.className = 'close-debug';
+                        closeBtn.style.cssText = 'position:absolute; top:5px; right:5px; background:red; color:white; border:none; padding:2px 6px; cursor:pointer;';
+                        closeBtn.onclick = () => debugDiv.remove();
+                        debugDiv.appendChild(closeBtn);
+                    }
+                    
+                    // Continue with health and version updates...
                     const healthElement = statusElement.nextElementSibling;
                     
-                    // Always show health data if we have it (whether online or offline)
                     if (data.health_data) {
                         let healthHtml = '<div style="font-size: 10px; line-height: 1.3;">';
                         
-                        // Health status
                         const healthStatus = data.health_data.health_status || 'unknown';
                         const healthClass = healthStatus === 'pass' ? 'online' : 'offline';
                         healthHtml += `<div><strong>Health:</strong> 
@@ -973,7 +1043,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                             </span>
                         </div>`;
                         
-                        // Atlas registration
                         const atlasRegistered = data.health_data.atlas_registered || false;
                         const atlasClass = atlasRegistered ? 'online' : 'offline';
                         healthHtml += `<div><strong>Atlas:</strong> 
@@ -982,7 +1051,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                             </span>
                         </div>`;
                         
-                        // Pod status
                         const podStatus = data.health_data.pod_status || 'unknown';
                         const podClass = podStatus === 'active' ? 'online' : 'offline';
                         healthHtml += `<div><strong>Pod:</strong> 
@@ -991,7 +1059,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                             </span>
                         </div>`;
                         
-                        // XandMiner status
                         const xandminerStatus = data.health_data.xandminer_status || 'unknown';
                         const xandminerClass = xandminerStatus === 'active' ? 'online' : 'offline';
                         healthHtml += `<div><strong>XandMiner:</strong> 
@@ -1000,7 +1067,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                             </span>
                         </div>`;
                         
-                        // XandMinerD status
                         const xandminerdStatus = data.health_data.xandminerd_status || 'unknown';
                         const xandminerdClass = xandminerdStatus === 'active' ? 'online' : 'offline';
                         healthHtml += `<div><strong>XandMinerD:</strong> 
@@ -1013,36 +1079,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         healthElement.innerHTML = healthHtml;
                         
                     } else {
-                        // Only show "Not Initialized" if we have no health data at all
                         healthElement.innerHTML = `<span class="status-btn status-not-initialized">Not Initialized</span>`;
                     }
                     
-                    // CORRECT WAY: Get the versions column (two columns after status)
                     const versionsElement = statusElement.nextElementSibling.nextElementSibling;
                     
-                    // Always show version data if we have it (whether online or offline)
                     if (data.version_data) {
                         let versionsHtml = '<div class="version-info">';
                         
-                        // Controller version
                         const controllerVersion = data.version_data.chillxand_version || 'N/A';
                         versionsHtml += `<div><strong>Controller:</strong> 
                             <span class="version-value">${controllerVersion}</span>
                         </div>`;
                         
-                        // Pod version
                         const podVersion = data.version_data.pod_version || 'N/A';
                         versionsHtml += `<div><strong>Pod:</strong> 
                             <span class="version-value">${podVersion}</span>
                         </div>`;
                         
-                        // XandMiner version
                         const xandminerVersion = data.version_data.xandminer_version || 'N/A';
                         versionsHtml += `<div><strong>XandMiner:</strong> 
                             <span class="version-value">${xandminerVersion}</span>
                         </div>`;
                         
-                        // XandMinerD version
                         const xandminerdVersion = data.version_data.xandminerd_version || 'N/A';
                         versionsHtml += `<div><strong>XandMinerD:</strong> 
                             <span class="version-value">${xandminerdVersion}</span>
@@ -1052,11 +1111,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         versionsElement.innerHTML = versionsHtml;
                         
                     } else {
-                        // Only show "Not Initialized" if we have no version data at all
                         versionsElement.innerHTML = `<span class="status-btn status-not-initialized">Not Initialized</span>`;
                     }
                     
-                    // Update last checked column
                     lastCheckElement.innerHTML = `
                         <div class="status-fresh">Just now</div>
                         <div style="font-size: 10px; color: #999;">${data.timestamp}</div>
@@ -1066,8 +1123,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 refreshBtn.textContent = '↻';
             })
             .catch(error => {
-                console.error('Error:', error);
-                alert('Failed to refresh status');
+                addDebug(`❌ Fetch Error: ${error.message}`);
+                alert('Failed to refresh status: ' + error.message);
                 refreshBtn.disabled = false;
                 refreshBtn.textContent = '↻';
             });
