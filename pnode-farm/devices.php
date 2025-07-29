@@ -1227,6 +1227,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             });
         }
 
+
         function startUpdateMonitoring(deviceId, deviceIp, deviceName, updateType, btn, originalText) {
             const monitorKey = `${deviceId}_${updateType}`;
             
@@ -1242,10 +1243,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 btn: btn,
                 originalText: originalText,
                 attemptCount: 0,
-                maxAttempts: 60,
+                maxAttempts: 120, // 120 × 5 seconds = 10 minutes
                 lastLogLength: 0,
                 consecutiveFailures: 0,
-                maxConsecutiveFailures: 3
+                maxConsecutiveFailures: 5, // Allow more failures during restart
+                updateStarted: false,
+                restartDetected: false,
+                postRestartAttempts: 0,
+                maxPostRestartAttempts: 20 // 20 × 5 seconds = 1.5 minutes after restart
             };
             
             monitor.interval = setInterval(() => {
@@ -1279,23 +1284,41 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 const currentLogLength = lines.length;
                 
                 if (lines.length > 0) {
-                    const lastLine = lines[lines.length - 1].trim();
+                    const lastLine = lines[lines.length - 1].trim().toLowerCase();
+                    const lastFewLines = lines.slice(-3).join(' ').toLowerCase(); // Check last 3 lines
                     
-                    if (lastLine.includes('no upgrade required') || 
-                        lastLine.includes('No upgrade required') ||
-                        lastLine.includes('already up to date') ||
-                        lastLine.includes('Already up to date')) {
+                    // Mark that update has started
+                    if (!monitor.updateStarted && (
+                        lastLine.includes('downloading') || 
+                        lastLine.includes('installing') || 
+                        lastLine.includes('updating') ||
+                        lastLine.includes('upgrade'))) {
+                        monitor.updateStarted = true;
+                    }
+                    
+                    // Check for completion patterns (more comprehensive)
+                    if (lastFewLines.includes('no upgrade required') || 
+                        lastFewLines.includes('no update required') ||
+                        lastFewLines.includes('already up to date') ||
+                        lastFewLines.includes('already up-to-date') ||
+                        lastFewLines.includes('no updates available') ||
+                        (lastLine.includes('latest') && lastLine.includes('version'))) {
                         
                         monitor.btn.textContent = 'No Update Needed';
                         console.log(`${monitor.updateType} update completed - no upgrade required for ${monitor.deviceName}`);
-                        finishUpdateMonitoring(monitorKey, monitor, 'completed');
+                        finishUpdateMonitoring(monitorKey, monitor, 'no_update');
                         return;
                     }
                     
-                    if (lastLine.includes('Update completed') ||
-                        lastLine.includes('update completed') ||
-                        lastLine.includes('Successfully updated') ||
-                        lastLine.includes('Restart complete')) {
+                    // Check for successful completion
+                    if (lastFewLines.includes('update completed') ||
+                        lastFewLines.includes('update successful') ||
+                        lastFewLines.includes('successfully updated') ||
+                        lastFewLines.includes('upgrade completed') ||
+                        lastFewLines.includes('installation completed') ||
+                        lastFewLines.includes('restart complete') ||
+                        lastFewLines.includes('service started') ||
+                        (lastLine.includes('started') && monitor.restartDetected)) {
                         
                         monitor.btn.textContent = 'Update Complete';
                         console.log(`${monitor.updateType} update completed successfully for ${monitor.deviceName}`);
@@ -1303,10 +1326,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         return;
                     }
                     
+                    // Check for errors
                     if (lastLine.includes('error') || 
-                        lastLine.includes('Error') ||
                         lastLine.includes('failed') ||
-                        lastLine.includes('Failed')) {
+                        lastLine.includes('exception') ||
+                        (lastLine.includes('could not') && lastLine.includes('install'))) {
                         
                         monitor.btn.textContent = 'Update Failed';
                         console.log(`${monitor.updateType} update failed for ${monitor.deviceName}: ${lastLine}`);
@@ -1314,18 +1338,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         return;
                     }
                     
-                    if (lastLine.includes('Downloading') || lastLine.includes('downloading')) {
+                    // Update button text based on current activity
+                    if (lastLine.includes('downloading') || lastLine.includes('download')) {
                         monitor.btn.textContent = 'Downloading...';
-                    } else if (lastLine.includes('Installing') || lastLine.includes('installing')) {
+                    } else if (lastLine.includes('installing') || lastLine.includes('install')) {
                         monitor.btn.textContent = 'Installing...';
-                    } else if (lastLine.includes('Restarting') || lastLine.includes('restarting')) {
+                    } else if (lastLine.includes('restarting') || lastLine.includes('restart')) {
                         monitor.btn.textContent = 'Restarting...';
-                    } else if (lastLine.includes('Updating') || lastLine.includes('updating')) {
+                        monitor.restartDetected = true;
+                    } else if (lastLine.includes('updating') || lastLine.includes('upgrade')) {
                         monitor.btn.textContent = 'Updating...';
+                    } else if (lastLine.includes('starting') || lastLine.includes('start')) {
+                        monitor.btn.textContent = 'Starting Services...';
+                    } else if (monitor.restartDetected) {
+                        monitor.btn.textContent = 'Post-Restart Check...';
+                        monitor.postRestartAttempts++;
                     } else {
                         monitor.btn.textContent = 'In Progress...';
                     }
                     
+                    // Log new lines
                     if (currentLogLength > monitor.lastLogLength) {
                         const newLines = lines.slice(monitor.lastLogLength);
                         newLines.forEach(line => {
@@ -1334,32 +1366,115 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         monitor.lastLogLength = currentLogLength;
                     }
                 } else {
-                    monitor.btn.textContent = 'Waiting...';
+                    // No logs yet
+                    if (monitor.updateStarted) {
+                        monitor.btn.textContent = 'Checking Logs...';
+                    } else {
+                        monitor.btn.textContent = 'Waiting for Logs...';
+                    }
                 }
                 
+                // Check if we've exceeded max attempts
                 if (monitor.attemptCount >= monitor.maxAttempts) {
-                    console.log(`Update monitoring timeout for ${monitor.deviceName} ${monitor.updateType}`);
+                    console.log(`Update monitoring timeout for ${monitor.deviceName} ${monitor.updateType} after ${monitor.maxAttempts} attempts`);
                     finishUpdateMonitoring(monitorKey, monitor, 'timeout');
+                }
+                
+                // If we've detected restart and are in post-restart phase
+                if (monitor.restartDetected && monitor.postRestartAttempts >= monitor.maxPostRestartAttempts) {
+                    console.log(`Post-restart monitoring complete for ${monitor.deviceName} ${monitor.updateType}`);
+                    monitor.btn.textContent = 'Update Likely Complete';
+                    finishUpdateMonitoring(monitorKey, monitor, 'post_restart_complete');
                 }
             })
             .catch(error => {
                 monitor.consecutiveFailures++;
-                console.log(`Failed to get update logs for ${monitor.deviceName}: ${error.message}`);
                 
-                if (monitor.consecutiveFailures >= monitor.maxConsecutiveFailures) {
-                    console.log(`Too many consecutive failures for ${monitor.deviceName} ${monitor.updateType} - assuming device is restarting`);
-                    monitor.btn.textContent = 'Device Restarting...';
-                    
-                    setTimeout(() => {
-                        finishUpdateMonitoring(monitorKey, monitor, 'restart');
-                    }, 15000);
+                // During updates, ALL connection failures are EXPECTED during restart
+                const isExpectedFailure = error.message.includes('500') || 
+                                        error.message.includes('503') || 
+                                        error.message.includes('502') ||
+                                        error.message.includes('Failed to fetch') ||
+                                        error.message.includes('Network request failed') ||
+                                        error.message.includes('Unable to connect') ||
+                                        error.message.includes('Connection refused') ||
+                                        error.message.includes('ECONNREFUSED') ||
+                                        error.message.includes('ERR_CONNECTION_REFUSED') ||
+                                        error.message.includes('No connection could be made') ||
+                                        error.message.includes('temporarily unavailable') ||
+                                        error.message.includes('establish a connection') ||
+                                        error.message.toLowerCase().includes('connection') ||
+                                        error.message.toLowerCase().includes('timeout') ||
+                                        error.message.toLowerCase().includes('network');
+                
+                if (isExpectedFailure && monitor.updateStarted) {
+                    console.log(`Expected connection failure during update for ${monitor.deviceName}: ${error.message} (this is normal during pNode restart)`);
+                } else if (isExpectedFailure && !monitor.updateStarted) {
+                    console.log(`Connection issue for ${monitor.deviceName}: ${error.message} (may be normal if device is busy)`);
                 } else {
-                    monitor.btn.textContent = `Checking... (${monitor.consecutiveFailures})`;
+                    console.log(`Unexpected error for ${monitor.deviceName}: ${error.message} (failure ${monitor.consecutiveFailures}/${monitor.maxConsecutiveFailures})`);
                 }
                 
+                // Handle different phases of monitoring
+                if (monitor.updateStarted && !monitor.restartDetected) {
+                    // Update has started, so ANY connection failures likely mean restart has begun
+                    if (monitor.consecutiveFailures >= 2) { // Even lower threshold - any connection failure after update starts
+                        console.log(`Device ${monitor.deviceName} appears to be restarting after update (expected - pNode services restarting)`);
+                        monitor.btn.textContent = 'pNode Restarting...';
+                        monitor.restartDetected = true;
+                        monitor.consecutiveFailures = 0; // Reset for post-restart monitoring
+                    } else {
+                        monitor.btn.textContent = `Update in Progress...`;
+                    }
+                } else if (monitor.restartDetected) {
+                    // We're in restart phase - connection failures are completely normal and expected
+                    monitor.postRestartAttempts++;
+                    const totalSeconds = monitor.postRestartAttempts * 5;
+                    const minutesWaiting = Math.floor(totalSeconds / 60);
+                    const secondsWaiting = totalSeconds % 60;
+                    const timeDisplay = minutesWaiting > 0 ? `${minutesWaiting}m${secondsWaiting}s` : `${secondsWaiting}s`;
+                    
+                    if (monitor.consecutiveFailures <= 6) { // 30 seconds
+                        monitor.btn.textContent = `pNode Restarting... (${timeDisplay})`;
+                    } else if (monitor.consecutiveFailures <= 18) { // 90 seconds  
+                        monitor.btn.textContent = `Still Restarting... (${timeDisplay})`;
+                    } else if (monitor.consecutiveFailures <= 36) { // 3 minutes
+                        monitor.btn.textContent = `Long Restart... (${timeDisplay})`;
+                    } else {
+                        monitor.btn.textContent = `Extended Restart... (${timeDisplay})`;
+                    }
+                    
+                    // During restart, we NEVER give up due to connection failures - only timeout
+                    // This is because "Unable to connect" is exactly what we expect during pNode restart
+                } else {
+                    // Update hasn't started yet
+                    if (monitor.consecutiveFailures >= monitor.maxConsecutiveFailures) {
+                        console.log(`Pre-update connection failure for ${monitor.deviceName} - device may be unreachable before update started`);
+                        finishUpdateMonitoring(monitorKey, monitor, 'connection_failed');
+                        return;
+                    } else {
+                        monitor.btn.textContent = `Connecting... (${monitor.consecutiveFailures})`;
+                    }
+                }
+                
+                // Check for overall timeout (this is our ONLY exit condition during restart phase)
                 if (monitor.attemptCount >= monitor.maxAttempts) {
-                    console.log(`Update monitoring timeout for ${monitor.deviceName} ${monitor.updateType}`);
-                    finishUpdateMonitoring(monitorKey, monitor, 'timeout');
+                    console.log(`Update monitoring timeout for ${monitor.deviceName} ${monitor.updateType} after 10 minutes`);
+                    
+                    if (monitor.restartDetected) {
+                        // If we detected a restart, assume update probably succeeded but device needs more time
+                        console.log(`Restart was detected for ${monitor.deviceName} - update likely completed successfully`);
+                        monitor.btn.textContent = 'Update Likely Complete';
+                        finishUpdateMonitoring(monitorKey, monitor, 'timeout_after_restart');
+                    } else if (monitor.updateStarted) {
+                        // Update started but no restart detected yet
+                        console.log(`Update started for ${monitor.deviceName} but no restart detected - may still be in progress`);
+                        monitor.btn.textContent = 'Update May Be Complete';
+                        finishUpdateMonitoring(monitorKey, monitor, 'timeout_after_update_start');
+                    } else {
+                        // Never got past the starting phase
+                        finishUpdateMonitoring(monitorKey, monitor, 'timeout');
+                    }
                 }
             });
         }
@@ -1377,34 +1492,74 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 case 'completed':
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
+                        // Wait a bit longer before refreshing to ensure device is fully ready
+                        setTimeout(() => {
+                            refreshDeviceStatus(monitor.deviceId);
+                        }, 2000);
+                    }, 3000);
+                    break;
+                case 'no_update':
+                    setTimeout(() => {
+                        monitor.btn.textContent = monitor.originalText;
                         refreshDeviceStatus(monitor.deviceId);
                     }, 3000);
                     break;
                 case 'failed':
+                case 'connection_failed':
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
+                        refreshDeviceStatus(monitor.deviceId);
                     }, 5000);
                     break;
                 case 'timeout':
-                    monitor.btn.textContent = 'Timeout - Check Device';
+                    monitor.btn.textContent = 'Check Device Manually';
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
-                        refreshDeviceStatus(monitor.deviceId);
-                    }, 3000);
+                        // Give extra time before refreshing after timeout
+                        setTimeout(() => {
+                            refreshDeviceStatus(monitor.deviceId);
+                        }, 3000);
+                    }, 5000);
                     break;
-                case 'restart':
+                case 'timeout_after_restart':
+                    monitor.btn.textContent = 'Check Device Status';
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
-                        refreshDeviceStatus(monitor.deviceId);
+                        // After a restart was detected, assume update likely succeeded
+                        setTimeout(() => {
+                            refreshDeviceStatus(monitor.deviceId);
+                        }, 3000);
+                    }, 4000);
+                    break;
+                case 'timeout_after_update_start':
+                    monitor.btn.textContent = 'Check Device Status';
+                    setTimeout(() => {
+                        monitor.btn.textContent = monitor.originalText;
+                        // Update started but unclear if completed - check device status
+                        setTimeout(() => {
+                            refreshDeviceStatus(monitor.deviceId);
+                        }, 2000);
+                    }, 4000);
+                    break;
+                case 'post_restart_complete':
+                    setTimeout(() => {
+                        monitor.btn.textContent = monitor.originalText;
+                        // Wait longer after restart to ensure device is fully ready
+                        setTimeout(() => {
+                            refreshDeviceStatus(monitor.deviceId);
+                        }, 5000);
                     }, 3000);
                     break;
                 default:
                     monitor.btn.textContent = monitor.originalText;
+                    setTimeout(() => {
+                        refreshDeviceStatus(monitor.deviceId);
+                    }, 2000);
             }
             
             console.log(`Finished monitoring ${monitor.updateType} update for ${monitor.deviceName} - reason: ${reason}`);
         }
-        
+
         window.onclick = function(event) {
             const addModal = document.getElementById('addModal');
             const editModal = document.getElementById('editModal');
