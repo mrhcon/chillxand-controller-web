@@ -110,7 +110,20 @@ try {
             'status' => 'Offline',
             'response_time' => 0,
             'consecutive_failures' => 0,
-            'timestamp' => date('M j, H:i')
+            'timestamp' => date('M j, H:i'),
+            'health_data' => [
+                'health_status' => 'unknown',
+                'atlas_registered' => false,
+                'pod_status' => 'unknown',
+                'xandminer_status' => 'unknown',
+                'xandminerd_status' => 'unknown'
+            ],
+            'version_data' => [
+                'chillxand_version' => 'N/A',
+                'pod_version' => 'N/A',
+                'xandminer_version' => 'N/A',
+                'xandminerd_version' => 'N/A'
+            ]
         ]);
         exit();
     }
@@ -185,7 +198,20 @@ try {
             'status' => 'Error',
             'response_time' => round($response_time * 1000, 1),
             'consecutive_failures' => 0,
-            'timestamp' => date('M j, H:i')
+            'timestamp' => date('M j, H:i'),
+            'health_data' => [
+                'health_status' => 'unknown',
+                'atlas_registered' => false,
+                'pod_status' => 'unknown',
+                'xandminer_status' => 'unknown',
+                'xandminerd_status' => 'unknown'
+            ],
+            'version_data' => [
+                'chillxand_version' => 'N/A',
+                'pod_version' => 'N/A',
+                'xandminer_version' => 'N/A',
+                'xandminerd_version' => 'N/A'
+            ]
         ]);
         exit();
     }
@@ -241,7 +267,20 @@ try {
             'status' => 'Error',
             'response_time' => round($response_time * 1000, 1),
             'consecutive_failures' => 0,
-            'timestamp' => date('M j, H:i')
+            'timestamp' => date('M j, H:i'),
+            'health_data' => [
+                'health_status' => 'unknown',
+                'atlas_registered' => false,
+                'pod_status' => 'unknown',
+                'xandminer_status' => 'unknown',
+                'xandminerd_status' => 'unknown'
+            ],
+            'version_data' => [
+                'chillxand_version' => 'N/A',
+                'pod_version' => 'N/A',
+                'xandminer_version' => 'N/A',
+                'xandminerd_version' => 'N/A'
+            ]
         ]);
         exit();
     }
@@ -357,7 +396,20 @@ try {
         'health_status' => $health_status,
         'response_time' => round($response_time * 1000, 1),
         'consecutive_failures' => 0,
-        'timestamp' => date('M j, H:i')
+        'timestamp' => date('M j, H:i'),
+        'health_data' => [
+            'health_status' => $health_status,
+            'atlas_registered' => $atlas_registered,
+            'pod_status' => $pod_status ?: 'unknown',
+            'xandminer_status' => $xandminer_status ?: 'unknown',
+            'xandminerd_status' => $xandminerd_status ?: 'unknown'
+        ],
+        'version_data' => [
+            'chillxand_version' => $chillxand_version ?: 'N/A',
+            'pod_version' => $pod_version ?: 'N/A',
+            'xandminer_version' => $xandminer_version ?: 'N/A',
+            'xandminerd_version' => $xandminerd_version ?: 'N/A'
+        ]
     ]);
     
 } catch (Exception $e) {
