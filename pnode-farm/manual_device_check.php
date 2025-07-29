@@ -147,6 +147,7 @@ try {
                 'xandminerd_version' => $cached_health['xandminerd_version'] ?? 'N/A'
             ]
         ]);
+        fclose($connection);
         exit();
     }
     
@@ -192,7 +193,7 @@ try {
         
         $stmt->execute([
             ':device_id' => $device_id,
-            ':status' => 'Error',
+            ':status' => 'Online',
             ':response_time' => $response_time,
             ':check_method' => 'manual',
             ':error_message' => 'HTTP request failed',
@@ -220,7 +221,7 @@ try {
         
         echo json_encode([
             'success' => true,
-            'status' => 'Error',
+            'status' => 'Online',
             'response_time' => round($response_time * 1000, 1),
             'consecutive_failures' => 0,
             'timestamp' => date('M j, H:i'),
@@ -264,7 +265,7 @@ try {
         
         $stmt->execute([
             ':device_id' => $device_id,
-            ':status' => 'Error',
+            ':status' => 'Online',
             ':response_time' => $response_time,
             ':check_method' => 'manual',
             ':error_message' => 'Invalid JSON response',
@@ -292,7 +293,7 @@ try {
         
         echo json_encode([
             'success' => true,
-            'status' => 'Error',
+            'status' => 'Online',
             'response_time' => round($response_time * 1000, 1),
             'consecutive_failures' => 0,
             'timestamp' => date('M j, H:i'),
