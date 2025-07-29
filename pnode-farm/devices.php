@@ -921,33 +921,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             const refreshBtn = document.querySelector(`#refresh-${deviceId}`);
             const lastCheckElement = document.querySelector(`#lastcheck-${deviceId}`);
             
-            // Create debug display
-            let debugDiv = document.getElementById(`debug-${deviceId}`);
-            if (!debugDiv) {
-                debugDiv = document.createElement('div');
-                debugDiv.id = `debug-${deviceId}`;
-                debugDiv.style.cssText = 'position:fixed; top:10px; right:10px; background:white; border:2px solid red; padding:10px; max-width:400px; z-index:9999; font-family:monospace; font-size:12px; max-height:80vh; overflow-y:auto;';
-                document.body.appendChild(debugDiv);
-                
-                // Add close button
-                const closeBtn = document.createElement('button');
-                closeBtn.textContent = 'Close';
-                closeBtn.style.cssText = 'position:absolute; top:5px; right:5px; background:red; color:white; border:none; padding:2px 6px; cursor:pointer;';
-                closeBtn.onclick = () => debugDiv.remove();
-                debugDiv.appendChild(closeBtn);
-            }
-            
-            function addDebug(msg) {
-                debugDiv.innerHTML += msg + '<br>';
-                debugDiv.scrollTop = debugDiv.scrollHeight;
-            }
-            
-            debugDiv.innerHTML = `<strong>DEBUG Device ${deviceId}:</strong><br><button style="position:absolute; top:5px; right:5px; background:red; color:white; border:none; padding:2px 6px; cursor:pointer;" onclick="this.parentElement.remove()">Close</button>`;
-            
             refreshBtn.disabled = true;
             refreshBtn.textContent = '⟳';
-            
-            addDebug('Starting fetch...');
             
             fetch('manual_device_check.php', {
                 method: 'POST',
@@ -955,57 +930,39 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 body: `device_id=${deviceId}`
             })
             .then(response => {
-                addDebug(`HTTP Status: ${response.status} ${response.ok ? 'OK' : 'NOT OK'}`);
                 return response.text();
             })
             .then(responseText => {
-                addDebug(`Response Length: ${responseText.length}`);
-                addDebug(`First 200 chars: ${responseText.substring(0, 200)}`);
-                
                 let data;
                 try {
                     data = JSON.parse(responseText);
-                    addDebug('✅ JSON parsed successfully');
                 } catch (parseError) {
-                    addDebug(`❌ JSON Error: ${parseError.message}`);
-                    alert('JSON Parse Error - Check debug window');
+                    console.error('JSON Parse Error:', parseError.message);
+                    alert('Error parsing response. Please try again.');
                     refreshBtn.disabled = false;
                     refreshBtn.textContent = '↻';
                     return;
                 }
                 
-                addDebug(`data.success: ${data.success}`);
-                addDebug(`data.status: "${data.status}" (type: ${typeof data.status})`);
-                addDebug(`data.status === 'Online': ${data.status === 'Online'}`);
-                
                 if (data.error) {
-                    addDebug(`❌ Error: ${data.error}`);
                     alert('Error: ' + data.error);
                 } else {
                     let overallStatus = 'Unknown';
                     let statusClass = 'unknown';
                     
-                    addDebug('Starting status classification...');
-                    
                     if (data.status === 'Online') {
                         statusClass = 'online';
                         overallStatus = 'Online';
-                        addDebug(`✅ Matched Online - statusClass: ${statusClass}`);
                     } else if (data.status === 'Offline') {
                         statusClass = 'offline'; 
                         overallStatus = 'Offline';
-                        addDebug(`⚠️ Matched Offline - statusClass: ${statusClass}`);
                     } else if (data.status === 'Error') {
                         statusClass = 'error';
                         overallStatus = 'Error';
-                        addDebug(`❌ Matched Error - statusClass: ${statusClass}`);
                     } else {
                         statusClass = 'unknown';
                         overallStatus = data.status || 'Unknown';
-                        addDebug(`❓ No match - statusClass: ${statusClass}, overallStatus: ${overallStatus}`);
                     }
-                    
-                    addDebug(`Final: overallStatus="${overallStatus}", statusClass="${statusClass}"`);
                     
                     // Update status
                     statusElement.innerHTML = `
@@ -1015,16 +972,69 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         <div class="device-details">Response: ${data.response_time}ms</div>
                     `;
                     
-                    // Update health data (keep your existing health update code here)
+                    // Update health data if available
                     const healthElement = statusElement.nextElementSibling;
-                    if (data.health_data) {
-                        // ... your existing health HTML generation code
+                    if (data.health_data && healthElement) {
+                        const healthData = data.health_data;
+                        healthElement.innerHTML = `
+                            <div style="font-size: 10px; line-height: 1.3;">
+                                <div><strong>Health:</strong> 
+                                    <span class="status-btn status-${healthData.health_status == 'pass' ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
+                                        ${healthData.health_status ? healthData.health_status.charAt(0).toUpperCase() + healthData.health_status.slice(1) : 'Unknown'}
+                                    </span>
+                                </div>
+                                <div><strong>Atlas:</strong> 
+                                    <span class="status-btn status-${healthData.atlas_registered ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
+                                        ${healthData.atlas_registered ? 'Yes' : 'No'}
+                                    </span>
+                                </div>
+                                <div><strong>Pod:</strong> 
+                                    <span class="status-btn status-${healthData.pod_status == 'active' ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
+                                        ${healthData.pod_status ? healthData.pod_status.charAt(0).toUpperCase() + healthData.pod_status.slice(1) : 'Unknown'}
+                                    </span>
+                                </div>
+                                <div><strong>XandMiner:</strong> 
+                                    <span class="status-btn status-${healthData.xandminer_status == 'active' ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
+                                        ${healthData.xandminer_status ? healthData.xandminer_status.charAt(0).toUpperCase() + healthData.xandminer_status.slice(1) : 'Unknown'}
+                                    </span>
+                                </div>
+                                <div><strong>XandMinerD:</strong> 
+                                    <span class="status-btn status-${healthData.xandminerd_status == 'active' ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
+                                        ${healthData.xandminerd_status ? healthData.xandminerd_status.charAt(0).toUpperCase() + healthData.xandminerd_status.slice(1) : 'Unknown'}
+                                    </span>
+                                </div>
+                            </div>
+                        `;
                     }
                     
-                    // Update versions (keep your existing version update code here) 
-                    const versionsElement = statusElement.nextElementSibling.nextElementSibling;
-                    if (data.version_data) {
-                        // ... your existing version HTML generation code
+                    // Update versions if available
+                    const versionsElement = healthElement ? healthElement.nextElementSibling : null;
+                    if (data.version_data && versionsElement) {
+                        const versionData = data.version_data;
+                        versionsElement.innerHTML = `
+                            <div class="version-info">
+                                <div><strong>Controller:</strong> 
+                                    <span class="version-value">
+                                        ${versionData.chillxand_version || 'N/A'}
+                                    </span>
+                                </div>
+                                <div><strong>Pod:</strong> 
+                                    <span class="version-value">
+                                        ${versionData.pod_version || 'N/A'}
+                                    </span>
+                                </div>
+                                <div><strong>XandMiner:</strong> 
+                                    <span class="version-value">
+                                        ${versionData.xandminer_version || 'N/A'}
+                                    </span>
+                                </div>
+                                <div><strong>XandMinerD:</strong> 
+                                    <span class="version-value">
+                                        ${versionData.xandminerd_version || 'N/A'}
+                                    </span>
+                                </div>
+                            </div>
+                        `;
                     }
                     
                     // Update timestamp
@@ -1037,7 +1047,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 refreshBtn.textContent = '↻';
             })
             .catch(error => {
-                addDebug(`❌ Fetch Error: ${error.message}`);
+                console.error('Fetch Error:', error.message);
                 alert('Failed to refresh status: ' + error.message);
                 refreshBtn.disabled = false;
                 refreshBtn.textContent = '↻';
