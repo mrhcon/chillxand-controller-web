@@ -960,12 +960,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     // CORRECT WAY: Get the next table cell, not the next table row
                     const healthElement = statusElement.nextElementSibling;
                     
-                    if (data.status === 'Online') {
-                        // Parse health data if available
+                    // Always show health data if we have it (whether online or offline)
+                    if (data.health_data) {
                         let healthHtml = '<div style="font-size: 10px; line-height: 1.3;">';
                         
                         // Health status
-                        const healthStatus = (data.health_data && data.health_data.health_status) || data.health_status || 'unknown';
+                        const healthStatus = data.health_data.health_status || 'unknown';
                         const healthClass = healthStatus === 'pass' ? 'online' : 'offline';
                         healthHtml += `<div><strong>Health:</strong> 
                             <span class="status-btn status-${healthClass}" style="padding: 1px 4px; font-size: 9px;">
@@ -974,7 +974,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         </div>`;
                         
                         // Atlas registration
-                        const atlasRegistered = (data.health_data && data.health_data.atlas_registered) || data.atlas_registered || false;
+                        const atlasRegistered = data.health_data.atlas_registered || false;
                         const atlasClass = atlasRegistered ? 'online' : 'offline';
                         healthHtml += `<div><strong>Atlas:</strong> 
                             <span class="status-btn status-${atlasClass}" style="padding: 1px 4px; font-size: 9px;">
@@ -983,7 +983,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         </div>`;
                         
                         // Pod status
-                        const podStatus = (data.health_data && data.health_data.pod_status) || data.pod_status || 'unknown';
+                        const podStatus = data.health_data.pod_status || 'unknown';
                         const podClass = podStatus === 'active' ? 'online' : 'offline';
                         healthHtml += `<div><strong>Pod:</strong> 
                             <span class="status-btn status-${podClass}" style="padding: 1px 4px; font-size: 9px;">
@@ -992,7 +992,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         </div>`;
                         
                         // XandMiner status
-                        const xandminerStatus = (data.health_data && data.health_data.xandminer_status) || data.xandminer_status || 'unknown';
+                        const xandminerStatus = data.health_data.xandminer_status || 'unknown';
                         const xandminerClass = xandminerStatus === 'active' ? 'online' : 'offline';
                         healthHtml += `<div><strong>XandMiner:</strong> 
                             <span class="status-btn status-${xandminerClass}" style="padding: 1px 4px; font-size: 9px;">
@@ -1001,7 +1001,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         </div>`;
                         
                         // XandMinerD status
-                        const xandminerdStatus = (data.health_data && data.health_data.xandminerd_status) || data.xandminerd_status || 'unknown';
+                        const xandminerdStatus = data.health_data.xandminerd_status || 'unknown';
                         const xandminerdClass = xandminerdStatus === 'active' ? 'online' : 'offline';
                         healthHtml += `<div><strong>XandMinerD:</strong> 
                             <span class="status-btn status-${xandminerdClass}" style="padding: 1px 4px; font-size: 9px;">
@@ -1012,38 +1012,38 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         healthHtml += '</div>';
                         healthElement.innerHTML = healthHtml;
                         
-                    } else if (data.status === 'Not Initialized' || data.status === 'Offline') {
-                        healthElement.innerHTML = `<span class="status-btn status-not-initialized">Not Initialized</span>`;
                     } else {
+                        // Only show "Not Initialized" if we have no health data at all
                         healthElement.innerHTML = `<span class="status-btn status-not-initialized">Not Initialized</span>`;
                     }
                     
                     // CORRECT WAY: Get the versions column (two columns after status)
                     const versionsElement = statusElement.nextElementSibling.nextElementSibling;
                     
-                    if (data.status === 'Online') {
+                    // Always show version data if we have it (whether online or offline)
+                    if (data.version_data) {
                         let versionsHtml = '<div class="version-info">';
                         
                         // Controller version
-                        const controllerVersion = (data.version_data && data.version_data.chillxand_version) || data.chillxand_version || 'N/A';
+                        const controllerVersion = data.version_data.chillxand_version || 'N/A';
                         versionsHtml += `<div><strong>Controller:</strong> 
                             <span class="version-value">${controllerVersion}</span>
                         </div>`;
                         
                         // Pod version
-                        const podVersion = (data.version_data && data.version_data.pod_version) || data.pod_version || 'N/A';
+                        const podVersion = data.version_data.pod_version || 'N/A';
                         versionsHtml += `<div><strong>Pod:</strong> 
                             <span class="version-value">${podVersion}</span>
                         </div>`;
                         
                         // XandMiner version
-                        const xandminerVersion = (data.version_data && data.version_data.xandminer_version) || data.xandminer_version || 'N/A';
+                        const xandminerVersion = data.version_data.xandminer_version || 'N/A';
                         versionsHtml += `<div><strong>XandMiner:</strong> 
                             <span class="version-value">${xandminerVersion}</span>
                         </div>`;
                         
                         // XandMinerD version
-                        const xandminerdVersion = (data.version_data && data.version_data.xandminerd_version) || data.xandminerd_version || 'N/A';
+                        const xandminerdVersion = data.version_data.xandminerd_version || 'N/A';
                         versionsHtml += `<div><strong>XandMinerD:</strong> 
                             <span class="version-value">${xandminerdVersion}</span>
                         </div>`;
@@ -1051,7 +1051,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         versionsHtml += '</div>';
                         versionsElement.innerHTML = versionsHtml;
                         
-                    } else if (data.status !== 'Online') {
+                    } else {
+                        // Only show "Not Initialized" if we have no version data at all
                         versionsElement.innerHTML = `<span class="status-btn status-not-initialized">Not Initialized</span>`;
                     }
                     
