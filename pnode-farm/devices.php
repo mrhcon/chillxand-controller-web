@@ -936,6 +936,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         statusClass = data.status.toLowerCase().replace(' ', '-');
                     }
                     
+                    // Update connectivity status
                     statusElement.innerHTML = `
                         <span class="status-btn status-${statusClass}">${overallStatus}</span>
                         <button class="refresh-btn" id="refresh-${deviceId}" onclick="refreshDeviceStatus(${deviceId})" title="Refresh status">↻</button>
@@ -944,19 +945,137 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         ${data.consecutive_failures > 0 ? `<div class="device-details" style="color: #dc3545;">Failures: ${data.consecutive_failures}</div>` : ''}
                     `;
                     
+                    // Update health status column (next sibling)
                     const healthElement = statusElement.parentNode.nextElementSibling;
-                    if (data.status === 'Online' && data.health_status) {
+                    if (data.status === 'Online' && data.health_data) {
+                        // Parse health data if available
+                        let healthHtml = '<div style="font-size: 10px; line-height: 1.3;">';
+                        
+                        // Health status
+                        const healthStatus = data.health_data.health_status || data.health_status || 'unknown';
+                        const healthClass = healthStatus === 'pass' ? 'online' : 'offline';
+                        healthHtml += `<div><strong>Health:</strong> 
+                            <span class="status-btn status-${healthClass}" style="padding: 1px 4px; font-size: 9px;">
+                                ${healthStatus.charAt(0).toUpperCase() + healthStatus.slice(1)}
+                            </span>
+                        </div>`;
+                        
+                        // Atlas registration
+                        const atlasRegistered = data.health_data.atlas_registered || data.atlas_registered || false;
+                        const atlasClass = atlasRegistered ? 'online' : 'offline';
+                        healthHtml += `<div><strong>Atlas:</strong> 
+                            <span class="status-btn status-${atlasClass}" style="padding: 1px 4px; font-size: 9px;">
+                                ${atlasRegistered ? 'Yes' : 'No'}
+                            </span>
+                        </div>`;
+                        
+                        // Pod status
+                        const podStatus = data.health_data.pod_status || data.pod_status || 'unknown';
+                        const podClass = podStatus === 'active' ? 'online' : 'offline';
+                        healthHtml += `<div><strong>Pod:</strong> 
+                            <span class="status-btn status-${podClass}" style="padding: 1px 4px; font-size: 9px;">
+                                ${podStatus.charAt(0).toUpperCase() + podStatus.slice(1)}
+                            </span>
+                        </div>`;
+                        
+                        // XandMiner status
+                        const xandminerStatus = data.health_data.xandminer_status || data.xandminer_status || 'unknown';
+                        const xandminerClass = xandminerStatus === 'active' ? 'online' : 'offline';
+                        healthHtml += `<div><strong>XandMiner:</strong> 
+                            <span class="status-btn status-${xandminerClass}" style="padding: 1px 4px; font-size: 9px;">
+                                ${xandminerStatus.charAt(0).toUpperCase() + xandminerStatus.slice(1)}
+                            </span>
+                        </div>`;
+                        
+                        // XandMinerD status
+                        const xandminerdStatus = data.health_data.xandminerd_status || data.xandminerd_status || 'unknown';
+                        const xandminerdClass = xandminerdStatus === 'active' ? 'online' : 'offline';
+                        healthHtml += `<div><strong>XandMinerD:</strong> 
+                            <span class="status-btn status-${xandminerdClass}" style="padding: 1px 4px; font-size: 9px;">
+                                ${xandminerdStatus.charAt(0).toUpperCase() + xandminerdStatus.slice(1)}
+                            </span>
+                        </div>`;
+                        
+                        healthHtml += '</div>';
+                        healthElement.innerHTML = healthHtml;
+                        
+                    } else if (data.status === 'Online' && data.health_status) {
+                        // Fallback for simple health status
                         const healthClass = data.health_status === 'pass' ? 'online' : 'offline';
-                        healthElement.innerHTML = `<span class="status-btn status-${healthClass}">${data.health_status.charAt(0).toUpperCase() + data.health_status.slice(1)}</span>`;
-                    } else if (data.status === 'Not Initialized') {
+                        healthElement.innerHTML = `
+                            <div style="font-size: 10px; line-height: 1.3;">
+                                <div><strong>Health:</strong> 
+                                    <span class="status-btn status-${healthClass}" style="padding: 1px 4px; font-size: 9px;">
+                                        ${data.health_status.charAt(0).toUpperCase() + data.health_status.slice(1)}
+                                    </span>
+                                </div>
+                                <div><strong>Atlas:</strong> 
+                                    <span class="status-btn status-offline" style="padding: 1px 4px; font-size: 9px;">
+                                        Unknown
+                                    </span>
+                                </div>
+                                <div><strong>Pod:</strong> 
+                                    <span class="status-btn status-offline" style="padding: 1px 4px; font-size: 9px;">
+                                        Unknown
+                                    </span>
+                                </div>
+                                <div><strong>XandMiner:</strong> 
+                                    <span class="status-btn status-offline" style="padding: 1px 4px; font-size: 9px;">
+                                        Unknown
+                                    </span>
+                                </div>
+                                <div><strong>XandMinerD:</strong> 
+                                    <span class="status-btn status-offline" style="padding: 1px 4px; font-size: 9px;">
+                                        Unknown
+                                    </span>
+                                </div>
+                            </div>
+                        `;
+                    } else if (data.status === 'Not Initialized' || data.status === 'Offline') {
                         healthElement.innerHTML = `<span class="status-btn status-not-initialized">Not Initialized</span>`;
                     } else {
                         healthElement.innerHTML = `<span class="status-btn status-not-initialized">Not Initialized</span>`;
                     }
                     
+                    // Update versions column (two columns after status)
+                    const versionsElement = statusElement.parentNode.nextElementSibling.nextElementSibling;
+                    if (data.status === 'Online' && data.version_data) {
+                        let versionsHtml = '<div class="version-info">';
+                        
+                        // Controller version
+                        const controllerVersion = data.version_data.chillxand_version || data.chillxand_version || 'N/A';
+                        versionsHtml += `<div><strong>Controller:</strong> 
+                            <span class="version-value">${controllerVersion}</span>
+                        </div>`;
+                        
+                        // Pod version
+                        const podVersion = data.version_data.pod_version || data.pod_version || 'N/A';
+                        versionsHtml += `<div><strong>Pod:</strong> 
+                            <span class="version-value">${podVersion}</span>
+                        </div>`;
+                        
+                        // XandMiner version
+                        const xandminerVersion = data.version_data.xandminer_version || data.xandminer_version || 'N/A';
+                        versionsHtml += `<div><strong>XandMiner:</strong> 
+                            <span class="version-value">${xandminerVersion}</span>
+                        </div>`;
+                        
+                        // XandMinerD version
+                        const xandminerdVersion = data.version_data.xandminerd_version || data.xandminerd_version || 'N/A';
+                        versionsHtml += `<div><strong>XandMinerD:</strong> 
+                            <span class="version-value">${xandminerdVersion}</span>
+                        </div>`;
+                        
+                        versionsHtml += '</div>';
+                        versionsElement.innerHTML = versionsHtml;
+                    } else if (data.status !== 'Online') {
+                        versionsElement.innerHTML = `<span class="status-btn status-not-initialized">Not Initialized</span>`;
+                    }
+                    
+                    // Update last checked column
                     lastCheckElement.innerHTML = `
                         <div class="status-fresh">Just now</div>
-                        <div style="font-size: 10px;">${data.timestamp}</div>
+                        <div style="font-size: 10px; color: #999;">${data.timestamp}</div>
                     `;
                 }
                 refreshBtn.disabled = false;
