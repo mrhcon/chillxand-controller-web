@@ -921,6 +921,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             const refreshBtn = document.querySelector(`#refresh-${deviceId}`);
             const lastCheckElement = document.querySelector(`#lastcheck-${deviceId}`);
             
+            console.log('=== DEBUG: Starting refresh for device', deviceId);
+            console.log('Status element:', statusElement);
+            console.log('Status element parent:', statusElement.parentNode);
+            console.log('Health element (next sibling):', statusElement.parentNode.nextElementSibling);
+            console.log('Versions element (sibling after that):', statusElement.parentNode.nextElementSibling.nextElementSibling);
+            
             refreshBtn.disabled = true;
             refreshBtn.textContent = '⟳';
             
@@ -931,6 +937,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             })
             .then(response => response.json())
             .then(data => {
+                console.log('=== DEBUG: Response data:', data);
+                
                 if (data.error) {
                     alert('Error: ' + data.error);
                 } else {
@@ -959,8 +967,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     
                     // Update health status column (next sibling)
                     const healthElement = statusElement.parentNode.nextElementSibling;
+                    console.log('=== DEBUG: About to update health element:', healthElement);
+                    console.log('=== DEBUG: Current health element content:', healthElement.innerHTML);
+                    
                     if (data.status === 'Online') {
-                        console.log('Health data received:', data.health_data); // Debug log
+                        console.log('=== DEBUG: Health data received:', data.health_data);
                         
                         // Parse health data if available
                         let healthHtml = '<div style="font-size: 10px; line-height: 1.3;">';
@@ -1011,40 +1022,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         </div>`;
                         
                         healthHtml += '</div>';
+                        
+                        console.log('=== DEBUG: New health HTML:', healthHtml);
+                        
+                        // REPLACE the content, don't append to it
                         healthElement.innerHTML = healthHtml;
                         
-                    } else if (data.status === 'Online' && data.health_status) {
-                        // Fallback for simple health status
-                        const healthClass = data.health_status === 'pass' ? 'online' : 'offline';
-                        healthElement.innerHTML = `
-                            <div style="font-size: 10px; line-height: 1.3;">
-                                <div><strong>Health:</strong> 
-                                    <span class="status-btn status-${healthClass}" style="padding: 1px 4px; font-size: 9px;">
-                                        ${data.health_status.charAt(0).toUpperCase() + data.health_status.slice(1)}
-                                    </span>
-                                </div>
-                                <div><strong>Atlas:</strong> 
-                                    <span class="status-btn status-offline" style="padding: 1px 4px; font-size: 9px;">
-                                        Unknown
-                                    </span>
-                                </div>
-                                <div><strong>Pod:</strong> 
-                                    <span class="status-btn status-offline" style="padding: 1px 4px; font-size: 9px;">
-                                        Unknown
-                                    </span>
-                                </div>
-                                <div><strong>XandMiner:</strong> 
-                                    <span class="status-btn status-offline" style="padding: 1px 4px; font-size: 9px;">
-                                        Unknown
-                                    </span>
-                                </div>
-                                <div><strong>XandMinerD:</strong> 
-                                    <span class="status-btn status-offline" style="padding: 1px 4px; font-size: 9px;">
-                                        Unknown
-                                    </span>
-                                </div>
-                            </div>
-                        `;
+                        console.log('=== DEBUG: Updated health element content:', healthElement.innerHTML);
+                        
                     } else if (data.status === 'Not Initialized' || data.status === 'Offline') {
                         healthElement.innerHTML = `<span class="status-btn status-not-initialized">Not Initialized</span>`;
                     } else {
@@ -1053,8 +1038,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     
                     // Update versions column (two columns after status)
                     const versionsElement = statusElement.parentNode.nextElementSibling.nextElementSibling;
+                    console.log('=== DEBUG: About to update versions element:', versionsElement);
+                    console.log('=== DEBUG: Current versions element content:', versionsElement.innerHTML);
+                    
                     if (data.status === 'Online') {
-                        console.log('Version data received:', data.version_data); // Debug log
+                        console.log('=== DEBUG: Version data received:', data.version_data);
                         
                         let versionsHtml = '<div class="version-info">';
                         
@@ -1083,7 +1071,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         </div>`;
                         
                         versionsHtml += '</div>';
+                        
+                        console.log('=== DEBUG: New versions HTML:', versionsHtml);
+                        
                         versionsElement.innerHTML = versionsHtml;
+                        
+                        console.log('=== DEBUG: Updated versions element content:', versionsElement.innerHTML);
+                        
                     } else if (data.status !== 'Online') {
                         versionsElement.innerHTML = `<span class="status-btn status-not-initialized">Not Initialized</span>`;
                     }
