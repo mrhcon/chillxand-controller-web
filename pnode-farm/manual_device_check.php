@@ -1,6 +1,9 @@
 <?php
-// manual_device_check.php - Clean version with proper column mapping
+// manual_device_check.php - Fixed version
 session_start();
+
+// Clean any previous output and set proper headers
+ob_clean();
 header('Content-Type: application/json');
 
 require_once 'db_connect.php';
@@ -58,6 +61,22 @@ try {
     $ip = $device['pnode_ip'];
     $port = 3001;
     
+    // Helper function to get cached data
+    function getCachedHealthData($pdo, $device_id) {
+        try {
+            $cached_statuses = getLatestDeviceStatuses($pdo, [$device_id]);
+            $cached_status = $cached_statuses[$device_id] ?? null;
+            $cached_health = [];
+            if ($cached_status) {
+                $cached_health = parseCachedDeviceHealth($cached_status);
+            }
+            return $cached_health;
+        } catch (Exception $e) {
+            error_log("Error getting cached status: " . $e->getMessage());
+            return [];
+        }
+    }
+    
     // Test if port is open
     $connection = @fsockopen($ip, $port, $errno, $errstr, 5);
     if (!$connection) {
@@ -106,94 +125,12 @@ try {
         ]);
                
         // Get cached data to return
-        $cached_statuses = getLatestDeviceStatuses($pdo, [$device_id]);
-        $cached_status = $cached_statuses[$device_id] ?? null;
-        $cached_health = [];
-        if ($cached_status) {
-            $cached_health = parseCachedDeviceHealth($cached_status);
-        }
+        $cached_health = getCachedHealthData($pdo, $device_id);
         
         echo json_encode([
             'success' => true,
             'status' => 'Offline',
             'response_time' => 0,
-            'consecutive_failures' => 0,
-            'timestamp' => date('M j, H:i'),
-            'health_data' => [
-                'health_status' => $cached_health['health_status'] ?? 'unknown',
-                'atlas_registered' => $cached_health['atlas_registered'] ?? false,
-                'pod_status' => $cached_health['pod_status'] ?? 'unknown',
-                'xandminer_status' => $cached_health['xandminer_status'] ?? 'unknown',
-                'xandminerd_status' => $cached_health['xandminerd_status'] ?? 'unknown'
-            ],
-            'version_data' => [
-                'chillxand_version' => $cached_health['chillxand_version'] ?? 'N/A',
-                'pod_version' => $cached_health['pod_version'] ?? 'N/A',
-                'xandminer_version' => $cached_health['xandminer_version'] ?? 'N/A',
-                'xandminerd_version' => $cached_health['xandminerd_version'] ?? 'N/A'
-            ]
-        ]);
-        exit();
-    }
-    
-    // For ERROR responses (HTTP failed, JSON parse failed) - also return cached data
-    if ($response === false || $health_data === null) {
-        // Port is closed - device is offline
-        $stmt = $pdo->prepare("
-            INSERT INTO device_status_log (
-                device_id, status, check_time, response_time, check_method, error_message, 
-                health_status, atlas_registered, pod_status, xandminer_status, 
-                xandminerd_status, cpu_load_avg, memory_percent, memory_total_bytes,
-                memory_used_bytes, server_ip, server_hostname, chillxand_version,
-                pod_version, xandminer_version, xandminerd_version, health_json,
-                consecutive_failures
-            ) VALUES (
-                :device_id, :status, NOW(), :response_time, :check_method, :error_message,
-                :health_status, :atlas_registered, :pod_status, :xandminer_status,
-                :xandminerd_status, :cpu_load_avg, :memory_percent, :memory_total_bytes,
-                :memory_used_bytes, :server_ip, :server_hostname, :chillxand_version,
-                :pod_version, :xandminer_version, :xandminerd_version, :health_json,
-                :consecutive_failures
-            )
-        ");
-        
-        $stmt->execute([
-            ':device_id' => $device_id,
-            ':status' => 'Offline',
-            ':response_time' => null,
-            ':check_method' => 'manual',
-            ':error_message' => "Connection failed: {$errstr} ({$errno})",
-            ':health_status' => null,
-            ':atlas_registered' => false,
-            ':pod_status' => null,
-            ':xandminer_status' => null,
-            ':xandminerd_status' => null,
-            ':cpu_load_avg' => null,
-            ':memory_percent' => null,
-            ':memory_total_bytes' => null,
-            ':memory_used_bytes' => null,
-            ':server_ip' => $ip,
-            ':server_hostname' => null,
-            ':chillxand_version' => null,
-            ':pod_version' => null,
-            ':xandminer_version' => null,
-            ':xandminerd_version' => null,
-            ':health_json' => null,
-            ':consecutive_failures' => 0
-        ]);
-        
-        // Get cached data to return
-        $cached_statuses = getLatestDeviceStatuses($pdo, [$device_id]);
-        $cached_status = $cached_statuses[$device_id] ?? null;
-        $cached_health = [];
-        if ($cached_status) {
-            $cached_health = parseCachedDeviceHealth($cached_status);
-        }
-        
-        echo json_encode([
-            'success' => true,
-            'status' => 'Error',
-            'response_time' => round($response_time * 1000, 1),
             'consecutive_failures' => 0,
             'timestamp' => date('M j, H:i'),
             'health_data' => [
@@ -278,6 +215,9 @@ try {
             ':consecutive_failures' => 0
         ]);
         
+        // Get cached data for error response
+        $cached_health = getCachedHealthData($pdo, $device_id);
+        
         echo json_encode([
             'success' => true,
             'status' => 'Error',
@@ -285,17 +225,17 @@ try {
             'consecutive_failures' => 0,
             'timestamp' => date('M j, H:i'),
             'health_data' => [
-                'health_status' => 'unknown',
-                'atlas_registered' => false,
-                'pod_status' => 'unknown',
-                'xandminer_status' => 'unknown',
-                'xandminerd_status' => 'unknown'
+                'health_status' => $cached_health['health_status'] ?? 'unknown',
+                'atlas_registered' => $cached_health['atlas_registered'] ?? false,
+                'pod_status' => $cached_health['pod_status'] ?? 'unknown',
+                'xandminer_status' => $cached_health['xandminer_status'] ?? 'unknown',
+                'xandminerd_status' => $cached_health['xandminerd_status'] ?? 'unknown'
             ],
             'version_data' => [
-                'chillxand_version' => 'N/A',
-                'pod_version' => 'N/A',
-                'xandminer_version' => 'N/A',
-                'xandminerd_version' => 'N/A'
+                'chillxand_version' => $cached_health['chillxand_version'] ?? 'N/A',
+                'pod_version' => $cached_health['pod_version'] ?? 'N/A',
+                'xandminer_version' => $cached_health['xandminer_version'] ?? 'N/A',
+                'xandminerd_version' => $cached_health['xandminerd_version'] ?? 'N/A'
             ]
         ]);
         exit();
@@ -347,6 +287,9 @@ try {
             ':consecutive_failures' => 0
         ]);
         
+        // Get cached data for JSON parse error
+        $cached_health = getCachedHealthData($pdo, $device_id);
+        
         echo json_encode([
             'success' => true,
             'status' => 'Error',
@@ -354,17 +297,17 @@ try {
             'consecutive_failures' => 0,
             'timestamp' => date('M j, H:i'),
             'health_data' => [
-                'health_status' => 'unknown',
-                'atlas_registered' => false,
-                'pod_status' => 'unknown',
-                'xandminer_status' => 'unknown',
-                'xandminerd_status' => 'unknown'
+                'health_status' => $cached_health['health_status'] ?? 'unknown',
+                'atlas_registered' => $cached_health['atlas_registered'] ?? false,
+                'pod_status' => $cached_health['pod_status'] ?? 'unknown',
+                'xandminer_status' => $cached_health['xandminer_status'] ?? 'unknown',
+                'xandminerd_status' => $cached_health['xandminerd_status'] ?? 'unknown'
             ],
             'version_data' => [
-                'chillxand_version' => 'N/A',
-                'pod_version' => 'N/A',
-                'xandminer_version' => 'N/A',
-                'xandminerd_version' => 'N/A'
+                'chillxand_version' => $cached_health['chillxand_version'] ?? 'N/A',
+                'pod_version' => $cached_health['pod_version'] ?? 'N/A',
+                'xandminer_version' => $cached_health['xandminer_version'] ?? 'N/A',
+                'xandminerd_version' => $cached_health['xandminerd_version'] ?? 'N/A'
             ]
         ]);
         exit();
