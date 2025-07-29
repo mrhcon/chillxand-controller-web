@@ -429,13 +429,26 @@ try {
     
     // For successful connectivity, return the fresh data we just collected
     // Connectivity status is ONLY about whether we can reach the device
-    echo json_encode([
+    
+    // Add debugging output
+    error_log("DEBUG: Device $device_id final response - Status: 'Online', Health: '$health_status', Response time: " . round($response_time * 1000, 1) . "ms");
+    
+    $response_data = [
         'success' => true,
         'status' => 'Online',  // Always "Online" if we got here (port 3001 responded)
         'health_status' => $health_status,
         'response_time' => round($response_time * 1000, 1),
         'consecutive_failures' => 0,
         'timestamp' => date('M j, H:i'),
+        'debug_info' => [
+            'device_id' => $device_id,
+            'device_ip' => $ip,
+            'port_connected' => true,
+            'health_json_received' => !empty($health_data),
+            'health_json_size' => strlen(json_encode($health_data ?? [])),
+            'php_version' => PHP_VERSION,
+            'current_time' => date('Y-m-d H:i:s')
+        ],
         'health_data' => [
             'health_status' => $health_status ?: 'unknown',
             'atlas_registered' => $atlas_registered,
@@ -449,7 +462,11 @@ try {
             'xandminer_version' => $xandminer_version ?: 'N/A',
             'xandminerd_version' => $xandminerd_version ?: 'N/A'
         ]
-    ]);
+    ];
+    
+    error_log("DEBUG: Final JSON response: " . json_encode($response_data));
+    
+    echo json_encode($response_data);
     
 } catch (Exception $e) {
     echo json_encode([
