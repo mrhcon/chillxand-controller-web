@@ -1412,6 +1412,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     
                     // Check for successful completion
                     if (lastFewLines.includes('update completed') ||
+                        lastFewLines.includes('ipdate process finished') ||
                         lastFewLines.includes('update successful') ||
                         lastFewLines.includes('successfully updated') ||
                         lastFewLines.includes('upgrade completed') ||
