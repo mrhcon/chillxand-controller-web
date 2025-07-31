@@ -1830,8 +1830,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         }
 
         function addUpdateStatusIcon(button, type, icon, message) {
-            // Remove any existing status icon
-            const existingIcon = button.parentNode.querySelector('.update-status-icon');
+            // Remove any existing status icon inside this button
+            const existingIcon = button.querySelector('.update-status-icon');
             if (existingIcon) {
                 existingIcon.remove();
             }
@@ -1839,14 +1839,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             // Create new status icon
             const iconSpan = document.createElement('span');
             iconSpan.className = `update-status-icon update-status-${type}`;
-            iconSpan.textContent = icon;
+            iconSpan.textContent = ` ${icon}`; // Space before icon
             iconSpan.title = message;
             iconSpan.style.cursor = 'help';
-            iconSpan.style.marginLeft = '3px';
-            iconSpan.style.display = 'inline-block';
             
-            // Insert immediately after the button
-            button.insertAdjacentElement('afterend', iconSpan);
+            // Append inside the button (after the text)
+            button.appendChild(iconSpan);
         }
 
         function finishUpdateMonitoring(monitorKey, monitor, reason) {
