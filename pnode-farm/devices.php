@@ -550,6 +550,32 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         .summary-offline { color: #dc3545; }
         .summary-total { color: #007bff; }
         .summary-issues { color: #ffc107; }
+        .update-status-icon {
+                display: inline-block;
+                width: 16px;
+                height: 16px;
+                margin-left: 5px;
+                vertical-align: middle;
+                font-size: 14px;
+                line-height: 1;
+                cursor: help;
+            }
+
+            .update-status-error {
+                color: #dc3545;
+            }
+
+            .update-status-warning {
+                color: #ffc107;
+            }
+
+            .update-status-success {
+                color: #28a745;
+            }
+
+            .update-status-icon:hover {
+                opacity: 0.8;
+            }
     </style>
 </head>
 <body>
@@ -1424,11 +1450,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
 
                     case 'complete_warn':
                         monitor.btn.textContent = 'Complete (Warnings)';
+                        monitor.lastWarningMessage = data.message || 'Update completed with warnings';
                         finishUpdateMonitoring(monitorKey, monitor, 'completed');
                         return;
 
                     case 'complete_fail':
                         monitor.btn.textContent = 'Update Failed';
+                        monitor.lastErrorMessage = data.message || 'Update validation failed';
                         finishUpdateMonitoring(monitorKey, monitor, 'failed');
                         return;
 
@@ -1562,7 +1590,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             const secondsWaiting = totalSeconds % 60;
             const timeDisplay = minutesWaiting > 0 ? `${minutesWaiting}m${secondsWaiting}s` : `${secondsWaiting}s`;
             return `In Progress (${timeDisplay})`;
-        }        
+        }
 
         function checkUpdateProgress(monitorKey, monitor) {
             monitor.attemptCount++;
@@ -1801,6 +1829,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             });
         }
 
+        function addUpdateStatusIcon(button, type, icon, message) {
+            // Remove any existing status icon
+            const existingIcon = button.parentNode.querySelector('.update-status-icon');
+            if (existingIcon) {
+                existingIcon.remove();
+            }
+
+            // Create new status icon
+            const iconSpan = document.createElement('span');
+            iconSpan.className = `update-status-icon update-status-${type}`;
+            iconSpan.textContent = icon;
+            iconSpan.title = message; // This creates the hover tooltip
+            iconSpan.style.cursor = 'help'; // Show help cursor on hover
+
+            // Insert after the button
+            button.parentNode.insertBefore(iconSpan, button.nextSibling);
+        }
+
         function finishUpdateMonitoring(monitorKey, monitor, reason) {
             if (monitor.interval) {
                 clearInterval(monitor.interval);
@@ -1810,6 +1856,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
 
             switch (reason) {
                 case 'completed':
+                    addUpdateStatusIcon(monitor.btn, 'success', '✅', 'Update completed successfully');
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
                         monitor.btn.disabled = false;
@@ -1820,6 +1867,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     }, 3000);
                     break;
                 case 'no_update':
+                    addUpdateStatusIcon(monitor.btn, 'success', '✅', 'No update needed - already up to date');
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
                         monitor.btn.disabled = false;
@@ -1831,6 +1879,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     break;
                 case 'failed':
                 case 'connection_failed':
+                    const errorMessage = monitor.lastErrorMessage || 'Update failed - check device status';
+                    addUpdateStatusIcon(monitor.btn, 'error', '❌', errorMessage);
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
                         monitor.btn.disabled = false;
@@ -1840,8 +1890,31 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         }, 10000);
                     }, 5000);
                     break;
+                case 'complete_warn':
+                    const warningMessage = monitor.lastWarningMessage || 'Update completed with warnings';
+                    addUpdateStatusIcon(monitor.btn, 'warning', '⚠️', warningMessage);
+                    setTimeout(() => {
+                        monitor.btn.textContent = monitor.originalText;
+                        monitor.btn.disabled = false;
+                        setTimeout(() => {
+                            refreshDeviceStatus(monitor.deviceId);
+                        }, 3000);
+                    }, 3000);
+                    break;
+                case 'complete_fail':
+                    const failMessage = monitor.lastErrorMessage || 'Update validation failed';
+                    addUpdateStatusIcon(monitor.btn, 'error', '❌', failMessage);
+                    setTimeout(() => {
+                        monitor.btn.textContent = monitor.originalText;
+                        monitor.btn.disabled = false;
+                        setTimeout(() => {
+                            refreshDeviceStatus(monitor.deviceId);
+                        }, 3000);
+                    }, 3000);
+                    break;
                 case 'timeout':
-                    monitor.btn.textContent = 'Timed Out - Check Manually';
+                    addUpdateStatusIcon(monitor.btn, 'error', '❌', 'Update monitoring timed out - check device status manually');
+                    // monitor.btn.textContent = 'Timed Out - Check Manually';
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
                         monitor.btn.disabled = false;
@@ -1852,7 +1925,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     }, 5000);
                     break;
                 case 'timeout_after_restart':
-                    monitor.btn.textContent = 'Update Likely Complete';
+                    addUpdateStatusIcon(monitor.btn, 'warning', '⚠️', 'Update likely completed but monitoring timed out after restart');
+                    // monitor.btn.textContent = 'Update Likely Complete';
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
                         monitor.btn.disabled = false;
@@ -1863,7 +1937,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     }, 4000);
                     break;
                 case 'timeout_after_update_start':
-                    monitor.btn.textContent = 'Check Device Status';
+                    addUpdateStatusIcon(monitor.btn, 'warning', '⚠️', 'Update started but final status unclear - check device manually');
+                    // monitor.btn.textContent = 'Check Device Status';
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
                         monitor.btn.disabled = false;
@@ -1874,6 +1949,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     }, 4000);
                     break;
                 case 'post_restart_complete':
+                    addUpdateStatusIcon(monitor.btn, 'success', '✅', 'Update likely completed successfully');
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
                         monitor.btn.disabled = false;
@@ -1884,6 +1960,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     }, 3000);
                     break;
                 default:
+                    addUpdateStatusIcon(monitor.btn, 'warning', '⚠️', 'Update finished with unknown status');
                     monitor.btn.textContent = monitor.originalText;
                     monitor.btn.disabled = false;
                     setTimeout(() => {
