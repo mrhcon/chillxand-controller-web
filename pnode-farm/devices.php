@@ -379,7 +379,39 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             align-items: flex-start;
             width: 100%;
         }
+        .action-button {
+            width: 200px;
+            padding: 5px 8px;
+            margin: 1px;
+            cursor: pointer;
+            display: inline-block;
+            vertical-align: top;
+            text-align: center;
+            font-size: 10px;
+            border: none;
+            border-radius: 3px;
+            box-sizing: border-box;
+            color: white;
+        }
 
+        /* Color variants */
+        .action-button.refresh { background-color: #17a2b8; }
+        .action-button.refresh:hover { background-color: #138496; }
+        .action-button.refresh:disabled { background-color: #6c757d; cursor: not-allowed; }
+
+        .action-button.edit { background-color: #17a2b8; }
+        .action-button.edit:hover { background-color: #138496; }
+
+        .action-button.delete { background-color: #dc3545; }
+        .action-button.delete:hover { background-color: #c82333; }
+
+        .action-button.update-controller { background-color: #fd7e14; }
+        .action-button.update-controller:hover { background-color: #e66a00; }
+        .action-button.update-controller:disabled { background-color: #ccc; cursor: not-allowed; }
+
+        .action-button.update-pod { background-color: #6f42c1; }
+        .action-button.update-pod:hover { background-color: #59359a; }
+        .action-button.update-pod:disabled { background-color: #ccc; cursor: not-allowed; }
         .update-button-row {
             display: flex;
             align-items: center;
@@ -425,48 +457,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         }
 
         .summary-container { margin-bottom: 20px; padding: 10px; border: 1px solid #ccc; background: #f9f9f9; }
-        .action-btn-tiny {
-            padding: 5px 8px;
-            margin: 1px;
-            cursor: pointer;
-            display: inline-block;
-            vertical-align: top;
-            min-width: 50px;
-            width: 200px;
-            text-align: center;
-            font-size: 10px;
-            border: 1px solid #ddd;
-            border-radius: 3px;
-            background-color: #f8f9fa;
-            color: #495057;
-            box-sizing: border-box;
-        }
-        .action-btn-tiny:hover {
-            background-color: #e9ecef;
-            border-color: #adb5bd;
-        }
-
-        .action-btn-tiny.action-edit {
-            background-color: #17a2b8;
-            color: white;
-            border-color: #17a2b8;
-        }
-
-        .action-btn-tiny.action-edit:hover {
-            background-color: #138496;
-            border-color: #117a8b;
-        }
-
-        .action-btn-tiny.action-delete {
-            background-color: #dc3545;
-            color: white;
-            border-color: #dc3545;
-        }
-
-        .action-btn-tiny.action-delete:hover {
-            background-color: #c82333;
-            border-color: #bd2130;
-        }
         .error { color: red; }
         .status-age { font-size: 10px; color: #666; }
         .status-stale { color: #ff6600; }
@@ -840,7 +830,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                         <span class="status-btn status-<?php echo strtolower(str_replace(' ', '-', $device['status'])); ?>">
                                             <?php echo htmlspecialchars($device['status']); ?>
                                         </span>
-                                        <button class="refresh-btn" id="refresh-<?php echo $device['id']; ?>" onclick="refreshDeviceStatus(<?php echo $device['id']; ?>)" title="Refresh status">↻</button>
                                        <div class="status-age <?php echo $device['status_stale'] ? 'status-stale' : 'status-fresh'; ?>">
                                            <?php if ($device['last_check']): ?>
                                                <?php echo $device['status_age'] ? round($device['status_age']) . 'm ago' : 'Just now'; ?>
@@ -931,15 +920,28 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                    <td>
                                         <div class="update-buttons-container">
                                             <div class="update-button-row">
-                                                <button type="button" class="action-btn-tiny action-edit"
+                                                <button class="action-button refresh" id="refresh-<?php echo $device['id']; ?>" onclick="refreshDeviceStatus(<?php echo $device['id']; ?>)" title="Refresh device status">
+                                                    ↻ Refresh Status
+                                                </button>
+                                            </div>
+                                            
+                                            <!-- Big gap -->
+                                            <div class="button-gap"></div>       
+
+                                            <div class="update-button-row">
+                                                <button type="button" class="action-button edit"
                                                         onclick="openEditModal(<?php echo $device['id']; ?>, '<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>', '<?php echo htmlspecialchars($device['pnode_ip']); ?>')">Edit</button>
                                             </div>
                                             <div class="update-button-row">
-                                                <button type="button" class="action-btn-tiny action-delete"
+                                                <button type="button" class="action-button delete"
                                                         onclick="openDeleteModal(<?php echo $device['id']; ?>, '<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>')">Delete</button>
                                             </div>
+
+                                            <!-- Big gap -->
+                                            <div class="button-gap"></div>
+
                                             <div class="update-button-row">
-                                                        <button type="button" class="update-btn-controller"
+                                                        <button type="button" class="action-button update-controller"
                                                         data-device-id="<?php echo $device['id']; ?>"
                                                         data-device-ip="<?php echo htmlspecialchars($device['pnode_ip']); ?>"
                                                         data-device-name="<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>">
@@ -947,7 +949,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                                 </button>
                                             </div>
                                             <div class="update-button-row">
-                                                <button type="button" class="update-btn-pod"
+                                                <button type="button" class="action-button update-pod"
                                                         data-device-id="<?php echo $device['id']; ?>"
                                                         data-device-ip="<?php echo htmlspecialchars($device['pnode_ip']); ?>"
                                                         data-device-name="<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>">
