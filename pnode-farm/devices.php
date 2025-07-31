@@ -1409,9 +1409,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         break;
 
                     case 'restarting':
-                        monitor.btn.textContent = 'Restarting...';
-                        monitor.restartDetected = true;
-                        monitor.restartConfirmed = true;
+                        if (!monitor.restartDetected) {
+                            monitor.restartDetected = true;
+                            monitor.restartConfirmed = true;
+                            monitor.postRestartAttempts = 0;
+                        }
+                        monitor.btn.textContent = updateRestartTimer(monitor);
                         break;
 
                     case 'complete_success':
@@ -1480,30 +1483,28 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
 
                     // Update has started - only detect restart if we have strong indicators
                     if (monitor.serviceRestartDetected && monitor.consecutiveFailures >= 3) {
-                        // We saw restart in logs AND multiple connection failures
                         console.log(`Service restart confirmed for ${monitor.deviceName} - service is restarting`);
-                        monitor.btn.textContent = 'Restarting...';
-                        monitor.restartDetected = true;
-                        monitor.restartConfirmed = true;
+                        if (!monitor.restartDetected) {
+                            monitor.restartDetected = true;
+                            monitor.restartConfirmed = true;
+                            monitor.postRestartAttempts = 0;
+                        }
+                        monitor.btn.textContent = updateRestartTimer(monitor);
                         monitor.consecutiveFailures = 0;
                     } else if (monitor.consecutiveFailures >= 8) {
-                        // Many failures but no restart in logs - might be restart anyway
                         console.log(`Possible restart detected for ${monitor.deviceName} (no log confirmation)`);
-                        monitor.btn.textContent = 'Possible Restart...';
-                        monitor.restartDetected = true;
+                        if (!monitor.restartDetected) {
+                            monitor.restartDetected = true;
+                            monitor.postRestartAttempts = 0;
+                        }
+                        monitor.btn.textContent = `Possible ${updateRestartTimer(monitor)}`;
                         monitor.consecutiveFailures = 0;
                     } else {
                         monitor.btn.textContent = `Update in Progress... (checking ${monitor.consecutiveFailures})`;
                     }
                 } else if (monitor.restartDetected) {
                     // We're in restart phase - connection failures are expected
-                    monitor.postRestartAttempts++;
-                    const totalSeconds = monitor.postRestartAttempts * 10; // Updated for 10-second intervals
-                    const minutesWaiting = Math.floor(totalSeconds / 60);
-                    const secondsWaiting = totalSeconds % 60;
-                    const timeDisplay = minutesWaiting > 0 ? `${minutesWaiting}m${secondsWaiting}s` : `${secondsWaiting}s`;
-
-                    monitor.btn.textContent = `Restarting (${timeDisplay})`;
+                    monitor.btn.textContent = updateRestartTimer(monitor);
 
                     // During restart, connection failures are completely normal
                     // Only exit on overall timeout, not connection failures
@@ -1540,6 +1541,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     }
                 }
             });
+        }
+
+        function updateRestartTimer(monitor) {
+            monitor.postRestartAttempts++;
+            const totalSeconds = monitor.postRestartAttempts * 10;
+            const minutesWaiting = Math.floor(totalSeconds / 60);
+            const secondsWaiting = totalSeconds % 60;
+            const timeDisplay = minutesWaiting > 0 ? `${minutesWaiting}m${secondsWaiting}s` : `${secondsWaiting}s`;
+            return `Restarting (${timeDisplay})`;
         }
 
         function checkUpdateProgress(monitorKey, monitor) {
