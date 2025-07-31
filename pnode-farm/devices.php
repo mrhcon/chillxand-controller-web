@@ -1268,9 +1268,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
 
                 if (data.success) {
                     if (data.status === 'no_update_needed') {
-                        btn.textContent = 'No Update Needed';
-                        console.log(`Controller update: ${data.message}`);
                         addUpdateStatusIcon(btn, 'success', '✅', 'No update needed - already up to date');
+                        btn.textContent = 'No Update Needed';
                         btn.disabled = false;
                         setTimeout(() => {
                             btn.textContent = originalText;
@@ -1281,6 +1280,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         console.log(`Controller update started for ${deviceName}: ${data.message}`);
                         startUpdateMonitoring(deviceId, deviceIp, deviceName, 'controller', btn, originalText);
                     } else if (data.status === 'error_github_check') {
+                        addUpdateStatusIcon(btn, 'error', '❌', `GitHub error: ${data.message}`);
                         btn.textContent = 'GitHub Check Failed';
                         btn.disabled = false;
                         setTimeout(() => {
@@ -1289,6 +1289,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         console.error(`Controller update GitHub error for ${deviceName}: ${data.message}`);
                         alert(`Controller update failed for ${deviceName}\n\nGitHub Error: ${data.message}`);
                     } else if (data.status === 'exception') {
+                        addUpdateStatusIcon(btn, 'error', '❌', `Exception: ${data.message}`);
                         btn.textContent = 'Update Exception';
                         btn.disabled = false;
                         setTimeout(() => {
@@ -1297,6 +1298,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         console.error(`Controller update exception for ${deviceName}: ${data.message}`);
                         alert(`Controller update failed for ${deviceName}\n\nException: ${data.message}`);
                     } else {
+                        addUpdateStatusIcon(btn, 'warning', '⚠️', `Status: ${data.status} - ${data.message}`);
                         btn.textContent = 'Update Response';
                         console.log(`Controller update response for ${deviceName}: Status=${data.status}, Message=${data.message}`);
                         setTimeout(() => {
