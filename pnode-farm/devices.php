@@ -1399,7 +1399,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         return;
 
                     case 'update_initiated':
-                        monitor.btn.textContent = 'Update Started';
+                        monitor.btn.textContent = updateInProgressTimer(monitor);
                         monitor.updateStarted = true;
                         break;
 
@@ -1551,6 +1551,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             const timeDisplay = minutesWaiting > 0 ? `${minutesWaiting}m${secondsWaiting}s` : `${secondsWaiting}s`;
             return `Restarting (${timeDisplay})`;
         }
+
+        function updateInProgressTimer(monitor) {
+            if (!monitor.inProgressStart) {
+                monitor.inProgressStart = monitor.attemptCount;
+            }
+            const inProgressAttempts = monitor.attemptCount - monitor.inProgressStart + 1;
+            const totalSeconds = inProgressAttempts * 10; // 10-second intervals
+            const minutesWaiting = Math.floor(totalSeconds / 60);
+            const secondsWaiting = totalSeconds % 60;
+            const timeDisplay = minutesWaiting > 0 ? `${minutesWaiting}m${secondsWaiting}s` : `${secondsWaiting}s`;
+            return `In Progress (${timeDisplay})`;
+        }        
 
         function checkUpdateProgress(monitorKey, monitor) {
             monitor.attemptCount++;
