@@ -330,7 +330,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             padding: 5px 8px;
             margin: 2px;
             cursor: pointer;
-            display: block;
+            display: inline-block;
             vertical-align: top;
             min-width: 50px;
             width: 200px;
@@ -408,7 +408,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         .status-log-table th, .status-log-table td {
             border: 1px solid #ddd;
             padding: 4px;
-            text-align: left;
+            text-align: center;
             font-size: 11px;
             vertical-align: top;
         }
@@ -429,7 +429,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             padding: 5px 8px;
             margin: 2px;
             cursor: pointer;
-            display: block;
+            display: inline-block;
             vertical-align: top;
             min-width: 50px;
             width: 200px;
