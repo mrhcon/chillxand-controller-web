@@ -1269,6 +1269,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 if (data.success) {
                     if (data.status === 'no_update_needed') {
                         btn.textContent = 'No Update Needed';
+                        console.log(`Controller update: ${data.message}`);
+                        addUpdateStatusIcon(btn, 'success', '✅', 'No update needed - already up to date');
                         btn.disabled = false;
                         setTimeout(() => {
                             btn.textContent = originalText;
