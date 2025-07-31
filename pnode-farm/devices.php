@@ -327,37 +327,42 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
     <style>
         .summary-container { margin-bottom: 20px; padding: 10px; border: 1px solid #ccc; background: #f9f9f9; }
         .action-btn-tiny {
-            padding: 5px 10px;
-            margin-left: 10px;
+            padding: 5px 8px;
+            margin: 2px;
             cursor: pointer;
             display: inline-block;
             vertical-align: top;
-            min-width: 60px;
+            min-width: 50px;
             text-align: center;
-            font-size: 11px;
+            font-size: 10px;
             border: 1px solid #ddd;
             border-radius: 3px;
             background-color: #f8f9fa;
             color: #495057;
+            box-sizing: border-box;
         }
         .action-btn-tiny:hover {
             background-color: #e9ecef;
             border-color: #adb5bd;
         }
+
         .action-btn-tiny.action-edit {
             background-color: #17a2b8;
             color: white;
             border-color: #17a2b8;
         }
+
         .action-btn-tiny.action-edit:hover {
             background-color: #138496;
             border-color: #117a8b;
         }
+
         .action-btn-tiny.action-delete {
             background-color: #dc3545;
             color: white;
             border-color: #dc3545;
         }
+
         .action-btn-tiny.action-delete:hover {
             background-color: #c82333;
             border-color: #bd2130;
@@ -419,40 +424,46 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         .log-metrics { font-size: 10px; color: #666; }
         .log-error { color: #dc3545; font-size: 10px; }
 
-        /* Update buttons styling */
-        .update-btn-controller,  {
-            background-color: #fd7e14;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            font-size: 10px;
-            border-radius: 3px;
+        .update-btn-controller, .update-btn-pod {
+            padding: 5px 8px;
+            margin: 2px;
             cursor: pointer;
-            margin-left: 5px;
-            margin-top: 3px;
             display: inline-block;
             vertical-align: top;
-            min-width: 100px;
+            min-width: 90px;
+            text-align: center;
+            font-size: 10px;
+            border: none;
+            border-radius: 3px;
+            color: white;
+            box-sizing: border-box; /* Important for consistent sizing */
         }
-        .update-btn-controller:hover { background-color: #e66a00; }
-        .update-btn-controller:disabled { background-color: #ccc; cursor: not-allowed; }
+
+        .update-btn-controller {
+            background-color: #fd7e14;
+        }
+
+        .update-btn-controller:hover {
+            background-color: #e66a00;
+        }
+
+        .update-btn-controller:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
 
         .update-btn-pod {
             background-color: #6f42c1;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            font-size: 10px;
-            border-radius: 3px;
-            cursor: pointer;
-            margin-left: 5px;
-            margin-top: 3px;
-            display: inline-block;
-            vertical-align: top;
-            min-width: 100px;
         }
-        .update-btn-pod:hover { background-color: #59359a; }
-        .update-btn-pod:disabled { background-color: #ccc; cursor: not-allowed; }
+
+        .update-btn-pod:hover {
+            background-color: #59359a;
+        }
+
+        .update-btn-pod:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
 
         /* Modal styling */
         .modal {
