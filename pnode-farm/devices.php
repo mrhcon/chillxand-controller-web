@@ -330,10 +330,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             user-select: none;
             position: relative;
             padding-right: 20px;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            transition: background-color 0.2s ease;
         }
 
         .sortable-header:hover {
             background-color: #e9ecef;
+            color: #007bff;
+        }
+
+        .sortable-header::before {
+            content: "⇅";
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 10px;
+            color: #999;
+            opacity: 0.7;
         }
 
         .sort-indicator {
@@ -342,16 +357,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             top: 50%;
             transform: translateY(-50%);
             font-size: 12px;
-            color: #666;
+            color: #007bff;
+            font-weight: bold;
         }
 
-        .sort-asc::after {
+        .sort-asc .sort-indicator::after {
             content: " ▲";
         }
 
-        .sort-desc::after {
+        .sort-desc .sort-indicator::after {
             content: " ▼";
-        }        
+        }
+
+        .sort-asc::before,
+        .sort-desc::before {
+            display: none;
+        }
         .update-buttons-container {
             display: flex;
             flex-direction: column;
@@ -362,7 +383,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             display: flex;
             align-items: center;
             margin: 2px 0;
-        }        
+        }
         .summary-container { margin-bottom: 20px; padding: 10px; border: 1px solid #ccc; background: #f9f9f9; }
         .action-btn-tiny {
             padding: 5px 8px;
@@ -869,23 +890,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                    </td>
                                    <td>
                                         <div class="update-buttons-container">
-                                            <div class="update-button-row">                                    
+                                            <div class="update-button-row">
                                                 <button type="button" class="action-btn-tiny action-edit"
                                                         onclick="openEditModal(<?php echo $device['id']; ?>, '<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>', '<?php echo htmlspecialchars($device['pnode_ip']); ?>')">Edit</button>
-                                            </div>  
-                                            <div class="update-button-row">                                                                                                                                  
+                                            </div>
+                                            <div class="update-button-row">
                                                 <button type="button" class="action-btn-tiny action-delete"
                                                         onclick="openDeleteModal(<?php echo $device['id']; ?>, '<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>')">Delete</button>
-                                            </div>  
-                                            <div class="update-button-row">  
+                                            </div>
+                                            <div class="update-button-row">
                                                         <button type="button" class="update-btn-controller"
                                                         data-device-id="<?php echo $device['id']; ?>"
                                                         data-device-ip="<?php echo htmlspecialchars($device['pnode_ip']); ?>"
                                                         data-device-name="<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>">
                                                     Update Controller
                                                 </button>
-                                            </div>  
-                                            <div class="update-button-row">                                                  
+                                            </div>
+                                            <div class="update-button-row">
                                                 <button type="button" class="update-btn-pod"
                                                         data-device-id="<?php echo $device['id']; ?>"
                                                         data-device-ip="<?php echo htmlspecialchars($device['pnode_ip']); ?>"
@@ -893,7 +914,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                                     Update Pod
                                                 </button>
                                             </div>
-                                        </div>         
+                                        </div>
                                    </td>
                                </tr>
                            <?php endforeach; ?>
@@ -2137,14 +2158,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         document.addEventListener('DOMContentLoaded', function() {
             const table = document.querySelector('.device-table');
             if (!table) return;
-            
+
             const headers = table.querySelectorAll('.sortable-header');
             let currentSort = { column: null, direction: 'asc' };
-            
+
             headers.forEach(header => {
                 header.addEventListener('click', function() {
                     const sortType = this.getAttribute('data-sort');
-                    
+
                     // Toggle direction if clicking same column
                     if (currentSort.column === sortType) {
                         currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
@@ -2152,13 +2173,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         currentSort.direction = 'asc';
                     }
                     currentSort.column = sortType;
-                    
+
                     // Update visual indicators
                     headers.forEach(h => {
                         h.classList.remove('sort-asc', 'sort-desc');
                     });
                     this.classList.add(currentSort.direction === 'asc' ? 'sort-asc' : 'sort-desc');
-                    
+
                     // Sort the table
                     sortTable(table, sortType, currentSort.direction);
                 });
@@ -2168,24 +2189,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         function sortTable(table, sortType, direction) {
             const tbody = table.querySelector('tbody');
             const rows = Array.from(tbody.querySelectorAll('tr'));
-            
+
             rows.sort((a, b) => {
                 let aValue, bValue;
-                
+
                 switch(sortType) {
                     case 'name':
                         aValue = a.cells[0].textContent.trim().toLowerCase();
                         bValue = b.cells[0].textContent.trim().toLowerCase();
                         break;
-                        
+
                     case 'ip':
                         aValue = a.cells[1].textContent.trim();
                         bValue = b.cells[1].textContent.trim();
                         // Sort IPs numerically
-                        return direction === 'asc' ? 
-                            compareIPs(aValue, bValue) : 
+                        return direction === 'asc' ?
+                            compareIPs(aValue, bValue) :
                             compareIPs(bValue, aValue);
-                        
+
                     case 'connectivity':
                         aValue = a.cells[3].querySelector('.status-btn').textContent.trim();
                         bValue = b.cells[3].querySelector('.status-btn').textContent.trim();
@@ -2194,7 +2215,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         const aOrder = connectivityOrder[aValue] || 999;
                         const bOrder = connectivityOrder[bValue] || 999;
                         return direction === 'asc' ? aOrder - bOrder : bOrder - aOrder;
-                        
+
                     case 'health':
                         // Get the overall health status from the health column
                         const aHealthElement = a.cells[4].querySelector('.status-btn');
@@ -2206,17 +2227,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         const aHealthOrder = healthOrder[aValue] || 999;
                         const bHealthOrder = healthOrder[bValue] || 999;
                         return direction === 'asc' ? aHealthOrder - bHealthOrder : bHealthOrder - aHealthOrder;
-                        
+
                     default:
                         aValue = a.cells[0].textContent.trim().toLowerCase();
                         bValue = b.cells[0].textContent.trim().toLowerCase();
                 }
-                
+
                 if (aValue < bValue) return direction === 'asc' ? -1 : 1;
                 if (aValue > bValue) return direction === 'asc' ? 1 : -1;
                 return 0;
             });
-            
+
             // Re-append sorted rows
             rows.forEach(row => tbody.appendChild(row));
         }
@@ -2224,14 +2245,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         function compareIPs(ip1, ip2) {
             const parts1 = ip1.split('.').map(Number);
             const parts2 = ip2.split('.').map(Number);
-            
+
             for (let i = 0; i < 4; i++) {
                 if (parts1[i] !== parts2[i]) {
                     return parts1[i] - parts2[i];
                 }
             }
             return 0;
-        }        
+        }
     </script>
 </body>
 </html>
