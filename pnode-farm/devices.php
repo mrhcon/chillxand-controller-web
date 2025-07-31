@@ -1904,9 +1904,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         }
 
         function addUpdateStatusIcon(button, type, icon, message) {
-            // Remove any existing status icon from the parent cell
-            const parentCell = button.closest('td');
-            const existingIcon = parentCell.querySelector(`.update-status-icon[data-button-id="${button.dataset.deviceId}-${button.classList.contains('update-btn-controller') ? 'controller' : 'pod'}"]`);
+            // Remove any existing status icon from the button row
+            const buttonRow = button.closest('.update-button-row');
+            const existingIcon = buttonRow.querySelector('.update-status-icon');
             if (existingIcon) {
                 existingIcon.remove();
             }
@@ -1916,19 +1916,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             iconSpan.className = `update-status-icon update-status-${type}`;
             iconSpan.textContent = icon;
             iconSpan.title = message;
-            iconSpan.dataset.buttonId = `${button.dataset.deviceId}-${button.classList.contains('update-btn-controller') ? 'controller' : 'pod'}`;
             iconSpan.style.cssText = `
                 cursor: help;
-                margin-left: 3px;
-                display: inline;
+                margin-left: 5px;
+                display: inline-block;
                 vertical-align: middle;
                 font-size: 14px;
+                line-height: 1;
             `;
 
-            // Insert icon right after the button (same line)
-            button.insertAdjacentElement('afterend', iconSpan);
+            // Add icon to the same row as the button
+            buttonRow.appendChild(iconSpan);
 
-            console.log('Added icon after button:', button);
+            console.log('Added icon to button row:', buttonRow);
         }
 
         function finishUpdateMonitoring(monitorKey, monitor, reason) {
