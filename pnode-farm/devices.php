@@ -1830,8 +1830,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         }
 
         function addUpdateStatusIcon(button, type, icon, message) {
-            // Remove any existing status icon inside this button
-            const existingIcon = button.querySelector('.update-status-icon');
+            // Check if button is already wrapped
+            let wrapper = button.parentElement;
+            if (!wrapper.classList.contains('button-wrapper')) {
+                // Create a wrapper div
+                wrapper = document.createElement('div');
+                wrapper.className = 'button-wrapper';
+                wrapper.style.cssText = `
+                    display: inline-block;
+                    position: relative;
+                    margin-left: 5px;
+                    margin-top: 3px;
+                `;
+                
+                // Insert wrapper and move button into it
+                button.parentNode.insertBefore(wrapper, button);
+                wrapper.appendChild(button);
+            }
+            
+            // Remove any existing status icon
+            const existingIcon = wrapper.querySelector('.update-status-icon');
             if (existingIcon) {
                 existingIcon.remove();
             }
@@ -1839,12 +1857,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             // Create new status icon
             const iconSpan = document.createElement('span');
             iconSpan.className = `update-status-icon update-status-${type}`;
-            iconSpan.textContent = ` ${icon}`; // Space before icon
+            iconSpan.textContent = icon;
             iconSpan.title = message;
-            iconSpan.style.cursor = 'help';
+            iconSpan.style.cssText = `
+                cursor: help;
+                margin-left: 5px;
+                display: inline-block;
+                vertical-align: middle;
+                font-size: 14px;
+                position: absolute;
+                left: 100%;
+                top: 50%;
+                transform: translateY(-50%);
+            `;
             
-            // Append inside the button (after the text)
-            button.appendChild(iconSpan);
+            // Add icon to wrapper
+            wrapper.appendChild(iconSpan);
+            
+            console.log('Added icon to wrapper:', wrapper);
         }
 
         function finishUpdateMonitoring(monitorKey, monitor, reason) {
