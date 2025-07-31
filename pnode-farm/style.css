@@ -386,6 +386,14 @@ button:hover {
     margin: 0;
 }
 
+.device-table th:last-child,
+.device-table td:last-child {
+    width: 230px;
+    max-width: 230px;
+    padding: 5px;
+    vertical-align: top;
+}
+
 .inner-table {
     width: 100%;
     margin: 10px 0;
