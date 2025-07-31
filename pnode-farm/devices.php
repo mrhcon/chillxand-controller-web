@@ -330,10 +330,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             padding: 5px 8px;
             margin: 2px;
             cursor: pointer;
-            display: inline-block;
+            display: block;
             vertical-align: top;
             min-width: 50px;
-            width: 120px;
+            width: 150px;
             text-align: center;
             font-size: 10px;
             border: 1px solid #ddd;
@@ -429,10 +429,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             padding: 5px 8px;
             margin: 2px;
             cursor: pointer;
-            display: inline-block;
+            display: block;
             vertical-align: top;
             min-width: 50px;
-            width: 120px;
+            width: 150px;
             text-align: center;
             font-size: 10px;
             border: none;
