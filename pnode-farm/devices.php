@@ -377,17 +377,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             display: flex;
             flex-direction: column;
             align-items: flex-start;
+            width: 100%;
         }
 
         .update-button-row {
             display: flex;
             align-items: center;
-            margin: 2px 0;
+            margin: 1px 0;
+            width: 100%;
         }
         .summary-container { margin-bottom: 20px; padding: 10px; border: 1px solid #ccc; background: #f9f9f9; }
         .action-btn-tiny {
             padding: 5px 8px;
-            margin: 2px;
+            margin: 1px;
             cursor: pointer;
             display: inline-block;
             vertical-align: top;
@@ -486,7 +488,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
 
         .update-btn-controller, .update-btn-pod {
             padding: 5px 8px;
-            margin: 2px;
+            margin: 1px;
             cursor: pointer;
             display: inline-block;
             vertical-align: top;
