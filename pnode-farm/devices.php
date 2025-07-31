@@ -820,7 +820,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                                onclick="openEditModal(<?php echo $device['id']; ?>, '<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>', '<?php echo htmlspecialchars($device['pnode_ip']); ?>')">Edit</button>
                                        <button type="button" class="action-btn-tiny action-delete"
                                                onclick="openDeleteModal(<?php echo $device['id']; ?>, '<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>')">Delete</button>
-                                       <br>
                                        <button type="button" class="update-btn-controller"
                                                data-device-id="<?php echo $device['id']; ?>"
                                                data-device-ip="<?php echo htmlspecialchars($device['pnode_ip']); ?>"
