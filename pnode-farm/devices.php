@@ -392,18 +392,32 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             color: #666;
         }
 
+        /* Align labels and values horizontally */
         .status-info > div {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 2px;
+            min-height: 16px;
         }
 
         .status-info strong {
             font-weight: bold;
             color: #333;
+            flex-shrink: 0;
+            margin-right: 5px;
         }
 
         .status-value {
             color: #333;
             font-weight: normal;
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        .status-btn.status-value {
+            color: white !important;
+            text-align: center;
         }
 
         .version-value {
