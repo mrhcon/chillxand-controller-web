@@ -1951,6 +1951,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     }, 3000);
                     break;
                 case 'no_update':
+                    console.log('DEBUG: no_update case triggered for button:', monitor.btn);
+                    console.log('DEBUG: button parent elements:', monitor.btn.parentElement, monitor.btn.closest('.update-button-row'));
                     addUpdateStatusIcon(monitor.btn, 'success', '✅', 'No update needed - already up to date');
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;

@@ -363,7 +363,7 @@ button:hover {
     margin-top: 10px;
 }
 
-.device-table th, .device-table td, .user-table th, .user-table td {
+.device-table td, .user-table td {
     border: 1px solid #ddd;
     padding: 8px;
     text-align: left;
@@ -372,6 +372,9 @@ button:hover {
 .device-table th, .user-table th {
     background-color: #f2f2f2;
     font-weight: bold;
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: center;    
 }
 
 .device-table tr:nth-child(even), .user-table tr:nth-child(even) {
@@ -454,12 +457,16 @@ details summary {
 .log-table th, .log-table td {
     border: 1px solid #ddd;
     padding: 4px;
-    text-align: left;
 }
 
 .log-table th {
     background-color: #e9ecef;
     font-weight: bold;
+    text-align: center;
+}
+
+.log-table td {
+    text-align: left;
 }
 
 .log-table tr:nth-child(odd) {
