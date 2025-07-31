@@ -325,6 +325,33 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon-16x16.png">
     <link rel="stylesheet" href="style.css">
     <style>
+        .sortable-header {
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+            padding-right: 20px;
+        }
+
+        .sortable-header:hover {
+            background-color: #e9ecef;
+        }
+
+        .sort-indicator {
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 12px;
+            color: #666;
+        }
+
+        .sort-asc::after {
+            content: " ▲";
+        }
+
+        .sort-desc::after {
+            content: " ▼";
+        }        
         .update-buttons-container {
             display: flex;
             flex-direction: column;
@@ -720,11 +747,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     <table class="device-table">
                         <thead>
                             <tr>
-                                <th>Node Name</th>
-                                <th>IP Address</th>
+                                <th class="sortable-header" data-sort="name">
+                                    Node Name
+                                    <span class="sort-indicator"></span>
+                                </th>
+                                <th class="sortable-header" data-sort="ip">
+                                    IP Address
+                                    <span class="sort-indicator"></span>
+                                </th>
                                 <th>Registration Date</th>
-                                <th>Connectivity</th>
-                                <th>Health Status</th>
+                                <th class="sortable-header" data-sort="connectivity">
+                                    Connectivity
+                                    <span class="sort-indicator"></span>
+                                </th>
+                                <th class="sortable-header" data-sort="health">
+                                    Health Status
+                                    <span class="sort-indicator"></span>
+                                </th>
                                 <th>Versions</th>
                                 <th>Last Checked</th>
                                 <th>Actions</th>
@@ -1955,8 +1994,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     }, 3000);
                     break;
                 case 'no_update':
-                    console.log('DEBUG: no_update case triggered for button:', monitor.btn);
-                    console.log('DEBUG: button parent elements:', monitor.btn.parentElement, monitor.btn.closest('.update-button-row'));
                     addUpdateStatusIcon(monitor.btn, 'success', '✅', 'No update needed - already up to date');
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
@@ -2095,6 +2132,106 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 closeUpdatePodModal();
             }
         });
+
+        // Table sorting functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const table = document.querySelector('.device-table');
+            if (!table) return;
+            
+            const headers = table.querySelectorAll('.sortable-header');
+            let currentSort = { column: null, direction: 'asc' };
+            
+            headers.forEach(header => {
+                header.addEventListener('click', function() {
+                    const sortType = this.getAttribute('data-sort');
+                    
+                    // Toggle direction if clicking same column
+                    if (currentSort.column === sortType) {
+                        currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        currentSort.direction = 'asc';
+                    }
+                    currentSort.column = sortType;
+                    
+                    // Update visual indicators
+                    headers.forEach(h => {
+                        h.classList.remove('sort-asc', 'sort-desc');
+                    });
+                    this.classList.add(currentSort.direction === 'asc' ? 'sort-asc' : 'sort-desc');
+                    
+                    // Sort the table
+                    sortTable(table, sortType, currentSort.direction);
+                });
+            });
+        });
+
+        function sortTable(table, sortType, direction) {
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            
+            rows.sort((a, b) => {
+                let aValue, bValue;
+                
+                switch(sortType) {
+                    case 'name':
+                        aValue = a.cells[0].textContent.trim().toLowerCase();
+                        bValue = b.cells[0].textContent.trim().toLowerCase();
+                        break;
+                        
+                    case 'ip':
+                        aValue = a.cells[1].textContent.trim();
+                        bValue = b.cells[1].textContent.trim();
+                        // Sort IPs numerically
+                        return direction === 'asc' ? 
+                            compareIPs(aValue, bValue) : 
+                            compareIPs(bValue, aValue);
+                        
+                    case 'connectivity':
+                        aValue = a.cells[3].querySelector('.status-btn').textContent.trim();
+                        bValue = b.cells[3].querySelector('.status-btn').textContent.trim();
+                        // Custom order: Online, Offline, Error, etc.
+                        const connectivityOrder = { 'Online': 1, 'Offline': 2, 'Error': 3, 'Not Initialized': 4 };
+                        const aOrder = connectivityOrder[aValue] || 999;
+                        const bOrder = connectivityOrder[bValue] || 999;
+                        return direction === 'asc' ? aOrder - bOrder : bOrder - aOrder;
+                        
+                    case 'health':
+                        // Get the overall health status from the health column
+                        const aHealthElement = a.cells[4].querySelector('.status-btn');
+                        const bHealthElement = b.cells[4].querySelector('.status-btn');
+                        aValue = aHealthElement ? aHealthElement.textContent.trim() : 'Unknown';
+                        bValue = bHealthElement ? bHealthElement.textContent.trim() : 'Unknown';
+                        // Custom order: pass/Healthy first, then fail/Issues, then unknown
+                        const healthOrder = { 'Pass': 1, 'Healthy': 1, 'Fail': 2, 'Issues': 2, 'Not Initialized': 3, 'Unknown': 4 };
+                        const aHealthOrder = healthOrder[aValue] || 999;
+                        const bHealthOrder = healthOrder[bValue] || 999;
+                        return direction === 'asc' ? aHealthOrder - bHealthOrder : bHealthOrder - aHealthOrder;
+                        
+                    default:
+                        aValue = a.cells[0].textContent.trim().toLowerCase();
+                        bValue = b.cells[0].textContent.trim().toLowerCase();
+                }
+                
+                if (aValue < bValue) return direction === 'asc' ? -1 : 1;
+                if (aValue > bValue) return direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+            
+            // Re-append sorted rows
+            rows.forEach(row => tbody.appendChild(row));
+        }
+
+        function compareIPs(ip1, ip2) {
+            const parts1 = ip1.split('.').map(Number);
+            const parts2 = ip2.split('.').map(Number);
+            
+            for (let i = 0; i < 4; i++) {
+                if (parts1[i] !== parts2[i]) {
+                    return parts1[i] - parts2[i];
+                }
+            }
+            return 0;
+        }        
     </script>
 </body>
 </html>
