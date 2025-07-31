@@ -326,7 +326,42 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
     <link rel="stylesheet" href="style.css">
     <style>
         .summary-container { margin-bottom: 20px; padding: 10px; border: 1px solid #ccc; background: #f9f9f9; }
-        .action-btn-tiny { padding: 5px 10px; margin-left: 10px; cursor: pointer; }
+        .action-btn-tiny {
+            padding: 5px 10px;
+            margin-left: 10px;
+            cursor: pointer;
+            display: inline-block;
+            vertical-align: top;
+            min-width: 60px;
+            text-align: center;
+            font-size: 11px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            background-color: #f8f9fa;
+            color: #495057;
+        }
+        .action-btn-tiny:hover {
+            background-color: #e9ecef;
+            border-color: #adb5bd;
+        }
+        .action-btn-tiny.action-edit {
+            background-color: #17a2b8;
+            color: white;
+            border-color: #17a2b8;
+        }
+        .action-btn-tiny.action-edit:hover {
+            background-color: #138496;
+            border-color: #117a8b;
+        }
+        .action-btn-tiny.action-delete {
+            background-color: #dc3545;
+            color: white;
+            border-color: #dc3545;
+        }
+        .action-btn-tiny.action-delete:hover {
+            background-color: #c82333;
+            border-color: #bd2130;
+        }
         .error { color: red; }
         .status-age { font-size: 10px; color: #666; }
         .status-stale { color: #ff6600; }
@@ -385,7 +420,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         .log-error { color: #dc3545; font-size: 10px; }
 
         /* Update buttons styling */
-        .update-btn-controller {
+        .update-btn-controller,  {
             background-color: #fd7e14;
             color: white;
             border: none;
@@ -395,6 +430,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             cursor: pointer;
             margin-left: 5px;
             margin-top: 3px;
+            display: inline-block;
+            vertical-align: top;
+            min-width: 100px;
         }
         .update-btn-controller:hover { background-color: #e66a00; }
         .update-btn-controller:disabled { background-color: #ccc; cursor: not-allowed; }
@@ -409,6 +447,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             cursor: pointer;
             margin-left: 5px;
             margin-top: 3px;
+            display: inline-block;
+            vertical-align: top;
+            min-width: 100px;
         }
         .update-btn-pod:hover { background-color: #59359a; }
         .update-btn-pod:disabled { background-color: #ccc; cursor: not-allowed; }
@@ -1830,51 +1871,31 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         }
 
         function addUpdateStatusIcon(button, type, icon, message) {
-            // Check if button is already wrapped
-            let wrapper = button.parentElement;
-            if (!wrapper.classList.contains('button-wrapper')) {
-                // Create a wrapper div
-                wrapper = document.createElement('div');
-                wrapper.className = 'button-wrapper';
-                wrapper.style.cssText = `
-                    display: inline-block;
-                    position: relative;
-                    margin-left: 5px;
-                    margin-top: 3px;
-                `;
-                
-                // Insert wrapper and move button into it
-                button.parentNode.insertBefore(wrapper, button);
-                wrapper.appendChild(button);
-            }
-            
-            // Remove any existing status icon
-            const existingIcon = wrapper.querySelector('.update-status-icon');
+            // Remove any existing status icon from the parent cell
+            const parentCell = button.closest('td');
+            const existingIcon = parentCell.querySelector(`.update-status-icon[data-button-id="${button.dataset.deviceId}-${button.classList.contains('update-btn-controller') ? 'controller' : 'pod'}"]`);
             if (existingIcon) {
                 existingIcon.remove();
             }
-            
+
             // Create new status icon
             const iconSpan = document.createElement('span');
             iconSpan.className = `update-status-icon update-status-${type}`;
             iconSpan.textContent = icon;
             iconSpan.title = message;
+            iconSpan.dataset.buttonId = `${button.dataset.deviceId}-${button.classList.contains('update-btn-controller') ? 'controller' : 'pod'}`;
             iconSpan.style.cssText = `
                 cursor: help;
-                margin-left: 5px;
-                display: inline-block;
+                margin-left: 3px;
+                display: inline;
                 vertical-align: middle;
                 font-size: 14px;
-                position: absolute;
-                left: 100%;
-                top: 50%;
-                transform: translateY(-50%);
             `;
-            
-            // Add icon to wrapper
-            wrapper.appendChild(iconSpan);
-            
-            console.log('Added icon to wrapper:', wrapper);
+
+            // Insert icon right after the button (same line)
+            button.insertAdjacentElement('afterend', iconSpan);
+
+            console.log('Added icon after button:', button);
         }
 
         function finishUpdateMonitoring(monitorKey, monitor, reason) {
