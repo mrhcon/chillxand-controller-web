@@ -833,14 +833,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                             <div class="update-button-row">                                    
                                                 <button type="button" class="action-btn-tiny action-edit"
                                                         onclick="openEditModal(<?php echo $device['id']; ?>, '<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>', '<?php echo htmlspecialchars($device['pnode_ip']); ?>')">Edit</button>
+                                            </div>  
+                                            <div class="update-button-row">                                                                                                                                  
                                                 <button type="button" class="action-btn-tiny action-delete"
                                                         onclick="openDeleteModal(<?php echo $device['id']; ?>, '<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>')">Delete</button>
-                                                <button type="button" class="update-btn-controller"
+                                            </div>  
+                                            <div class="update-button-row">  
+                                                        <button type="button" class="update-btn-controller"
                                                         data-device-id="<?php echo $device['id']; ?>"
                                                         data-device-ip="<?php echo htmlspecialchars($device['pnode_ip']); ?>"
                                                         data-device-name="<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>">
                                                     Update Controller
                                                 </button>
+                                            </div>  
+                                            <div class="update-button-row">                                                  
                                                 <button type="button" class="update-btn-pod"
                                                         data-device-id="<?php echo $device['id']; ?>"
                                                         data-device-ip="<?php echo htmlspecialchars($device['pnode_ip']); ?>"
