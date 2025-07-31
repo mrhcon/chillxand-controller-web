@@ -325,6 +325,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon-16x16.png">
     <link rel="stylesheet" href="style.css">
     <style>
+        .button-gap {
+            height: 15px;
+        }
         .sortable-header {
             cursor: pointer;
             user-select: none;
@@ -394,10 +397,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             color: white;
         }
 
-        /* Color variants */
-        .action-button.refresh { background-color: #17a2b8; }
-        .action-button.refresh:hover { background-color: #138496; }
-        .action-button.refresh:disabled { background-color: #6c757d; cursor: not-allowed; }
+        .action-button.refresh { 
+            background-color: #28a745; 
+        }
+        .action-button.refresh:hover { 
+            background-color: #218838; 
+        }
+        .action-button.refresh:disabled { 
+            background-color: #6c757d; 
+            cursor: not-allowed; 
+        }
 
         .action-button.edit { background-color: #17a2b8; }
         .action-button.edit:hover { background-color: #138496; }
@@ -924,9 +933,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                                     ↻ Refresh Status
                                                 </button>
                                             </div>
-                                            
+
                                             <!-- Big gap -->
-                                            <div class="button-gap"></div>       
+                                            <div class="button-gap"></div>
 
                                             <div class="update-button-row">
                                                 <button type="button" class="action-button edit"
