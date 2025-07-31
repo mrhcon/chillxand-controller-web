@@ -325,6 +325,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon-16x16.png">
     <link rel="stylesheet" href="style.css">
     <style>
+        .update-buttons-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .update-button-row {
+            display: flex;
+            align-items: center;
+            margin: 2px 0;
+        }        
         .summary-container { margin-bottom: 20px; padding: 10px; border: 1px solid #ccc; background: #f9f9f9; }
         .action-btn-tiny {
             padding: 5px 8px;
@@ -818,22 +829,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                        <?php endif; ?>
                                    </td>
                                    <td>
-                                       <button type="button" class="action-btn-tiny action-edit"
-                                               onclick="openEditModal(<?php echo $device['id']; ?>, '<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>', '<?php echo htmlspecialchars($device['pnode_ip']); ?>')">Edit</button>
-                                       <button type="button" class="action-btn-tiny action-delete"
-                                               onclick="openDeleteModal(<?php echo $device['id']; ?>, '<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>')">Delete</button>
-                                       <button type="button" class="update-btn-controller"
-                                               data-device-id="<?php echo $device['id']; ?>"
-                                               data-device-ip="<?php echo htmlspecialchars($device['pnode_ip']); ?>"
-                                               data-device-name="<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>">
-                                           Update Controller
-                                       </button>
-                                       <button type="button" class="update-btn-pod"
-                                               data-device-id="<?php echo $device['id']; ?>"
-                                               data-device-ip="<?php echo htmlspecialchars($device['pnode_ip']); ?>"
-                                               data-device-name="<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>">
-                                           Update Pod
-                                       </button>
+                                        <div class="update-buttons-container">
+                                            <div class="update-button-row">                                    
+                                                <button type="button" class="action-btn-tiny action-edit"
+                                                        onclick="openEditModal(<?php echo $device['id']; ?>, '<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>', '<?php echo htmlspecialchars($device['pnode_ip']); ?>')">Edit</button>
+                                                <button type="button" class="action-btn-tiny action-delete"
+                                                        onclick="openDeleteModal(<?php echo $device['id']; ?>, '<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>')">Delete</button>
+                                                <button type="button" class="update-btn-controller"
+                                                        data-device-id="<?php echo $device['id']; ?>"
+                                                        data-device-ip="<?php echo htmlspecialchars($device['pnode_ip']); ?>"
+                                                        data-device-name="<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>">
+                                                    Update Controller
+                                                </button>
+                                                <button type="button" class="update-btn-pod"
+                                                        data-device-id="<?php echo $device['id']; ?>"
+                                                        data-device-ip="<?php echo htmlspecialchars($device['pnode_ip']); ?>"
+                                                        data-device-name="<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>">
+                                                    Update Pod
+                                                </button>
+                                            </div>
+                                        </div>         
                                    </td>
                                </tr>
                            <?php endforeach; ?>
