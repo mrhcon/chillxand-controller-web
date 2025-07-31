@@ -1835,16 +1835,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             if (existingIcon) {
                 existingIcon.remove();
             }
-
+            
             // Create new status icon
             const iconSpan = document.createElement('span');
             iconSpan.className = `update-status-icon update-status-${type}`;
             iconSpan.textContent = icon;
-            iconSpan.title = message; // This creates the hover tooltip
-            iconSpan.style.cursor = 'help'; // Show help cursor on hover
-
-            // Insert after the button
-            button.parentNode.insertBefore(iconSpan, button.nextSibling);
+            iconSpan.title = message;
+            iconSpan.style.cursor = 'help';
+            iconSpan.style.marginLeft = '3px';
+            iconSpan.style.display = 'inline-block';
+            
+            // Insert immediately after the button
+            button.insertAdjacentElement('afterend', iconSpan);
         }
 
         function finishUpdateMonitoring(monitorKey, monitor, reason) {
