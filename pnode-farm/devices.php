@@ -1399,12 +1399,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         return;
 
                     case 'update_initiated':
-                        monitor.btn.textContent = updateInProgressTimer(monitor);
+                        monitor.btn.textContent = 'Update Started';
                         monitor.updateStarted = true;
                         break;
 
                     case 'in_progress':
-                        monitor.btn.textContent = 'In Progress...';
+                        monitor.btn.textContent = updateInProgressTimer(monitor);
                         monitor.updateStarted = true;
                         break;
 
@@ -1500,7 +1500,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         monitor.btn.textContent = `Possible ${updateRestartTimer(monitor)}`;
                         monitor.consecutiveFailures = 0;
                     } else {
-                        monitor.btn.textContent = `Update in Progress... (checking ${monitor.consecutiveFailures})`;
+                        monitor.btn.textContent = `In Progress (${monitor.consecutiveFailures})`;
                     }
                 } else if (monitor.restartDetected) {
                     // We're in restart phase - connection failures are expected
@@ -1822,6 +1822,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 case 'no_update':
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
+                        monitor.btn.disabled = false;
                         // Quick refresh if no update was needed
                         setTimeout(() => {
                             refreshDeviceStatus(monitor.deviceId);
@@ -1832,6 +1833,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 case 'connection_failed':
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
+                        monitor.btn.disabled = false;
                         // Wait a bit in case device is recovering
                         setTimeout(() => {
                             refreshDeviceStatus(monitor.deviceId);
@@ -1842,6 +1844,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     monitor.btn.textContent = 'Timed Out - Check Manually';
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
+                        monitor.btn.disabled = false;
                         // Give extra time before refreshing after timeout
                         setTimeout(() => {
                             refreshDeviceStatus(monitor.deviceId);
@@ -1852,6 +1855,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     monitor.btn.textContent = 'Update Likely Complete';
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
+                        monitor.btn.disabled = false;
                         // After restart was confirmed, wait longer before checking
                         setTimeout(() => {
                             refreshDeviceStatus(monitor.deviceId);
@@ -1862,6 +1866,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     monitor.btn.textContent = 'Check Device Status';
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
+                        monitor.btn.disabled = false;
                         // Update started but status unclear
                         setTimeout(() => {
                             refreshDeviceStatus(monitor.deviceId);
@@ -1871,6 +1876,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 case 'post_restart_complete':
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
+                        monitor.btn.disabled = false;
                         // Wait after restart to ensure device is fully ready
                         setTimeout(() => {
                             refreshDeviceStatus(monitor.deviceId);
@@ -1879,6 +1885,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     break;
                 default:
                     monitor.btn.textContent = monitor.originalText;
+                    monitor.btn.disabled = false;
                     setTimeout(() => {
                         refreshDeviceStatus(monitor.deviceId);
                     }, 5000);
