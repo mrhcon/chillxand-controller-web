@@ -333,7 +333,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             display: inline-block;
             vertical-align: top;
             min-width: 50px;
-            width: 120x;
+            width: 120px;
             text-align: center;
             font-size: 10px;
             border: 1px solid #ddd;
@@ -432,7 +432,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             display: inline-block;
             vertical-align: top;
             min-width: 50px;
-            width: 120x;
+            width: 120px;
             text-align: center;
             font-size: 10px;
             border: none;
