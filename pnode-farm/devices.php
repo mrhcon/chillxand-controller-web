@@ -74,9 +74,9 @@ try {
 // Fetch user's devices with latest status (FAST - no blocking operations!)
 try {
     $stmt = $pdo->prepare("
-        SELECT d.id, d.pnode_name, d.pnode_ip, d.registration_date 
-        FROM devices d 
-        WHERE d.username = :username OR :admin = 1 
+        SELECT d.id, d.pnode_name, d.pnode_ip, d.registration_date
+        FROM devices d
+        WHERE d.username = :username OR :admin = 1
         ORDER BY d.pnode_name ASC
     ");
     $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
@@ -84,16 +84,16 @@ try {
     $stmt->execute();
     $devices = $stmt->fetchAll(PDO::FETCH_ASSOC);
     error_log("Fetched " . count($devices) . " devices for user {$_SESSION['username']}");
-    
+
     // Get latest statuses for all devices at once (super efficient!)
     $device_ids = array_column($devices, 'id');
     $cached_statuses = getLatestDeviceStatuses($pdo, $device_ids);
-    
+
     // Add cached status and health data to each device
     $updated_devices = [];
     $summaries = [];
     $limit = 3;
-    
+
     foreach ($devices as $device) {
         $device_id = $device['id'];
         $cached_status = $cached_statuses[$device_id] ?? [
@@ -101,7 +101,7 @@ try {
             'is_stale' => true,
             'error_message' => 'Device has not been checked yet'
         ];
-        
+
         // Add status from cache
         $device['status'] = $cached_status['status'];
         $device['status_age'] = $cached_status['age_minutes'];
@@ -110,7 +110,7 @@ try {
         $device['response_time'] = $cached_status['response_time'];
         $device['consecutive_failures'] = $cached_status['consecutive_failures'];
         $device['health_status'] = $cached_status['health_status'];
-        
+
         // Determine overall status (connectivity + health)
         $overall_status = 'Unknown';
         if ($device['status'] === 'Online') {
@@ -127,18 +127,18 @@ try {
             $overall_status = $device['status'];
         }
         $device['overall_status'] = $overall_status;
-        
+
         // Parse health data from cached data
         $summaries[$device_id] = parseCachedDeviceHealth($cached_status);
-        
+
         // Fetch initial device status logs (instead of user interactions)
         $sql = "
             SELECT status, check_time, response_time, error_message, health_status,
                    atlas_registered, pod_status, xandminer_status, xandminerd_status,
                    cpu_load_avg, memory_percent, consecutive_failures
-            FROM device_status_log 
+            FROM device_status_log
             WHERE device_id = :device_id
-            ORDER BY check_time DESC 
+            ORDER BY check_time DESC
             LIMIT :limit
         ";
         $stmt = $pdo->prepare($sql);
@@ -146,22 +146,22 @@ try {
         $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
         $stmt->execute();
         $device['logs'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
+
         // Count total device status logs
         $sql = "
-            SELECT COUNT(*) 
-            FROM device_status_log 
+            SELECT COUNT(*)
+            FROM device_status_log
             WHERE device_id = :device_id
         ";
         $stmt = $pdo->prepare($sql);
         $stmt->bindValue(':device_id', $device_id, PDO::PARAM_INT);
         $stmt->execute();
         $device['total_logs'] = $stmt->fetchColumn();
-        
+
         $updated_devices[] = $device;
     }
     $devices = $updated_devices;
-    
+
 } catch (PDOException $e) {
     $error = "Error fetching devices or logs: " . $e->getMessage();
     error_log("PDOException in device/log fetch: " . $e->getMessage());
@@ -172,7 +172,7 @@ try {
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['action'] == 'add') {
     $pnode_name = trim($_POST['pnode_name']);
     $pnode_ip = trim($_POST['pnode_ip']);
-    
+
     if (empty($pnode_name) || empty($pnode_ip)) {
         $error = "Please fill in all fields.";
         logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Empty fields');
@@ -198,10 +198,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
                 $stmt->bindValue(':pnode_ip', $pnode_ip, PDO::PARAM_STR);
                 $stmt->execute();
-                
+
                 // Get the new device ID (no seeding required - system handles gracefully)
                 $new_device_id = $pdo->lastInsertId();
-                
+
                 logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_success', "Device: $pnode_name, IP: $pnode_ip");
                 if (PHP_SAPI !== 'cli') {
                     header("Location: devices.php");
@@ -223,7 +223,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
     $device_id = $_POST['device_id'];
     $pnode_name = trim($_POST['pnode_name']);
     $pnode_ip = trim($_POST['pnode_ip']);
-    
+
     if (empty($pnode_name) || empty($pnode_ip)) {
         $error = "Please fill in all fields.";
         logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_edit_failed', 'Empty fields');
@@ -260,7 +260,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
                     $stmt->bindValue(':admin', $_SESSION['admin'], PDO::PARAM_INT);
                     $stmt->execute();
-                    
+
                     logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_edit_success', "Device ID: $device_id, New Name: $pnode_name, New IP: $pnode_ip");
                     if (PHP_SAPI !== 'cli') {
                         header("Location: devices.php");
@@ -331,14 +331,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         .status-age { font-size: 10px; color: #666; }
         .status-stale { color: #ff6600; }
         .status-fresh { color: #006600; }
-        .refresh-btn { 
-            background-color: #17a2b8; 
-            color: white; 
-            border: none; 
-            padding: 3px 6px; 
-            font-size: 11px; 
-            border-radius: 3px; 
-            cursor: pointer; 
+        .refresh-btn {
+            background-color: #17a2b8;
+            color: white;
+            border: none;
+            padding: 3px 6px;
+            font-size: 11px;
+            border-radius: 3px;
+            cursor: pointer;
             margin-left: 5px;
             width: 18px;
             height: 18px;
@@ -348,8 +348,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             justify-content: center;
             transition: all 0.2s ease;
         }
-        .refresh-btn:hover { 
-            background-color: #138496; 
+        .refresh-btn:hover {
+            background-color: #138496;
             transform: scale(1.1);
         }
         .refresh-btn:disabled {
@@ -364,11 +364,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         .last-check-col { font-size: 11px; color: #666; }
         .never-checked { font-style: italic; color: #999; }
         .status-log-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; }
-        .status-log-table th, .status-log-table td { 
-            border: 1px solid #ddd; 
-            padding: 4px; 
-            text-align: left; 
-            font-size: 11px; 
+        .status-log-table th, .status-log-table td {
+            border: 1px solid #ddd;
+            padding: 4px;
+            text-align: left;
+            font-size: 11px;
             vertical-align: top;
         }
         .status-log-table th { background-color: #f8f9fa; font-weight: bold; }
@@ -383,36 +383,36 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         .log-service-inactive { color: #dc3545; }
         .log-metrics { font-size: 10px; color: #666; }
         .log-error { color: #dc3545; font-size: 10px; }
-        
+
         /* Update buttons styling */
-        .update-btn-controller { 
-            background-color: #fd7e14; 
-            color: white; 
-            border: none; 
-            padding: 5px 10px; 
-            font-size: 10px; 
-            border-radius: 3px; 
-            cursor: pointer; 
+        .update-btn-controller {
+            background-color: #fd7e14;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            font-size: 10px;
+            border-radius: 3px;
+            cursor: pointer;
             margin-left: 5px;
             margin-top: 3px;
         }
         .update-btn-controller:hover { background-color: #e66a00; }
         .update-btn-controller:disabled { background-color: #ccc; cursor: not-allowed; }
-        
-        .update-btn-pod { 
-            background-color: #6f42c1; 
-            color: white; 
-            border: none; 
-            padding: 5px 10px; 
-            font-size: 10px; 
-            border-radius: 3px; 
-            cursor: pointer; 
+
+        .update-btn-pod {
+            background-color: #6f42c1;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            font-size: 10px;
+            border-radius: 3px;
+            cursor: pointer;
             margin-left: 5px;
             margin-top: 3px;
         }
         .update-btn-pod:hover { background-color: #59359a; }
         .update-btn-pod:disabled { background-color: #ccc; cursor: not-allowed; }
-        
+
         /* Modal styling */
         .modal {
             display: none;
@@ -515,8 +515,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             background-color: #0056b3;
         }
         .version-info {
-            font-size: 10px; 
-            line-height: 1.3; 
+            font-size: 10px;
+            line-height: 1.3;
             color: #666;
         }
         .version-value {
@@ -584,7 +584,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 <?php if (isset($error)): ?>
                     <p class="error"><?php echo htmlspecialchars($error); ?></p>
                 <?php endif; ?>
-                
+
                 <div style="margin-bottom: 20px;">
                     <button type="button" class="action-btn" id="add-device-btn" onclick="openAddModal()">Add New Device</button>
                 </div>
@@ -648,7 +648,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                     <td id="status-<?php echo $device['id']; ?>">
                                         <span class="status-btn status-<?php echo strtolower(str_replace(' ', '-', $device['status'])); ?>">
                                             <?php echo htmlspecialchars($device['status']); ?>
-                                        </span>                                        
+                                        </span>
                                         <button class="refresh-btn" id="refresh-<?php echo $device['id']; ?>" onclick="refreshDeviceStatus(<?php echo $device['id']; ?>)" title="Refresh status">↻</button>
                                        <div class="status-age <?php echo $device['status_stale'] ? 'status-stale' : 'status-fresh'; ?>">
                                            <?php if ($device['last_check']): ?>
@@ -669,27 +669,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                            <span class="status-btn status-not-initialized">Not Initialized</span>
                                        <?php else: ?>
                                            <div style="font-size: 10px; line-height: 1.3;">
-                                               <div><strong>Health:</strong> 
+                                               <div><strong>Health:</strong>
                                                    <span class="status-btn status-<?php echo $summaries[$device['id']]['health_status'] == 'pass' ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
                                                        <?php echo ucfirst($summaries[$device['id']]['health_status'] ?? 'unknown'); ?>
                                                    </span>
                                                </div>
-                                               <div><strong>Atlas:</strong> 
+                                               <div><strong>Atlas:</strong>
                                                    <span class="status-btn status-<?php echo $summaries[$device['id']]['atlas_registered'] ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
                                                        <?php echo $summaries[$device['id']]['atlas_registered'] ? 'Yes' : 'No'; ?>
                                                    </span>
                                                </div>
-                                               <div><strong>Pod:</strong> 
+                                               <div><strong>Pod:</strong>
                                                    <span class="status-btn status-<?php echo $summaries[$device['id']]['pod_status'] == 'active' ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
                                                        <?php echo ucfirst($summaries[$device['id']]['pod_status'] ?? 'unknown'); ?>
                                                    </span>
                                                </div>
-                                               <div><strong>XandMiner:</strong> 
+                                               <div><strong>XandMiner:</strong>
                                                    <span class="status-btn status-<?php echo $summaries[$device['id']]['xandminer_status'] == 'active' ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
                                                        <?php echo ucfirst($summaries[$device['id']]['xandminer_status'] ?? 'unknown'); ?>
                                                    </span>
                                                </div>
-                                               <div><strong>XandMinerD:</strong> 
+                                               <div><strong>XandMinerD:</strong>
                                                    <span class="status-btn status-<?php echo $summaries[$device['id']]['xandminerd_status'] == 'active' ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
                                                        <?php echo ucfirst($summaries[$device['id']]['xandminerd_status'] ?? 'unknown'); ?>
                                                    </span>
@@ -702,24 +702,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                            <span class="status-btn status-not-initialized">Not Initialized</span>
                                        <?php else: ?>
                                            <div class="version-info">
-                                               <div><strong>Controller:</strong> 
+                                               <div><strong>Controller:</strong>
                                                    <span class="version-value">
                                                        <?php echo htmlspecialchars($summaries[$device['id']]['chillxand_version'] ?? 'N/A'); ?>
                                                    </span>
                                                </div>
-                                               <div><strong>Pod:</strong> 
+                                               <div><strong>Pod:</strong>
                                                    <span class="version-value">
-                                                        <?php echo htmlspecialchars($summaries[$device['id']]['pod_version'] ?? 'N/A'); ?>   
+                                                        <?php echo htmlspecialchars($summaries[$device['id']]['pod_version'] ?? 'N/A'); ?>
                                                    </span>
                                                </div>
-                                               <div><strong>XandMiner:</strong> 
+                                               <div><strong>XandMiner:</strong>
                                                    <span class="version-value">
-                                                        <?php echo htmlspecialchars($summaries[$device['id']]['xandminer_version'] ?? 'N/A'); ?>   
+                                                        <?php echo htmlspecialchars($summaries[$device['id']]['xandminer_version'] ?? 'N/A'); ?>
                                                    </span>
                                                </div>
-                                               <div><strong>XandMinerD:</strong> 
+                                               <div><strong>XandMinerD:</strong>
                                                    <span class="version-value">
-                                                        <?php echo htmlspecialchars($summaries[$device['id']]['xandminerd_version'] ?? 'N/A'); ?>   
+                                                        <?php echo htmlspecialchars($summaries[$device['id']]['xandminerd_version'] ?? 'N/A'); ?>
                                                    </span>
                                                </div>
                                            </div>
@@ -738,18 +738,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                        <?php endif; ?>
                                    </td>
                                    <td>
-                                       <button type="button" class="action-btn-tiny action-edit" 
+                                       <button type="button" class="action-btn-tiny action-edit"
                                                onclick="openEditModal(<?php echo $device['id']; ?>, '<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>', '<?php echo htmlspecialchars($device['pnode_ip']); ?>')">Edit</button>
-                                       <button type="button" class="action-btn-tiny action-delete" 
+                                       <button type="button" class="action-btn-tiny action-delete"
                                                onclick="openDeleteModal(<?php echo $device['id']; ?>, '<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>')">Delete</button>
                                        <br>
-                                       <button type="button" class="update-btn-controller" 
+                                       <button type="button" class="update-btn-controller"
                                                data-device-id="<?php echo $device['id']; ?>"
                                                data-device-ip="<?php echo htmlspecialchars($device['pnode_ip']); ?>"
                                                data-device-name="<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>">
                                            Update Controller
                                        </button>
-                                       <button type="button" class="update-btn-pod" 
+                                       <button type="button" class="update-btn-pod"
                                                data-device-id="<?php echo $device['id']; ?>"
                                                data-device-ip="<?php echo htmlspecialchars($device['pnode_ip']); ?>"
                                                data-device-name="<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>">
@@ -761,12 +761,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                        </tbody>
                    </table>
                <?php endif; ?>
-               
+
                <div style="margin-top: 20px; padding: 10px; background-color: #e9ecef; border-radius: 4px;">
                    <h4>Background Health Monitoring</h4>
-                   <p><small>Device health status is automatically checked every 2 minutes by a background process. 
-                   Use the refresh button (↻) next to each device for immediate status updates. The status logs show 
-                   device connectivity checks, response times, and health status. Update buttons allow you to trigger 
+                   <p><small>Device health status is automatically checked every 2 minutes by a background process.
+                   Use the refresh button (↻) next to each device for immediate status updates. The status logs show
+                   device connectivity checks, response times, and health status. Update buttons allow you to trigger
                    controller or pod updates on the remote devices.</small></p>
                </div>
            </div>
@@ -892,7 +892,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
 
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM loaded, initializing button handlers...');
-            
+
             document.querySelectorAll('.update-btn-controller').forEach(function(btn) {
                 btn.addEventListener('click', function() {
                     const deviceId = this.getAttribute('data-device-id');
@@ -902,7 +902,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     openUpdateControllerModal(deviceId, deviceIp, deviceName);
                 });
             });
-            
+
             document.querySelectorAll('.update-btn-pod').forEach(function(btn) {
                 btn.addEventListener('click', function() {
                     const deviceId = this.getAttribute('data-device-id');
@@ -912,18 +912,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     openUpdatePodModal(deviceId, deviceIp, deviceName);
                 });
             });
-            
+
             console.log('Button handlers initialized successfully');
         });
-        
+
         function refreshDeviceStatus(deviceId) {
             const statusElement = document.querySelector(`#status-${deviceId}`);
             const refreshBtn = document.querySelector(`#refresh-${deviceId}`);
             const lastCheckElement = document.querySelector(`#lastcheck-${deviceId}`);
-            
+
             refreshBtn.disabled = true;
             refreshBtn.textContent = '⟳';
-            
+
             fetch('manual_device_check.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -943,18 +943,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     refreshBtn.textContent = '↻';
                     return;
                 }
-                
+
                 if (data.error) {
                     alert('Error: ' + data.error);
                 } else {
                     let overallStatus = 'Unknown';
                     let statusClass = 'unknown';
-                    
+
                     if (data.status === 'Online') {
                         statusClass = 'online';
                         overallStatus = 'Online';
                     } else if (data.status === 'Offline') {
-                        statusClass = 'offline'; 
+                        statusClass = 'offline';
                         overallStatus = 'Offline';
                     } else if (data.status === 'Error') {
                         statusClass = 'error';
@@ -963,7 +963,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         statusClass = 'unknown';
                         overallStatus = data.status || 'Unknown';
                     }
-                    
+
                     // Update status
                     statusElement.innerHTML = `
                         <span class="status-btn status-${statusClass}">${overallStatus}</span>
@@ -971,34 +971,34 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         <div class="status-age status-fresh">Just checked</div>
                         <div class="device-details">Response: ${data.response_time}ms</div>
                     `;
-                    
+
                     // Update health data if available
                     const healthElement = statusElement.nextElementSibling;
                     if (data.health_data && healthElement) {
                         const healthData = data.health_data;
                         healthElement.innerHTML = `
                             <div style="font-size: 10px; line-height: 1.3;">
-                                <div><strong>Health:</strong> 
+                                <div><strong>Health:</strong>
                                     <span class="status-btn status-${healthData.health_status == 'pass' ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
                                         ${healthData.health_status ? healthData.health_status.charAt(0).toUpperCase() + healthData.health_status.slice(1) : 'Unknown'}
                                     </span>
                                 </div>
-                                <div><strong>Atlas:</strong> 
+                                <div><strong>Atlas:</strong>
                                     <span class="status-btn status-${healthData.atlas_registered ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
                                         ${healthData.atlas_registered ? 'Yes' : 'No'}
                                     </span>
                                 </div>
-                                <div><strong>Pod:</strong> 
+                                <div><strong>Pod:</strong>
                                     <span class="status-btn status-${healthData.pod_status == 'active' ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
                                         ${healthData.pod_status ? healthData.pod_status.charAt(0).toUpperCase() + healthData.pod_status.slice(1) : 'Unknown'}
                                     </span>
                                 </div>
-                                <div><strong>XandMiner:</strong> 
+                                <div><strong>XandMiner:</strong>
                                     <span class="status-btn status-${healthData.xandminer_status == 'active' ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
                                         ${healthData.xandminer_status ? healthData.xandminer_status.charAt(0).toUpperCase() + healthData.xandminer_status.slice(1) : 'Unknown'}
                                     </span>
                                 </div>
-                                <div><strong>XandMinerD:</strong> 
+                                <div><strong>XandMinerD:</strong>
                                     <span class="status-btn status-${healthData.xandminerd_status == 'active' ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
                                         ${healthData.xandminerd_status ? healthData.xandminerd_status.charAt(0).toUpperCase() + healthData.xandminerd_status.slice(1) : 'Unknown'}
                                     </span>
@@ -1006,29 +1006,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                             </div>
                         `;
                     }
-                    
+
                     // Update versions if available
                     const versionsElement = healthElement ? healthElement.nextElementSibling : null;
                     if (data.version_data && versionsElement) {
                         const versionData = data.version_data;
                         versionsElement.innerHTML = `
                             <div class="version-info">
-                                <div><strong>Controller:</strong> 
+                                <div><strong>Controller:</strong>
                                     <span class="version-value">
                                         ${versionData.chillxand_version || 'N/A'}
                                     </span>
                                 </div>
-                                <div><strong>Pod:</strong> 
+                                <div><strong>Pod:</strong>
                                     <span class="version-value">
                                         ${versionData.pod_version || 'N/A'}
                                     </span>
                                 </div>
-                                <div><strong>XandMiner:</strong> 
+                                <div><strong>XandMiner:</strong>
                                     <span class="version-value">
                                         ${versionData.xandminer_version || 'N/A'}
                                     </span>
                                 </div>
-                                <div><strong>XandMinerD:</strong> 
+                                <div><strong>XandMinerD:</strong>
                                     <span class="version-value">
                                         ${versionData.xandminerd_version || 'N/A'}
                                     </span>
@@ -1036,7 +1036,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                             </div>
                         `;
                     }
-                    
+
                     // Update timestamp
                     lastCheckElement.innerHTML = `
                         <div class="status-fresh">Just now</div>
@@ -1053,34 +1053,34 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 refreshBtn.textContent = '↻';
             });
         }
-        
+
         function openAddModal() {
             document.getElementById('add-pnode-name').value = '';
             document.getElementById('add-pnode-ip').value = '';
             document.getElementById('addModal').style.display = 'block';
         }
-        
+
         function closeAddModal() {
             document.getElementById('addModal').style.display = 'none';
         }
-        
+
         function openEditModal(deviceId, currentName, currentIp) {
             document.getElementById('edit-device-id').value = deviceId;
             document.getElementById('edit-pnode-name').value = currentName;
             document.getElementById('edit-pnode-ip').value = currentIp;
             document.getElementById('editModal').style.display = 'block';
         }
-        
+
         function closeEditModal() {
             document.getElementById('editModal').style.display = 'none';
         }
-        
+
         function openDeleteModal(deviceId, deviceName) {
             document.getElementById('delete-device-id').value = deviceId;
             document.getElementById('delete-device-name').textContent = deviceName;
             document.getElementById('deleteModal').style.display = 'block';
         }
-        
+
         function closeDeleteModal() {
             document.getElementById('deleteModal').style.display = 'none';
         }
@@ -1091,7 +1091,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             document.getElementById('update-controller-device-ip').textContent = deviceIp;
             document.getElementById('updateControllerModal').style.display = 'block';
         }
-        
+
         function closeUpdateControllerModal() {
             document.getElementById('updateControllerModal').style.display = 'none';
             pendingControllerUpdate = null;
@@ -1103,46 +1103,46 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             document.getElementById('update-pod-device-ip').textContent = deviceIp;
             document.getElementById('updatePodModal').style.display = 'block';
         }
-        
+
         function closeUpdatePodModal() {
             document.getElementById('updatePodModal').style.display = 'none';
             pendingPodUpdate = null;
         }
-        
+
         function submitAdd() {
             document.getElementById('addForm').submit();
         }
-        
+
         function submitEdit() {
             document.getElementById('editForm').submit();
         }
-        
+
         function submitDelete() {
             document.getElementById('deleteForm').submit();
         }
 
         function confirmUpdateController() {
             if (!pendingControllerUpdate) return;
-            
+
             const deviceId = pendingControllerUpdate.deviceId;
             const deviceIp = pendingControllerUpdate.deviceIp;
             const deviceName = pendingControllerUpdate.deviceName;
-            
+
             closeUpdateControllerModal();
-            
+
             console.log('User confirmed controller update for:', deviceName);
-            
+
             const btn = document.querySelector(`[data-device-id="${deviceId}"].update-btn-controller`);
             if (!btn) {
                 console.error('Could not find controller button for device', deviceId);
                 alert('Error: Could not find update button');
                 return;
             }
-            
+
             const originalText = btn.textContent;
             btn.disabled = true;
             btn.textContent = 'Starting...';
-            
+
             fetch('device_update.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -1156,7 +1156,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             })
             .then(responseText => {
                 console.log('Controller update raw response:', responseText);
-                
+
                 let data;
                 try {
                     data = JSON.parse(responseText);
@@ -1165,7 +1165,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     console.error('Response was:', responseText);
                     throw new Error(`Invalid JSON response from device_update.php: ${responseText.substring(0, 100)}...`);
                 }
-                
+
                 if (data.success) {
                     if (data.status === 'no_update_needed') {
                         btn.textContent = 'No Update Needed';
@@ -1215,29 +1215,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 btn.textContent = originalText;
             });
         }
-        
+
         function confirmUpdatePod() {
             if (!pendingPodUpdate) return;
-            
+
             const deviceId = pendingPodUpdate.deviceId;
             const deviceIp = pendingPodUpdate.deviceIp;
             const deviceName = pendingPodUpdate.deviceName;
-            
+
             closeUpdatePodModal();
-            
+
             console.log('User confirmed pod update for:', deviceName);
-            
+
             const btn = document.querySelector(`[data-device-id="${deviceId}"].update-btn-pod`);
             if (!btn) {
                 console.error('Could not find pod button for device', deviceId);
                 alert('Error: Could not find update button');
                 return;
             }
-            
+
             const originalText = btn.textContent;
             btn.disabled = true;
             btn.textContent = 'Starting...';
-            
+
             fetch('device_update.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -1251,7 +1251,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             })
             .then(responseText => {
                 console.log('Pod update raw response:', responseText);
-                
+
                 let data;
                 try {
                     data = JSON.parse(responseText);
@@ -1260,7 +1260,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     console.error('Response was:', responseText);
                     throw new Error(`Invalid JSON response: ${responseText.substring(0, 100)}...`);
                 }
-                
+
                 if (data.success) {
                     if (data.status === 'no_update_needed') {
                         btn.textContent = 'No Update Needed';
@@ -1313,11 +1313,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
 
         function startUpdateMonitoring(deviceId, deviceIp, deviceName, updateType, btn, originalText) {
             const monitorKey = `${deviceId}_${updateType}`;
-            
+
             if (updateMonitors[monitorKey]) {
                 clearInterval(updateMonitors[monitorKey].interval);
             }
-            
+
             const monitor = {
                 deviceId: deviceId,
                 deviceIp: deviceIp,
@@ -1338,21 +1338,215 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 serviceRestartDetected: false, // New flag to track actual service restart
                 restartConfirmed: false // New flag to confirm restart is real
             };
-            
-            monitor.interval = setInterval(() => {
-                checkUpdateProgress(monitorKey, monitor);
-            }, 10000);
-            
+
+            if (updateType === 'controller') {
+                monitor.interval = setInterval(() => {
+                    checkControllerUpdateProgress(monitorKey, monitor);
+                }, 10000);
+            } else {
+                monitor.interval = setInterval(() => {
+                    checkUpdateProgress(monitorKey, monitor);
+                }, 10000);
+            }
+
             updateMonitors[monitorKey] = monitor;
-            
+
             console.log(`Started monitoring ${updateType} update for ${deviceName}`);
+        }
+
+        function checkControllerUpdateProgress(monitorKey, monitor) {
+            monitor.attemptCount++;
+
+            const logUrl = `update_log_proxy.php?device_ip=${encodeURIComponent(monitor.deviceIp)}&update_type=${encodeURIComponent(monitor.updateType)}`;
+
+            fetch(logUrl, {
+                method: 'GET',
+                headers: { 'Accept': 'text/plain' }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                return response.text();
+            })
+            .then(responseText => {
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                } catch (e) {
+                    throw new Error('Invalid JSON response');
+                }
+
+                // Reset failure counters on successful response
+                monitor.consecutiveFailures = 0;
+                monitor.lastSuccessfulLogFetch = Date.now();
+
+                // Handle status-based updates
+                switch (data.status) {
+                    case 'no_update_needed':
+                        monitor.btn.textContent = 'No Update Needed';
+                        finishUpdateMonitoring(monitorKey, monitor, 'no_update');
+                        return;
+
+                    case 'error_github_check':
+                        monitor.btn.textContent = 'GitHub Check Failed';
+                        finishUpdateMonitoring(monitorKey, monitor, 'failed');
+                        return;
+
+                    case 'error_starting':
+                        monitor.btn.textContent = 'Start Error';
+                        finishUpdateMonitoring(monitorKey, monitor, 'failed');
+                        return;
+
+                    case 'update_initiated':
+                        monitor.btn.textContent = 'Update Started';
+                        monitor.updateStarted = true;
+                        break;
+
+                    case 'in_progress':
+                        monitor.btn.textContent = 'In Progress...';
+                        monitor.updateStarted = true;
+                        break;
+
+                    case 'restarting':
+                        monitor.btn.textContent = 'Restarting...';
+                        monitor.restartDetected = true;
+                        monitor.restartConfirmed = true;
+                        break;
+
+                    case 'complete_success':
+                        monitor.btn.textContent = 'Update Complete';
+                        finishUpdateMonitoring(monitorKey, monitor, 'completed');
+                        return;
+
+                    case 'complete_warn':
+                        monitor.btn.textContent = 'Complete (Warnings)';
+                        finishUpdateMonitoring(monitorKey, monitor, 'completed');
+                        return;
+
+                    case 'complete_fail':
+                        monitor.btn.textContent = 'Update Failed';
+                        finishUpdateMonitoring(monitorKey, monitor, 'failed');
+                        return;
+
+                    default:
+                        monitor.btn.textContent = `Status: ${data.status}`;
+                        break;
+                }
+
+                // Check for overall timeout
+                if (monitor.attemptCount >= monitor.maxAttempts) {
+                    finishUpdateMonitoring(monitorKey, monitor, 'timeout');
+                }
+
+                // If we've detected restart and are in post-restart phase, check if we should continue
+                if (monitor.restartDetected && monitor.postRestartAttempts >= monitor.maxPostRestartAttempts) {
+                    console.log(`Post-restart monitoring complete for ${monitor.deviceName} ${monitor.updateType}`);
+                    monitor.btn.textContent = 'Update Likely Complete';
+                    finishUpdateMonitoring(monitorKey, monitor, 'post_restart_complete');
+                }
+            })
+            .catch(error => {
+                monitor.consecutiveFailures++;
+
+                const timeSinceLastSuccess = Date.now() - monitor.lastSuccessfulLogFetch;
+                const minutesSinceSuccess = Math.floor(timeSinceLastSuccess / 60000);
+
+                console.log(`Connection error for ${monitor.deviceName}: ${error.message} (failure ${monitor.consecutiveFailures}, ${minutesSinceSuccess}m since last success)`);
+
+                // Handle different phases of monitoring
+                if (monitor.updateStarted && !monitor.restartDetected) {
+                    // Try a direct health check to see if version changed (indicating completion)
+                    if (monitor.initialVersion && monitor.consecutiveFailures >= 3) {
+                        fetch(`http://${monitor.deviceIp}:3001/health`, {
+                            method: 'GET',
+                            timeout: 5000
+                        })
+                        .then(response => response.json())
+                        .then(healthData => {
+                            const currentVersion = healthData.chillxand_controller_version;
+                            if (currentVersion && currentVersion !== monitor.initialVersion) {
+                                console.log(`Health check: Version changed from ${monitor.initialVersion} to ${currentVersion} - update complete!`);
+                                monitor.btn.textContent = 'Update Complete';
+                                finishUpdateMonitoring(monitorKey, monitor, 'completed');
+                                return;
+                            }
+                        })
+                        .catch(() => {
+                            // Health check also failed (expected if service is restarting)
+                            console.log(`Health check failed during stuck update for ${monitor.deviceName}`);
+                        });
+                    }
+
+                    // Update has started - only detect restart if we have strong indicators
+                    if (monitor.serviceRestartDetected && monitor.consecutiveFailures >= 3) {
+                        // We saw restart in logs AND multiple connection failures
+                        console.log(`Service restart confirmed for ${monitor.deviceName} - service is restarting`);
+                        monitor.btn.textContent = 'Restarting...';
+                        monitor.restartDetected = true;
+                        monitor.restartConfirmed = true;
+                        monitor.consecutiveFailures = 0;
+                    } else if (monitor.consecutiveFailures >= 8) {
+                        // Many failures but no restart in logs - might be restart anyway
+                        console.log(`Possible restart detected for ${monitor.deviceName} (no log confirmation)`);
+                        monitor.btn.textContent = 'Possible Restart...';
+                        monitor.restartDetected = true;
+                        monitor.consecutiveFailures = 0;
+                    } else {
+                        monitor.btn.textContent = `Update in Progress... (checking ${monitor.consecutiveFailures})`;
+                    }
+                } else if (monitor.restartDetected) {
+                    // We're in restart phase - connection failures are expected
+                    monitor.postRestartAttempts++;
+                    const totalSeconds = monitor.postRestartAttempts * 10; // Updated for 10-second intervals
+                    const minutesWaiting = Math.floor(totalSeconds / 60);
+                    const secondsWaiting = totalSeconds % 60;
+                    const timeDisplay = minutesWaiting > 0 ? `${minutesWaiting}m${secondsWaiting}s` : `${secondsWaiting}s`;
+
+                    monitor.btn.textContent = `Restarting (${timeDisplay})`;
+
+                    // During restart, connection failures are completely normal
+                    // Only exit on overall timeout, not connection failures
+                } else {
+                    // Update hasn't started yet - check if we should exit due to consecutive failures
+                    if (monitor.consecutiveFailures >= monitor.maxConsecutiveFailures) {
+                        console.log(`Pre-update connection failure for ${monitor.deviceName} - device may be unreachable`);
+                        finishUpdateMonitoring(monitorKey, monitor, 'connection_failed');
+                        return;
+                    } else {
+                        // Show the current failure count (but cap display at maxConsecutiveFailures - 1)
+                        const displayCount = Math.min(monitor.consecutiveFailures, monitor.maxConsecutiveFailures - 1);
+                        monitor.btn.textContent = `Connecting... (${displayCount})`;
+                    }
+                }
+
+                // Check for overall timeout (this is our main exit condition)
+                if (monitor.attemptCount >= monitor.maxAttempts) {
+                    console.log(`Update monitoring timeout for ${monitor.deviceName} ${monitor.updateType} after 10 minutes`);
+
+                    if (monitor.restartConfirmed) {
+                        // We confirmed a restart happened, likely successful
+                        console.log(`Restart confirmed for ${monitor.deviceName} - update likely completed successfully`);
+                        monitor.btn.textContent = 'Update Likely Complete';
+                        finishUpdateMonitoring(monitorKey, monitor, 'timeout_after_restart');
+                    } else if (monitor.updateStarted) {
+                        // Update started but unclear status
+                        console.log(`Update started for ${monitor.deviceName} but status unclear`);
+                        monitor.btn.textContent = 'Update Status Unknown';
+                        finishUpdateMonitoring(monitorKey, monitor, 'timeout_after_update_start');
+                    } else {
+                        // Never got started properly
+                        finishUpdateMonitoring(monitorKey, monitor, 'timeout');
+                    }
+                }
+            });
         }
 
         function checkUpdateProgress(monitorKey, monitor) {
             monitor.attemptCount++;
-            
+
             const logUrl = `update_log_proxy.php?device_ip=${encodeURIComponent(monitor.deviceIp)}&update_type=${encodeURIComponent(monitor.updateType)}`;
-            
+
             fetch(logUrl, {
                 method: 'GET',
                 headers: { 'Accept': 'text/plain' }
@@ -1367,25 +1561,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 // Reset failure counters on successful log fetch
                 monitor.consecutiveFailures = 0;
                 monitor.lastSuccessfulLogFetch = Date.now();
-                
+
                 const lines = logData.trim().split('\n').filter(line => line.trim());
                 const currentLogLength = lines.length;
-                
+
                 if (lines.length > 0) {
                     const lastLine = lines[lines.length - 1].trim().toLowerCase();
                     const lastFewLines = lines.slice(-3).join(' ').toLowerCase();
-                    
+
                     // Mark that update has started
                     if (!monitor.updateStarted && (
-                        lastLine.includes('downloading') || 
-                        lastLine.includes('installing') || 
+                        lastLine.includes('downloading') ||
+                        lastLine.includes('installing') ||
                         lastLine.includes('updating') ||
                         lastLine.includes('upgrade') ||
                         lastLine.includes('running installer'))) {
                         monitor.updateStarted = true;
                         console.log(`${monitor.updateType} update started for ${monitor.deviceName}`);
                     }
-                    
+
                     // Check for service restart indicators in logs
                     if (!monitor.serviceRestartDetected && (
                         lastLine.includes('reloading systemd daemon') ||
@@ -1395,24 +1589,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         monitor.serviceRestartDetected = true;
                         console.log(`Service restart initiated for ${monitor.deviceName}`);
                     }
-                    
+
                     // Check for completion patterns
-                    if (lastFewLines.includes('no upgrade required') || 
+                    if (lastFewLines.includes('no upgrade required') ||
                         lastFewLines.includes('no update required') ||
                         lastFewLines.includes('already up to date') ||
                         lastFewLines.includes('already up-to-date') ||
                         lastFewLines.includes('no updates available') ||
                         (lastLine.includes('latest') && lastLine.includes('version'))) {
-                        
+
                         monitor.btn.textContent = 'No Update Needed';
                         console.log(`${monitor.updateType} update completed - no upgrade required for ${monitor.deviceName}`);
                         finishUpdateMonitoring(monitorKey, monitor, 'no_update');
                         return;
                     }
-                    
+
                     // Check for successful completion
                     if (lastFewLines.includes('update completed') ||
-                        lastFewLines.includes('ipdate process finished') ||
+                        lastFewLines.includes('pdate process finished') ||
                         lastFewLines.includes('update successful') ||
                         lastFewLines.includes('successfully updated') ||
                         lastFewLines.includes('upgrade completed') ||
@@ -1420,25 +1614,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         lastFewLines.includes('service started successfully') ||
                         lastFewLines.includes('restart complete') ||
                         (lastLine.includes('started') && monitor.restartDetected)) {
-                        
+
                         monitor.btn.textContent = 'Update Complete';
                         console.log(`${monitor.updateType} update completed successfully for ${monitor.deviceName}`);
                         finishUpdateMonitoring(monitorKey, monitor, 'completed');
                         return;
                     }
-                    
+
                     // Check for errors
-                    if (lastLine.includes('error') || 
+                    if (lastLine.includes('error') ||
                         lastLine.includes('failed') ||
                         lastLine.includes('exception') ||
                         (lastLine.includes('could not') && lastLine.includes('install'))) {
-                        
+
                         monitor.btn.textContent = 'Update Failed';
                         console.log(`${monitor.updateType} update failed for ${monitor.deviceName}: ${lastLine}`);
                         finishUpdateMonitoring(monitorKey, monitor, 'failed');
                         return;
                     }
-                    
+
                     // Update button text based on current activity
                     if (lastLine.includes('downloading') || lastLine.includes('download')) {
                         monitor.btn.textContent = 'Downloading...';
@@ -1460,7 +1654,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     } else {
                         monitor.btn.textContent = 'In Progress...';
                     }
-                    
+
                     // Log new lines
                     if (currentLogLength > monitor.lastLogLength) {
                         const newLines = lines.slice(monitor.lastLogLength);
@@ -1477,13 +1671,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         monitor.btn.textContent = 'Waiting for Logs...';
                     }
                 }
-                
+
                 // Check if we've exceeded max attempts
                 if (monitor.attemptCount >= monitor.maxAttempts) {
                     console.log(`Update monitoring timeout for ${monitor.deviceName} ${monitor.updateType} after ${monitor.maxAttempts} attempts`);
                     finishUpdateMonitoring(monitorKey, monitor, 'timeout');
                 }
-                
+
                 // If we've detected restart and are in post-restart phase, check if we should continue
                 if (monitor.restartDetected && monitor.postRestartAttempts >= monitor.maxPostRestartAttempts) {
                     console.log(`Post-restart monitoring complete for ${monitor.deviceName} ${monitor.updateType}`);
@@ -1493,13 +1687,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             })
             .catch(error => {
                 monitor.consecutiveFailures++;
-                
+
                 const timeSinceLastSuccess = Date.now() - monitor.lastSuccessfulLogFetch;
                 const minutesSinceSuccess = Math.floor(timeSinceLastSuccess / 60000);
-                
+
                 // More sophisticated failure detection
-                const isConnectionError = error.message.includes('500') || 
-                                        error.message.includes('503') || 
+                const isConnectionError = error.message.includes('500') ||
+                                        error.message.includes('503') ||
                                         error.message.includes('502') ||
                                         error.message.includes('Failed to fetch') ||
                                         error.message.includes('Network request failed') ||
@@ -1508,9 +1702,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                         error.message.toLowerCase().includes('connection') ||
                                         error.message.toLowerCase().includes('timeout') ||
                                         error.message.toLowerCase().includes('network');
-                
+
                 console.log(`Connection error for ${monitor.deviceName}: ${error.message} (failure ${monitor.consecutiveFailures}, ${minutesSinceSuccess}m since last success)`);
-                
+
                 // Handle different phases of monitoring with more intelligent logic
                 if (monitor.updateStarted && !monitor.restartDetected) {
                     // Update has started - only detect restart if we have strong indicators
@@ -1537,17 +1731,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     const minutesWaiting = Math.floor(totalSeconds / 60);
                     const secondsWaiting = totalSeconds % 60;
                     const timeDisplay = minutesWaiting > 0 ? `${minutesWaiting}m${secondsWaiting}s` : `${secondsWaiting}s`;
-                    
+
                     if (monitor.consecutiveFailures <= 12) { // 1 minute
                         monitor.btn.textContent = `pNode Restarting... (${timeDisplay})`;
-                    } else if (monitor.consecutiveFailures <= 36) { // 3 minutes  
+                    } else if (monitor.consecutiveFailures <= 36) { // 3 minutes
                         monitor.btn.textContent = `Still Restarting... (${timeDisplay})`;
                     } else if (monitor.consecutiveFailures <= 60) { // 5 minutes
                         monitor.btn.textContent = `Extended Restart... (${timeDisplay})`;
                     } else {
                         monitor.btn.textContent = `Long Restart... (${timeDisplay})`;
                     }
-                    
+
                     // During restart, connection failures are completely normal
                     // Only exit on overall timeout, not connection failures
                 } else {
@@ -1562,11 +1756,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         monitor.btn.textContent = `Connecting... (${displayCount})`;
                     }
                 }
-                
+
                 // Check for overall timeout (this is our main exit condition)
                 if (monitor.attemptCount >= monitor.maxAttempts) {
                     console.log(`Update monitoring timeout for ${monitor.deviceName} ${monitor.updateType} after 10 minutes`);
-                    
+
                     if (monitor.restartConfirmed) {
                         // We confirmed a restart happened, likely successful
                         console.log(`Restart confirmed for ${monitor.deviceName} - update likely completed successfully`);
@@ -1589,9 +1783,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             if (monitor.interval) {
                 clearInterval(monitor.interval);
             }
-            
+
             delete updateMonitors[monitorKey];
-            
+
             switch (reason) {
                 case 'completed':
                     setTimeout(() => {
@@ -1667,7 +1861,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         refreshDeviceStatus(monitor.deviceId);
                     }, 5000);
             }
-            
+
             console.log(`Finished monitoring ${monitor.updateType} update for ${monitor.deviceName} - reason: ${reason}`);
         }
 
@@ -1678,7 +1872,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             const deleteModal = document.getElementById('deleteModal');
             const updateControllerModal = document.getElementById('updateControllerModal');
             const updatePodModal = document.getElementById('updatePodModal');
-            
+
             if (event.target == addModal) {
                 closeAddModal();
             }
@@ -1695,7 +1889,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 closeUpdatePodModal();
             }
         }
-        
+
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 closeAddModal();
