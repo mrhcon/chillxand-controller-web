@@ -309,27 +309,25 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                             <span class="status-btn status-value status-not-initialized">Not Initialized</span>
                                         <?php else: ?>
                                             <div class="status-info">
-                                                <div class="status-info">
-                                                    <div><strong>Controller:</strong> 
-                                                        <span class="status-value version-value">
-                                                            <?php echo htmlspecialchars($summaries[$device['id']]['chillxand_version'] ?? 'N/A'); ?>
-                                                        </span>
-                                                    </div>
-                                                    <div><strong>Pod:</strong> 
-                                                        <span class="status-value version-value">
-                                                            <?php echo htmlspecialchars($summaries[$device['id']]['pod_version'] ?? 'N/A'); ?>
-                                                        </span>
-                                                    </div>
-                                                    <div><strong>XandMiner:</strong> 
-                                                        <span class="status-value version-value">
-                                                            <?php echo htmlspecialchars($summaries[$device['id']]['xandminer_version'] ?? 'N/A'); ?>
-                                                        </span>
-                                                    </div>
-                                                    <div><strong>XandMinerD:</strong> 
-                                                        <span class="status-value version-value">
-                                                            <?php echo htmlspecialchars($summaries[$device['id']]['xandminerd_version'] ?? 'N/A'); ?>
-                                                        </span>
-                                                    </div>
+                                                <div><strong>Controller:</strong> 
+                                                    <span class="status-value version-value">
+                                                        <?php echo htmlspecialchars($summaries[$device['id']]['chillxand_version'] ?? 'N/A'); ?>
+                                                    </span>
+                                                </div>
+                                                <div><strong>Pod:</strong> 
+                                                    <span class="status-value version-value">
+                                                        <?php echo htmlspecialchars($summaries[$device['id']]['pod_version'] ?? 'N/A'); ?>
+                                                    </span>
+                                                </div>
+                                                <div><strong>XandMiner:</strong> 
+                                                    <span class="status-value version-value">
+                                                        <?php echo htmlspecialchars($summaries[$device['id']]['xandminer_version'] ?? 'N/A'); ?>
+                                                    </span>
+                                                </div>
+                                                <div><strong>XandMinerD:</strong> 
+                                                    <span class="status-value version-value">
+                                                        <?php echo htmlspecialchars($summaries[$device['id']]['xandminerd_version'] ?? 'N/A'); ?>
+                                                    </span>
                                                 </div>
                                             </div>
                                         <?php endif; ?>
@@ -601,29 +599,27 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                 const summary = data.summary;
                 cell.innerHTML = `
                     <div class="status-info">
-                        <div class="status-info">
-                            <div><strong>Controller:</strong> 
-                            <span class="status-value version-value">
-                                    ${summary.chillxand_version || 'N/A'}
-                                </span>
-                            </div>
-                            <div><strong>Pod:</strong> 
-                            <span class="status-value version-value">
-                                    ${summary.pod_version || 'N/A'}
-                                </span>
-                            </div>
-                            <div><strong>XandMiner:</strong> 
-                            <span class="status-value version-value">
-                                    ${summary.xandminer_version || 'N/A'}
-                                </span>
-                            </div>
-                            <div><strong>XandMinerD:</strong> 
-                            <span class="status-value version-value">
-                                    ${summary.xandminerd_version || 'N/A'}
-                                </span>
-                            </div>
+                        <div><strong>Controller:</strong> 
+                        <span class="status-value version-value">
+                                ${summary.chillxand_version || 'N/A'}
+                            </span>
                         </div>
-                    </div>    
+                        <div><strong>Pod:</strong> 
+                        <span class="status-value version-value">
+                                ${summary.pod_version || 'N/A'}
+                            </span>
+                        </div>
+                        <div><strong>XandMiner:</strong> 
+                        <span class="status-value version-value">
+                                ${summary.xandminer_version || 'N/A'}
+                            </span>
+                        </div>
+                        <div><strong>XandMinerD:</strong> 
+                        <span class="status-value version-value">
+                                ${summary.xandminerd_version || 'N/A'}
+                            </span>
+                        </div>
+                    </div>
                 `;
             }
             
