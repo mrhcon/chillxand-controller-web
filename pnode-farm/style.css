@@ -1072,7 +1072,7 @@ details summary {
     width: 120px;
     flex-shrink: 0;
     margin-right: 15px;
-    font-size: 12px;
+    font-size: 16px;
 }
 
 .device-table .status-value {
@@ -1080,7 +1080,7 @@ details summary {
     font-weight: normal;
     text-align: left;
     flex: 1;
-    font-size: 12px;
+    font-size: 16px;
 }
 
 .device-table .status-btn.status-value {
@@ -1100,7 +1100,7 @@ details summary {
 .device-table .version-value {
     color: #333;
     font-weight: normal;
-    font-size: 12px;
+    font-size: 16px;
 }
 
 /* Ensure consistent cell alignment with more spacious padding */
@@ -1115,19 +1115,19 @@ details summary {
 /* Fix font sizes in Health Status and Versions columns */
 .device-table td:nth-child(5) .status-info strong,
 .device-table td:nth-child(6) .status-info strong {
-    font-size: 12px !important;
+    font-size: 16px !important;
     width: 120px !important;
     margin-right: 15px !important;    
 }
 
 .device-table td:nth-child(5) .status-value,
 .device-table td:nth-child(6) .status-value {
-    font-size: 12px !important;
+    font-size: 16px !important;
 }
 
 .device-table td:nth-child(5) .version-value,
 .device-table td:nth-child(6) .version-value {
-    font-size: 12px !important;
+    font-size: 16px !important;
 }
 
 .device-table td:nth-child(5) .status-btn.status-value,
