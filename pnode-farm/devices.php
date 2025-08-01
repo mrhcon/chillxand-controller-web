@@ -444,27 +444,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                        <?php else: ?>
                                            <div class="status-info">
                                                <div><strong>Health:</strong>
-                                                   <span class="status-btn status-value status-<?php echo $summaries[$device['id']]['health_status'] == 'pass' ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
+                                                   <span class="status-btn status-value status-<?php echo $summaries[$device['id']]['health_status'] == 'pass' ? 'online' : 'offline'; ?>" >
                                                        <?php echo ucfirst($summaries[$device['id']]['health_status'] ?? 'unknown'); ?>
                                                    </span>
                                                </div>
                                                <div><strong>Atlas:</strong>
-                                                   <span class="status-btn status-value status-<?php echo $summaries[$device['id']]['atlas_registered'] ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
+                                                   <span class="status-btn status-value status-<?php echo $summaries[$device['id']]['atlas_registered'] ? 'online' : 'offline'; ?>" >
                                                        <?php echo $summaries[$device['id']]['atlas_registered'] ? 'Yes' : 'No'; ?>
                                                    </span>
                                                </div>
                                                <div><strong>Pod:</strong>
-                                                   <span class="status-btn status-value status-<?php echo $summaries[$device['id']]['pod_status'] == 'active' ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
+                                                   <span class="status-btn status-value status-<?php echo $summaries[$device['id']]['pod_status'] == 'active' ? 'online' : 'offline'; ?>" >
                                                        <?php echo ucfirst($summaries[$device['id']]['pod_status'] ?? 'unknown'); ?>
                                                    </span>
                                                </div>
                                                <div><strong>XandMiner:</strong>
-                                                   <span class="status-btn status-value status-<?php echo $summaries[$device['id']]['xandminer_status'] == 'active' ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
+                                                   <span class="status-btn status-value status-<?php echo $summaries[$device['id']]['xandminer_status'] == 'active' ? 'online' : 'offline'; ?>" >
                                                        <?php echo ucfirst($summaries[$device['id']]['xandminer_status'] ?? 'unknown'); ?>
                                                    </span>
                                                </div>
                                                <div><strong>XandMinerD:</strong>
-                                                   <span class="status-btn status-value status-<?php echo $summaries[$device['id']]['xandminerd_status'] == 'active' ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
+                                                   <span class="status-btn status-value status-<?php echo $summaries[$device['id']]['xandminerd_status'] == 'active' ? 'online' : 'offline'; ?>" >
                                                        <?php echo ucfirst($summaries[$device['id']]['xandminerd_status'] ?? 'unknown'); ?>
                                                    </span>
                                                </div>
@@ -775,27 +775,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         healthElement.innerHTML = `
                             <div class="status-info">
                                 <div><strong>Health:</strong>
-                                    <span class="status-btn status-value status-${healthData.health_status == 'pass' ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
+                                    <span class="status-btn status-value status-${healthData.health_status == 'pass' ? 'online' : 'offline'}" >
                                         ${healthData.health_status ? healthData.health_status.charAt(0).toUpperCase() + healthData.health_status.slice(1) : 'Unknown'}
                                     </span>
                                 </div>
                                 <div><strong>Atlas:</strong>
-                                    <span class="status-btn status-value status-${healthData.atlas_registered ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
+                                    <span class="status-btn status-value status-${healthData.atlas_registered ? 'online' : 'offline'}" >
                                         ${healthData.atlas_registered ? 'Yes' : 'No'}
                                     </span>
                                 </div>
                                 <div><strong>Pod:</strong>
-                                    <span class="status-btn status-value status-${healthData.pod_status == 'active' ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
+                                    <span class="status-btn status-value status-${healthData.pod_status == 'active' ? 'online' : 'offline'}" >
                                         ${healthData.pod_status ? healthData.pod_status.charAt(0).toUpperCase() + healthData.pod_status.slice(1) : 'Unknown'}
                                     </span>
                                 </div>
                                 <div><strong>XandMiner:</strong>
-                                    <span class="status-btn status-value status-${healthData.xandminer_status == 'active' ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
+                                    <span class="status-btn status-value status-${healthData.xandminer_status == 'active' ? 'online' : 'offline'}" >
                                         ${healthData.xandminer_status ? healthData.xandminer_status.charAt(0).toUpperCase() + healthData.xandminer_status.slice(1) : 'Unknown'}
                                     </span>
                                 </div>
                                 <div><strong>XandMinerD:</strong>
-                                    <span class="status-btn status-value status-${healthData.xandminerd_status == 'active' ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
+                                    <span class="status-btn status-value status-${healthData.xandminerd_status == 'active' ? 'online' : 'offline'}" >
                                         ${healthData.xandminerd_status ? healthData.xandminerd_status.charAt(0).toUpperCase() + healthData.xandminerd_status.slice(1) : 'Unknown'}
                                     </span>
                                 </div>

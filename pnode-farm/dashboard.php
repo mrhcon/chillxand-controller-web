@@ -208,7 +208,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                 <?php if (empty($devices)): ?>
                     <p>No devices registered. <a href="devices.php">Add your first device</a> to get started!</p>
                 <?php else: ?>
-                    <table>
+                    <table class="device-table">
                         <thead>
                             <tr>
                                 <th>Node Name</th>
@@ -240,27 +240,27 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                         <?php else: ?>
                                             <div class="status-info">
                                                 <div><strong>Health:</strong> 
-                                                    <span class="status-btn status-value status-<?php echo $summaries[$device['id']]['health_status'] == 'pass' ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
+                                                    <span class="status-btn status-value status-<?php echo $summaries[$device['id']]['health_status'] == 'pass' ? 'online' : 'offline'; ?>" >
                                                         <?php echo ucfirst($summaries[$device['id']]['health_status'] ?? 'unknown'); ?>
                                                     </span>
                                                 </div>
                                                 <div><strong>Atlas:</strong> 
-                                                    <span class="status-btn status-value status-<?php echo $summaries[$device['id']]['atlas_registered'] ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
+                                                    <span class="status-btn status-value status-<?php echo $summaries[$device['id']]['atlas_registered'] ? 'online' : 'offline'; ?>" >
                                                         <?php echo $summaries[$device['id']]['atlas_registered'] ? 'Yes' : 'No'; ?>
                                                     </span>
                                                 </div>
                                                 <div><strong>Pod:</strong> 
-                                                    <span class="status-btn status-value status-<?php echo $summaries[$device['id']]['pod_status'] == 'active' ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
+                                                    <span class="status-btn status-value status-<?php echo $summaries[$device['id']]['pod_status'] == 'active' ? 'online' : 'offline'; ?>" >
                                                         <?php echo ucfirst($summaries[$device['id']]['pod_status'] ?? 'unknown'); ?>
                                                     </span>
                                                 </div>
                                                 <div><strong>XandMiner:</strong> 
-                                                    <span class="status-btn status-value status-<?php echo $summaries[$device['id']]['xandminer_status'] == 'active' ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
+                                                    <span class="status-btn status-value status-<?php echo $summaries[$device['id']]['xandminer_status'] == 'active' ? 'online' : 'offline'; ?>" >
                                                         <?php echo ucfirst($summaries[$device['id']]['xandminer_status'] ?? 'unknown'); ?>
                                                     </span>
                                                 </div>
                                                 <div><strong>XandMinerD:</strong> 
-                                                    <span class="status-btn status-value status-<?php echo $summaries[$device['id']]['xandminerd_status'] == 'active' ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
+                                                    <span class="status-btn status-value status-<?php echo $summaries[$device['id']]['xandminerd_status'] == 'active' ? 'online' : 'offline'; ?>" >
                                                         <?php echo ucfirst($summaries[$device['id']]['xandminerd_status'] ?? 'unknown'); ?>
                                                     </span>
                                                 </div>
@@ -525,27 +525,27 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                 cell.innerHTML = `
                     <div class="status-info">
                         <div><strong>Health:</strong> 
-                            <span class="status-btn status-value status-${summary.health_status == 'pass' ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
+                            <span class="status-btn status-value status-${summary.health_status == 'pass' ? 'online' : 'offline'}" >
                                 ${summary.health_status ? summary.health_status.charAt(0).toUpperCase() + summary.health_status.slice(1) : 'Unknown'}
                             </span>
                         </div>
                         <div><strong>Atlas:</strong> 
-                            <span class="status-btn status-value status-${summary.atlas_registered ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
+                            <span class="status-btn status-value status-${summary.atlas_registered ? 'online' : 'offline'}" >
                                 ${summary.atlas_registered ? 'Yes' : 'No'}
                             </span>
                         </div>
                         <div><strong>Pod:</strong> 
-                            <span class="status-btn status-value status-${summary.pod_status == 'active' ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
+                            <span class="status-btn status-value status-${summary.pod_status == 'active' ? 'online' : 'offline'}" >
                                 ${summary.pod_status ? summary.pod_status.charAt(0).toUpperCase() + summary.pod_status.slice(1) : 'Unknown'}
                             </span>
                         </div>
                         <div><strong>XandMiner:</strong> 
-                            <span class="status-btn status-value status-${summary.xandminer_status == 'active' ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
+                            <span class="status-btn status-value status-${summary.xandminer_status == 'active' ? 'online' : 'offline'}" >
                                 ${summary.xandminer_status ? summary.xandminer_status.charAt(0).toUpperCase() + summary.xandminer_status.slice(1) : 'Unknown'}
                             </span>
                         </div>
                         <div><strong>XandMinerD:</strong> 
-                            <span class="status-btn status-value status-${summary.xandminerd_status == 'active' ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
+                            <span class="status-btn status-value status-${summary.xandminerd_status == 'active' ? 'online' : 'offline'}" >
                                 ${summary.xandminerd_status ? summary.xandminerd_status.charAt(0).toUpperCase() + summary.xandminerd_status.slice(1) : 'Unknown'}
                             </span>
                         </div>
