@@ -321,22 +321,22 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                             <div class="status-info">
                                                 <div class="version-info">
                                                     <div><strong>Controller:</strong> 
-                                                    <span class="status-value version-value">
+                                                        <span class="status-value version-value">
                                                             <?php echo htmlspecialchars($summaries[$device['id']]['chillxand_version'] ?? 'N/A'); ?>
                                                         </span>
                                                     </div>
                                                     <div><strong>Pod:</strong> 
-                                                    <span class="status-value version-value">
+                                                        <span class="status-value version-value">
                                                             <?php echo htmlspecialchars($summaries[$device['id']]['pod_version'] ?? 'N/A'); ?>
                                                         </span>
                                                     </div>
                                                     <div><strong>XandMiner:</strong> 
-                                                    <span class="status-value version-value">
+                                                        <span class="status-value version-value">
                                                             <?php echo htmlspecialchars($summaries[$device['id']]['xandminer_version'] ?? 'N/A'); ?>
                                                         </span>
                                                     </div>
                                                     <div><strong>XandMinerD:</strong> 
-                                                    <span class="status-value version-value">
+                                                        <span class="status-value version-value">
                                                             <?php echo htmlspecialchars($summaries[$device['id']]['xandminerd_version'] ?? 'N/A'); ?>
                                                         </span>
                                                     </div>

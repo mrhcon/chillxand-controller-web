@@ -427,46 +427,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             margin: 1px 0;
             width: 100%;
         }
-        .status-info {
-            line-height: 1.3;
-            color: #666;
-        }
-
-        /* Align labels and values horizontally */
-        .status-info > div {
-            display: flex;
-            align-items: center;
-            margin-bottom: 2px;
-            min-height: 16px;
-        }
-
-        .status-info strong {
-            font-weight: bold;
-            color: #333;
-            width: 120px;
-            flex-shrink: 0;
-            margin: 0 15x 0 0;
-        }
-
-        .status-value {
-            color: #333;
-            font-weight: normal;
-            text-align: left;
-            flex: 1;
-        }
-
-        .status-btn.status-value {
-            color: white !important;
-            text-align: center;
-            font-size: 9px;
-            padding: 3px 6px;
-            min-height: 18px;
-            line-height: 1.2;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-
+ 
         .summary-container { margin-bottom: 20px; padding: 10px; border: 1px solid #ccc; background: #f9f9f9; }
         .error { color: red; }
         .status-age { color: #666; }
