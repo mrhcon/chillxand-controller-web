@@ -413,6 +413,12 @@ button:hover {
     margin: 2px 0;
 }
 
+.last-check-date {
+    color: black;
+    font-size: inherit;
+    margin: 2px 0;
+}
+
 .device-table td:nth-child(7) .never-checked {
     font-size: inherit;
     font-weight: normal;
