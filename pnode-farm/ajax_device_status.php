@@ -60,7 +60,7 @@ try {
         $overall_status = $cached_status['status'];
     }
     
-    // Return JSON response
+    // Return JSON response - keeping exact same format as original
     echo json_encode([
         'success' => true,
         'device_id' => $device_id,
@@ -73,7 +73,7 @@ try {
         'consecutive_failures' => $cached_status['consecutive_failures'],
         'health_status' => $cached_status['health_status'],
         'summary' => $summary,
-        'timestamp' => time()
+        'timestamp' => time()  // Back to original format
     ]);
     
 } catch (PDOException $e) {
