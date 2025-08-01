@@ -615,7 +615,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                         <div class="${staleClass}">
                             ${ageText}
                         </div>
-                        <div style="font-size: 10px; color: #999;">
+                        <div class="last-check-date">
                             ${formattedDate}
                         </div>
                         ${data.response_time ? `<div class="device-status-details">Response: ${Math.round(data.response_time * 1000)}ms</div>` : ''}
