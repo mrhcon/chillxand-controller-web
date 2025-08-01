@@ -664,6 +664,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                         <div style="font-size: 10px; color: #999;">
                             ${formattedDate}
                         </div>
+                        ${data.response_time ? `<div class="device-status-details">Response: ${Math.round(data.response_time * 1000)}ms</div>` : ''}                        
                     `;
                 } else {
                     cell.innerHTML = '<div class="never-checked">Never checked</div>';
