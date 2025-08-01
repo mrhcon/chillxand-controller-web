@@ -277,16 +277,6 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                         <span class="status-btn status-<?php echo strtolower(str_replace(' ', '-', $device['status'])); ?>">
                                             <?php echo htmlspecialchars($device['status']); ?>
                                         </span>
-                                        <div class="status-age <?php echo $device['status_stale'] ? 'status-stale' : 'status-fresh'; ?>">
-                                            <?php if ($device['last_check']): ?>
-                                                <?php echo $device['status_age'] ? round($device['status_age']) . 'm ago' : 'Just now'; ?>
-                                            <?php else: ?>
-                                                Never checked
-                                            <?php endif; ?>
-                                        </div>
-                                        <?php if ($device['response_time']): ?>
-                                            <div class="device-status-details">Response: <?php echo round($device['response_time'] * 1000, 1); ?>ms</div>
-                                        <?php endif; ?>
                                         <?php if ($device['consecutive_failures'] > 0): ?>
                                             <div class="device-status-details" style="color: #dc3545;">Failures: <?php echo $device['consecutive_failures']; ?></div>
                                         <?php endif; ?>
@@ -360,6 +350,9 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                             <div style="font-size: 10px; color: #999;">
                                                 <?php echo date('M j, H:i', strtotime($device['last_check'])); ?>
                                             </div>
+                                            <?php if ($device['response_time']): ?>
+                                                <div class="device-status-details">Response: <?php echo round($device['response_time'] * 1000, 1); ?>ms</div>
+                                            <?php endif; ?>                                            
                                         <?php else: ?>
                                             <div class="never-checked">Never checked</div>
                                         <?php endif; ?>
