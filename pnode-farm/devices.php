@@ -443,16 +443,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         .status-info strong {
             font-weight: bold;
             color: #333;
-            width: 80px;
+            width: 90px;
             flex-shrink: 0;
-            margin-right: 5px;
+            margin-right: 10px;
         }
 
         .status-value {
             color: #333;
             font-weight: normal;
             text-align: left;
-            flex-shrink: 0;
+            flex: 1;
         }
 
         .status-btn.status-value {
@@ -666,11 +666,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             line-height: 1.3;
             color: #666;
         }
-        .version-value {
+        /* .version-value {
             font-family: 'Courier New', monospace;
             color: #333;
             font-weight: 500;
-        }
+        } */
         .dashboard-summary {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
