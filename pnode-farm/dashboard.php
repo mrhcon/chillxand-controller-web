@@ -565,10 +565,6 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                     <span class="status-btn ${statusClass}">
                         ${data.status}
                     </span>
-                    <div class="status-age ${staleClass}">
-                        ${data.last_check ? ageText : 'Never checked'}
-                    </div>
-                    ${data.response_time ? `<div class="device-status-details">Response: ${Math.round(data.response_time * 1000)}ms</div>` : ''}
                     ${data.consecutive_failures > 0 ? `<div class="device-status-details" style="color: #dc3545;">Failures: ${data.consecutive_failures}</div>` : ''}
                 `;
             }
