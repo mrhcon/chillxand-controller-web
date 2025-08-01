@@ -1103,41 +1103,16 @@ details summary {
     font-size: 16px;
 }
 
-/* Ensure consistent cell alignment with more spacious padding */
+/* Vertical centering for Connectivity, Health Status, Versions, and Last Checked columns */
 .device-table td:nth-child(4),
 .device-table td:nth-child(5),
 .device-table td:nth-child(6),
 .device-table td:nth-child(7) {
-    vertical-align: top;
+    vertical-align: middle;
     padding: 8px;
 }
 
-/* Fix font sizes in Health Status and Versions columns */
-.device-table td:nth-child(5) .status-info strong,
-.device-table td:nth-child(6) .status-info strong {
-    font-size: 16px !important;
-    width: 120px !important;
-    margin-right: 15px !important;    
-}
-
-.device-table td:nth-child(5) .status-value,
-.device-table td:nth-child(6) .status-value {
-    font-size: 16px !important;
-}
-
-.device-table td:nth-child(5) .version-value,
-.device-table td:nth-child(6) .version-value {
-    font-size: 16px !important;
-}
-
-.device-table td:nth-child(5) .status-btn.status-value,
-.device-table td:nth-child(6) .status-btn.status-value {
-    font-size: 9px !important;
-    padding: 3px 6px !important;
-    min-height: 18px !important;
-}
-
-/* Ensure consistent spacing */
+/* Ensure consistent spacing for Health Status and Versions columns */
 .device-table td:nth-child(5) .status-info > div,
 .device-table td:nth-child(6) .status-info > div {
     margin-bottom: 2px !important;
