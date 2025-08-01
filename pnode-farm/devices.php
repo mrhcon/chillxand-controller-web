@@ -826,7 +826,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
 <script>
         var pendingControllerUpdate = null;
         var pendingPodUpdate = null;
-        window.updateMonitors = {};
+        var updateMonitors = {};
 
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM loaded, initializing button handlers...');
@@ -859,11 +859,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             const refreshBtn = document.querySelector(`#refresh-${deviceId}`);
             const lastCheckElement = document.querySelector(`#lastcheck-${deviceId}`);
 
-            // Mark manual refresh in progress
-            if (window.devicesAutoRefresh) {
-                window.devicesAutoRefresh.setManualRefreshInProgress(deviceId, true);
-            }
-
             refreshBtn.disabled = true;
             refreshBtn.textContent = '⟳ Refreshing Status...';
 
@@ -882,6 +877,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 } catch (parseError) {
                     console.error('JSON Parse Error:', parseError.message);
                     alert('Error parsing response. Please try again.');
+                    refreshBtn.disabled = false;
+                    refreshBtn.textContent = '↻ Refresh Status';
                     return;
                 }
 
@@ -917,27 +914,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         healthElement.innerHTML = `
                             <div class="status-info">
                                 <div><strong>Health:</strong>
-                                    <span class="status-btn status-value status-${healthData.health_status == 'pass' ? 'online' : 'offline'}">
+                                    <span class="status-btn status-value status-${healthData.health_status == 'pass' ? 'online' : 'offline'}" >
                                         ${healthData.health_status ? healthData.health_status.charAt(0).toUpperCase() + healthData.health_status.slice(1) : 'Unknown'}
                                     </span>
                                 </div>
                                 <div><strong>Atlas:</strong>
-                                    <span class="status-btn status-value status-${healthData.atlas_registered ? 'online' : 'offline'}">
+                                    <span class="status-btn status-value status-${healthData.atlas_registered ? 'online' : 'offline'}" >
                                         ${healthData.atlas_registered ? 'Yes' : 'No'}
                                     </span>
                                 </div>
                                 <div><strong>Pod:</strong>
-                                    <span class="status-btn status-value status-${healthData.pod_status == 'active' ? 'online' : 'offline'}">
+                                    <span class="status-btn status-value status-${healthData.pod_status == 'active' ? 'online' : 'offline'}" >
                                         ${healthData.pod_status ? healthData.pod_status.charAt(0).toUpperCase() + healthData.pod_status.slice(1) : 'Unknown'}
                                     </span>
                                 </div>
                                 <div><strong>XandMiner:</strong>
-                                    <span class="status-btn status-value status-${healthData.xandminer_status == 'active' ? 'online' : 'offline'}">
+                                    <span class="status-btn status-value status-${healthData.xandminer_status == 'active' ? 'online' : 'offline'}" >
                                         ${healthData.xandminer_status ? healthData.xandminer_status.charAt(0).toUpperCase() + healthData.xandminer_status.slice(1) : 'Unknown'}
                                     </span>
                                 </div>
                                 <div><strong>XandMinerD:</strong>
-                                    <span class="status-btn status-value status-${healthData.xandminerd_status == 'active' ? 'online' : 'offline'}">
+                                    <span class="status-btn status-value status-${healthData.xandminerd_status == 'active' ? 'online' : 'offline'}" >
                                         ${healthData.xandminerd_status ? healthData.xandminerd_status.charAt(0).toUpperCase() + healthData.xandminerd_status.slice(1) : 'Unknown'}
                                     </span>
                                 </div>
@@ -981,27 +978,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         <div class="last-check-date">${data.timestamp}</div>
                         <div class="device-details">Response: ${data.response_time}ms</div>
                     `;
-
-                    // Update auto-refresh status tracking
-                    if (window.devicesAutoRefresh) {
-                        const newStatus = {
-                            status: data.status,
-                            overallStatus: overallStatus
-                        };
-                        window.devicesAutoRefresh.deviceStatuses.set(deviceId, newStatus);
-                        window.devicesAutoRefresh.updateSummaryCards();
-                    }
                 }
+                refreshBtn.disabled = false;
+                refreshBtn.textContent = '↻ Refresh Status';
             })
             .catch(error => {
                 console.error('Fetch Error:', error.message);
                 alert('Failed to refresh status: ' + error.message);
-            })
-            .finally(() => {
-                // Mark manual refresh as complete
-                if (window.devicesAutoRefresh) {
-                    window.devicesAutoRefresh.setManualRefreshInProgress(deviceId, false);
-                }
                 refreshBtn.disabled = false;
                 refreshBtn.textContent = '↻ Refresh Status';
             });
@@ -2046,487 +2029,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             }
             return 0;
         }
-
-// Updated manual refresh function to integrate with auto-refresh
-        function refreshDeviceStatus(deviceId) {
-            const statusElement = document.querySelector(`#status-${deviceId}`);
-            const refreshBtn = document.querySelector(`#refresh-${deviceId}`);
-            const lastCheckElement = document.querySelector(`#lastcheck-${deviceId}`);
-
-            // Mark manual refresh in progress
-            if (window.devicesAutoRefresh) {
-                window.devicesAutoRefresh.setManualRefreshInProgress(deviceId, true);
-            }
-
-            refreshBtn.disabled = true;
-            refreshBtn.textContent = '⟳ Refreshing Status...';
-
-            fetch('manual_device_check.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `device_id=${deviceId}`
-            })
-            .then(response => {
-                return response.text();
-            })
-            .then(responseText => {
-                let data;
-                try {
-                    data = JSON.parse(responseText);
-                } catch (parseError) {
-                    console.error('JSON Parse Error:', parseError.message);
-                    alert('Error parsing response. Please try again.');
-                    return;
-                }
-
-                if (data.error) {
-                    alert('Error: ' + data.error);
-                } else {
-                    let overallStatus = 'Unknown';
-                    let statusClass = 'unknown';
-
-                    if (data.status === 'Online') {
-                        statusClass = 'online';
-                        overallStatus = 'Online';
-                    } else if (data.status === 'Offline') {
-                        statusClass = 'offline';
-                        overallStatus = 'Offline';
-                    } else if (data.status === 'Error') {
-                        statusClass = 'error';
-                        overallStatus = 'Error';
-                    } else {
-                        statusClass = 'unknown';
-                        overallStatus = data.status || 'Unknown';
-                    }
-
-                    // Update status
-                    statusElement.innerHTML = `
-                        <span class="status-btn status-${statusClass}">${overallStatus}</span>
-                    `;
-
-                    // Update health data if available
-                    const healthElement = statusElement.nextElementSibling;
-                    if (data.health_data && healthElement) {
-                        const healthData = data.health_data;
-                        healthElement.innerHTML = `
-                            <div class="status-info">
-                                <div><strong>Health:</strong>
-                                    <span class="status-btn status-value status-${healthData.health_status == 'pass' ? 'online' : 'offline'}">
-                                        ${healthData.health_status ? healthData.health_status.charAt(0).toUpperCase() + healthData.health_status.slice(1) : 'Unknown'}
-                                    </span>
-                                </div>
-                                <div><strong>Atlas:</strong>
-                                    <span class="status-btn status-value status-${healthData.atlas_registered ? 'online' : 'offline'}">
-                                        ${healthData.atlas_registered ? 'Yes' : 'No'}
-                                    </span>
-                                </div>
-                                <div><strong>Pod:</strong>
-                                    <span class="status-btn status-value status-${healthData.pod_status == 'active' ? 'online' : 'offline'}">
-                                        ${healthData.pod_status ? healthData.pod_status.charAt(0).toUpperCase() + healthData.pod_status.slice(1) : 'Unknown'}
-                                    </span>
-                                </div>
-                                <div><strong>XandMiner:</strong>
-                                    <span class="status-btn status-value status-${healthData.xandminer_status == 'active' ? 'online' : 'offline'}">
-                                        ${healthData.xandminer_status ? healthData.xandminer_status.charAt(0).toUpperCase() + healthData.xandminer_status.slice(1) : 'Unknown'}
-                                    </span>
-                                </div>
-                                <div><strong>XandMinerD:</strong>
-                                    <span class="status-btn status-value status-${healthData.xandminerd_status == 'active' ? 'online' : 'offline'}">
-                                        ${healthData.xandminerd_status ? healthData.xandminerd_status.charAt(0).toUpperCase() + healthData.xandminerd_status.slice(1) : 'Unknown'}
-                                    </span>
-                                </div>
-                            </div>
-                        `;
-                    }
-
-                    // Update versions if available
-                    const versionsElement = healthElement ? healthElement.nextElementSibling : null;
-                    if (data.version_data && versionsElement) {
-                        const versionData = data.version_data;
-                        versionsElement.innerHTML = `
-                            <div class="status-info">
-                                <div><strong>Controller:</strong>
-                                    <span class="status-value version-value">
-                                        ${versionData.chillxand_version || 'N/A'}
-                                    </span>
-                                </div>
-                                <div><strong>Pod:</strong>
-                                    <span class="status-value version-value">
-                                        ${versionData.pod_version || 'N/A'}
-                                    </span>
-                                </div>
-                                <div><strong>XandMiner:</strong>
-                                    <span class="status-value version-value">
-                                        ${versionData.xandminer_version || 'N/A'}
-                                    </span>
-                                </div>
-                                <div><strong>XandMinerD:</strong>
-                                    <span class="status-value version-value">
-                                        ${versionData.xandminerd_version || 'N/A'}
-                                    </span>
-                                </div>
-                            </div>
-                        `;
-                    }
-
-                    // Update timestamp
-                    lastCheckElement.innerHTML = `
-                        <div class="status-fresh">Just now</div>
-                        <div class="last-check-date">${data.timestamp}</div>
-                        <div class="device-details">Response: ${data.response_time}ms</div>
-                    `;
-
-                    // Update auto-refresh status tracking
-                    if (window.devicesAutoRefresh) {
-                        const newStatus = {
-                            status: data.status,
-                            overallStatus: overallStatus
-                        };
-                        window.devicesAutoRefresh.deviceStatuses.set(deviceId, newStatus);
-                        window.devicesAutoRefresh.updateSummaryCards();
-                    }
-                }
-            })
-            .catch(error => {
-                console.error('Fetch Error:', error.message);
-                alert('Failed to refresh status: ' + error.message);
-            })
-            .finally(() => {
-                // Mark manual refresh as complete
-                if (window.devicesAutoRefresh) {
-                    window.devicesAutoRefresh.setManualRefreshInProgress(deviceId, false);
-                }
-                refreshBtn.disabled = false;
-                refreshBtn.textContent = '↻ Refresh Status';
-            });
-        }    
-
-        // Auto-refresh functionality for devices.php
-        class DevicesAutoRefresh {
-            constructor() {
-                this.devices = [];
-                this.updateInterval = 30000; // 30 seconds per device
-                this.staggerDelay = 2000; // 2 seconds between device updates
-                this.deviceStatuses = new Map(); // Track current status of each device
-                this.manualRefreshInProgress = new Set(); // Track manual refreshes
-                this.init();
-            }
-            
-            init() {
-                // Collect all device IDs from the table and their initial statuses
-                const deviceRows = document.querySelectorAll('tbody tr');
-                deviceRows.forEach((row, index) => {
-                    const deviceLink = row.querySelector('td:first-child a');
-                    if (deviceLink) {
-                        const url = new URL(deviceLink.href);
-                        const deviceId = url.searchParams.get('device_id');
-                        if (deviceId) {
-                            // Get initial status from the row
-                            const initialStatus = this.getRowStatus(row);
-                            this.deviceStatuses.set(deviceId, initialStatus);
-                            
-                            this.devices.push({
-                                id: deviceId,
-                                row: row,
-                                lastUpdate: 0
-                            });
-                        }
-                    }
-                });
-                
-                console.log(`Initialized auto-refresh for ${this.devices.length} devices`);
-                
-                // Start staggered updates
-                this.startStaggeredUpdates();
-            }
-            
-            getRowStatus(row) {
-                // Extract current status from a table row
-                const connectivityCell = row.cells[3];
-                const statusBtn = connectivityCell.querySelector('.status-btn');
-                const status = statusBtn ? statusBtn.textContent.trim() : 'Unknown';
-                
-                // Determine overall status based on current row content
-                const healthCell = row.cells[4];
-                let overallStatus = 'Unknown';
-                
-                if (status === 'Online') {
-                    // Check if health shows "Pass" for healthy status
-                    const healthText = healthCell.textContent;
-                    if (healthText.includes('Pass')) {
-                        overallStatus = 'Healthy';
-                    } else if (healthText.includes('Fail')) {
-                        overallStatus = 'Online (Issues)';
-                    } else {
-                        overallStatus = 'Online';
-                    }
-                } else if (status === 'Offline') {
-                    overallStatus = 'Offline';
-                } else {
-                    overallStatus = status;
-                }
-                
-                return {
-                    status: status,
-                    overallStatus: overallStatus
-                };
-            }
-            
-            startStaggeredUpdates() {
-                this.devices.forEach((device, index) => {
-                    // Stagger initial updates
-                    setTimeout(() => {
-                        this.updateDevice(device);
-                        // Set up recurring updates for this device
-                        setInterval(() => this.updateDevice(device), this.updateInterval);
-                    }, index * this.staggerDelay);
-                });
-            }
-            
-            async updateDevice(device) {
-                try {
-                    // Check if we should skip this update
-                    if (this.shouldSkipUpdate(device.id)) {
-                        console.log(`Skipping auto-refresh for device ${device.id} (manual refresh or update in progress)`);
-                        return;
-                    }
-                    
-                    console.log(`Auto-refreshing device ${device.id}...`);
-                    
-                    const response = await fetch(`ajax_device_status.php?device_id=${device.id}`);
-                    const data = await response.json();
-                    
-                    if (data.success) {
-                        // Store old status for comparison
-                        const oldStatus = this.deviceStatuses.get(device.id);
-                        
-                        // Update the row
-                        this.updateDeviceRow(device, data);
-                        
-                        // Store new status
-                        const newStatus = {
-                            status: data.status,
-                            overallStatus: data.overall_status
-                        };
-                        this.deviceStatuses.set(device.id, newStatus);
-                        
-                        // Update summary cards if status changed or on first update
-                        if (!oldStatus || 
-                            oldStatus.status !== newStatus.status || 
-                            oldStatus.overallStatus !== newStatus.overallStatus) {
-                            this.updateSummaryCards();
-                        }
-                        
-                        device.lastUpdate = Date.now();
-                        console.log(`Auto-refresh completed for device ${device.id}`);
-                    } else {
-                        console.error(`Error auto-refreshing device ${device.id}:`, data.error);
-                    }
-                } catch (error) {
-                    console.error(`Failed to auto-refresh device ${device.id}:`, error);
-                }
-            }
-            
-            shouldSkipUpdate(deviceId) {
-                // Skip if manual refresh is in progress
-                if (this.manualRefreshInProgress.has(deviceId)) {
-                    return true;
-                }
-                
-                // Skip if update is in progress
-                if (window.updateMonitors && window.updateMonitors[`${deviceId}_controller`]) {
-                    return true;
-                }
-                if (window.updateMonitors && window.updateMonitors[`${deviceId}_pod`]) {
-                    return true;
-                }
-                
-                return false;
-            }
-            
-            updateSummaryCards() {
-                const statuses = Array.from(this.deviceStatuses.values());
-                
-                // Calculate totals
-                const totalDevices = statuses.length;
-                const onlineDevices = statuses.filter(s => s.status === 'Online').length;
-                const offlineDevices = statuses.filter(s => s.status === 'Offline').length;
-                const healthyDevices = statuses.filter(s => s.overallStatus === 'Healthy').length;
-                const issuesDevices = statuses.filter(s => s.overallStatus === 'Online (Issues)').length;
-                
-                // Update the summary cards
-                const summaryCards = document.querySelectorAll('.summary-card');
-                if (summaryCards.length >= 5) {
-                    // Total Devices
-                    const totalCard = summaryCards[0].querySelector('.summary-number');
-                    if (totalCard) totalCard.textContent = totalDevices;
-                    
-                    // Online
-                    const onlineCard = summaryCards[1].querySelector('.summary-number');
-                    if (onlineCard) onlineCard.textContent = onlineDevices;
-                    
-                    // Healthy
-                    const healthyCard = summaryCards[2].querySelector('.summary-number');
-                    if (healthyCard) healthyCard.textContent = healthyDevices;
-                    
-                    // With Issues
-                    const issuesCard = summaryCards[3].querySelector('.summary-number');
-                    if (issuesCard) issuesCard.textContent = issuesDevices;
-                    
-                    // Offline
-                    const offlineCard = summaryCards[4].querySelector('.summary-number');
-                    if (offlineCard) offlineCard.textContent = offlineDevices;
-                                       
-                    console.log(`Summary updated: ${totalDevices} total, ${onlineDevices} online, ${healthyDevices} healthy, ${issuesDevices} issues, ${offlineDevices} offline`);
-                }
-            }
-            
-            updateDeviceRow(device, data) {
-                const row = device.row;
-                
-                // Update connectivity status (4th column)
-                const connectivityCell = row.cells[3];
-                this.updateConnectivityCell(connectivityCell, data);
-                
-                // Update health status (5th column)
-                const healthCell = row.cells[4];
-                this.updateHealthCell(healthCell, data);
-                
-                // Update versions (6th column)
-                const versionsCell = row.cells[5];
-                this.updateVersionsCell(versionsCell, data);
-                
-                // Update last checked (7th column)
-                const lastCheckedCell = row.cells[6];
-                this.updateLastCheckedCell(lastCheckedCell, data);
-            }
-            
-            updateConnectivityCell(cell, data) {
-                const statusClass = `status-${data.status.toLowerCase().replace(' ', '-')}`;
-                
-                cell.innerHTML = `
-                    <span class="status-btn ${statusClass}">
-                        ${data.status}
-                    </span>
-                    ${data.consecutive_failures > 0 ? `<div class="device-details" style="color: #dc3545;">Failures: ${data.consecutive_failures}</div>` : ''}
-                `;
-            }
-            
-            updateHealthCell(cell, data) {
-                if (data.status === 'Not Initialized') {
-                    cell.innerHTML = '<span class="status-btn status-value status-not-initialized">Not Initialized</span>';
-                    return;
-                }
-                
-                const summary = data.summary;
-                cell.innerHTML = `
-                    <div class="status-info">
-                        <div><strong>Health:</strong>
-                            <span class="status-btn status-value status-${summary.health_status == 'pass' ? 'online' : 'offline'}">
-                                ${summary.health_status ? summary.health_status.charAt(0).toUpperCase() + summary.health_status.slice(1) : 'Unknown'}
-                            </span>
-                        </div>
-                        <div><strong>Atlas:</strong>
-                            <span class="status-btn status-value status-${summary.atlas_registered ? 'online' : 'offline'}">
-                                ${summary.atlas_registered ? 'Yes' : 'No'}
-                            </span>
-                        </div>
-                        <div><strong>Pod:</strong>
-                            <span class="status-btn status-value status-${summary.pod_status == 'active' ? 'online' : 'offline'}">
-                                ${summary.pod_status ? summary.pod_status.charAt(0).toUpperCase() + summary.pod_status.slice(1) : 'Unknown'}
-                            </span>
-                        </div>
-                        <div><strong>XandMiner:</strong>
-                            <span class="status-btn status-value status-${summary.xandminer_status == 'active' ? 'online' : 'offline'}">
-                                ${summary.xandminer_status ? summary.xandminer_status.charAt(0).toUpperCase() + summary.xandminer_status.slice(1) : 'Unknown'}
-                            </span>
-                        </div>
-                        <div><strong>XandMinerD:</strong>
-                            <span class="status-btn status-value status-${summary.xandminerd_status == 'active' ? 'online' : 'offline'}">
-                                ${summary.xandminerd_status ? summary.xandminerd_status.charAt(0).toUpperCase() + summary.xandminerd_status.slice(1) : 'Unknown'}
-                            </span>
-                        </div>
-                    </div>
-                `;
-            }
-            
-            updateVersionsCell(cell, data) {
-                if (data.status === 'Not Initialized') {
-                    cell.innerHTML = '<span class="status-btn status-value status-not-initialized">Not Initialized</span>';
-                    return;
-                }
-                
-                const summary = data.summary;
-                cell.innerHTML = `
-                    <div class="status-info">
-                        <div><strong>Controller:</strong>
-                            <span class="status-value version-value">
-                                ${summary.chillxand_version || 'N/A'}
-                            </span>
-                        </div>
-                        <div><strong>Pod:</strong>
-                            <span class="status-value version-value">
-                                ${summary.pod_version || 'N/A'}
-                            </span>
-                        </div>
-                        <div><strong>XandMiner:</strong>
-                            <span class="status-value version-value">
-                                ${summary.xandminer_version || 'N/A'}
-                            </span>
-                        </div>
-                        <div><strong>XandMinerD:</strong>
-                            <span class="status-value version-value">
-                                ${summary.xandminerd_version || 'N/A'}
-                            </span>
-                        </div>
-                    </div>
-                `;
-            }
-            
-            updateLastCheckedCell(cell, data) {
-                if (data.last_check) {
-                    const ageText = data.status_age ? Math.round(data.status_age) + ' min ago' : 'Just now';
-                    const staleClass = data.status_stale ? 'status-stale' : 'status-fresh';
-                    const checkDate = new Date(data.last_check);
-                    const formattedDate = checkDate.toLocaleDateString('en-US', { 
-                        month: 'short', 
-                        day: 'numeric', 
-                        hour: '2-digit', 
-                        minute: '2-digit',
-                        hour12: false 
-                    });
-                    
-                    cell.innerHTML = `
-                        <div class="${staleClass}">
-                            ${ageText}
-                        </div>
-                        <div class="last-check-date">
-                            ${formattedDate}
-                        </div>
-                        ${data.response_time ? `<div class="device-details">Response: ${Math.round(data.response_time * 1000)}ms</div>` : ''}                        
-                    `;
-                } else {
-                    cell.innerHTML = '<div class="never-checked">Never checked</div>';
-                }
-            }
-            
-            // Method to mark manual refresh in progress
-            setManualRefreshInProgress(deviceId, inProgress) {
-                if (inProgress) {
-                    this.manualRefreshInProgress.add(deviceId);
-                } else {
-                    this.manualRefreshInProgress.delete(deviceId);
-                }
-            }
-        }
-
-        // Initialize auto-refresh when page loads
-        let devicesAutoRefresh;
-        document.addEventListener('DOMContentLoaded', function() {
-            if (document.querySelector('.device-table tbody tr')) {
-                devicesAutoRefresh = new DevicesAutoRefresh();
-            }
-        });
     </script>
 </body>
 </html>
