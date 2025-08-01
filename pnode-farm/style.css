@@ -427,7 +427,7 @@ button:hover {
 }
 
 .device-table td .last-check-date {
-    color: #666 !important;
+    color: #999 !important;
 }
 
 .device-table td:nth-child(7) .status-fresh,
