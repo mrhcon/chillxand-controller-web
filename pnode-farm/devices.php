@@ -436,16 +436,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         /* Align labels and values horizontally */
         .status-info > div {
             display: flex;
-            justify-content: flex-start;
             align-items: center;
             margin-bottom: 2px;
             min-height: 16px;
-            gap: 8px;
         }
 
         .status-info strong {
             font-weight: bold;
             color: #333;
+            width: 80px;
             flex-shrink: 0;
             margin-right: 5px;
         }
