@@ -237,7 +237,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                     <td><a href="device_details.php?device_id=<?php echo $device['id']; ?>"><?php echo htmlspecialchars($device['pnode_name']); ?></a></td>
                                     <td><?php echo htmlspecialchars($device['pnode_ip']); ?></td>
                                     <td><?php echo htmlspecialchars($device['registration_date']); ?></td>
-                                    <td>
+                                    <td id="status-<?php echo $device['id']; ?>">
                                         <span class="status-btn status-<?php echo strtolower(str_replace(' ', '-', $device['status'])); ?>">
                                             <?php echo htmlspecialchars($device['status']); ?>
                                         </span>
@@ -306,7 +306,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                             </div>
                                         <?php endif; ?>
                                     </td>
-                                    <td class="last-check-col">
+                                    <td class="last-check-col" id="lastcheck-<?php echo $device['id']; ?>">
                                         <?php if ($device['last_check']): ?>
                                             <div class="<?php echo $device['status_stale'] ? 'status-stale' : 'status-fresh'; ?>">
                                                 <?php echo $device['status_age'] ? round($device['status_age']) . ' min ago' : 'Just now'; ?>
