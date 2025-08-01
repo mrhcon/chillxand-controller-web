@@ -402,6 +402,19 @@ button:hover {
     color: #666;
 }
 
+.device-table .status-age {
+    font-size: inherit !important;
+    color: #666 !important;
+    font-weight: normal !important;
+}
+
+.device-table .status-fresh,
+.device-table .status-stale {
+    font-size: inherit !important;
+    color: #666 !important;
+    font-weight: normal !important;
+}
+
 .device-table td:nth-child(7) .status-fresh,
 .device-table td:nth-child(7) .status-stale {
     font-size: inherit !important;
