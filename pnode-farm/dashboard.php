@@ -337,7 +337,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
         </div>
     </div>
 
-    <script>
+ <script>
         class DeviceStatusUpdater {
             constructor() {
                 this.devices = [];
@@ -348,14 +348,18 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
             }
 
             init() {
+                console.log('DeviceStatusUpdater init() called');
                 // Collect all device IDs from the table and their initial statuses
-                const deviceRows = document.querySelectorAll('tbody tr');
+                const deviceRows = document.querySelectorAll('.device-table tbody tr');
+                console.log(`Found ${deviceRows.length} device rows`);
+                
                 deviceRows.forEach((row, index) => {
                     const deviceLink = row.querySelector('td:first-child a');
                     if (deviceLink) {
                         const url = new URL(deviceLink.href);
                         const deviceId = url.searchParams.get('device_id');
                         if (deviceId) {
+                            console.log(`Adding device ${deviceId} for auto-refresh`);
                             // Get initial status from the row
                             const initialStatus = this.getRowStatus(row);
                             this.deviceStatuses.set(deviceId, initialStatus);
@@ -371,8 +375,10 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
 
                 console.log(`Initialized status updater for ${this.devices.length} devices`);
 
-                // Start staggered updates
-                this.startStaggeredUpdates();
+                if (this.devices.length > 0) {
+                    // Start staggered updates
+                    this.startStaggeredUpdates();
+                }
             }
 
             getRowStatus(row) {
@@ -408,13 +414,18 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
             }
 
             startStaggeredUpdates() {
+                console.log('Starting staggered updates...');
                 this.devices.forEach((device, index) => {
+                    const delay = index * this.staggerDelay;
+                    console.log(`Scheduling device ${device.id} update in ${delay}ms`);
+                    
                     // Stagger initial updates
                     setTimeout(() => {
+                        console.log(`Starting updates for device ${device.id}`);
                         this.updateDevice(device);
                         // Set up recurring updates for this device
                         setInterval(() => this.updateDevice(device), this.updateInterval);
-                    }, index * this.staggerDelay);
+                    }, delay);
                 });
             }
 
@@ -423,7 +434,12 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                     console.log(`Updating device ${device.id}...`);
 
                     const response = await fetch(`ajax_device_status.php?device_id=${device.id}`);
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    
                     const data = await response.json();
+                    console.log(`Got response for device ${device.id}:`, data);
 
                     if (data.success) {
                         // Store old status for comparison
@@ -466,6 +482,8 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                 const healthyDevices = statuses.filter(s => s.overallStatus === 'Healthy').length;
                 const issuesDevices = statuses.filter(s => s.overallStatus === 'Online (Issues)').length;
 
+                console.log(`Updating summary cards: ${totalDevices} total, ${onlineDevices} online, ${healthyDevices} healthy`);
+
                 // Update the summary cards
                 const summaryCards = document.querySelectorAll('.summary-card');
                 if (summaryCards.length >= 5) {
@@ -489,12 +507,13 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                     const offlineCard = summaryCards[4].querySelector('.summary-number');
                     if (offlineCard) offlineCard.textContent = offlineDevices;
 
-                    console.log(`Summary updated: ${totalDevices} total, ${onlineDevices} online, ${healthyDevices} healthy, ${issuesDevices} issues, ${offlineDevices} offline`);
+                    console.log(`Summary cards updated successfully`);
                 }
             }
 
             updateDeviceRow(device, data) {
                 const row = device.row;
+                console.log(`Updating row for device ${device.id}`, row);
 
                 // Update connectivity status (4th column)
                 const connectivityCell = row.cells[3];
@@ -511,12 +530,12 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                 // Update last checked (7th column)
                 const lastCheckedCell = row.cells[6];
                 this.updateLastCheckedCell(lastCheckedCell, data);
+                
+                console.log(`Row updated for device ${device.id}`);
             }
 
             updateConnectivityCell(cell, data) {
                 const statusClass = `status-${data.status.toLowerCase().replace(' ', '-')}`;
-                const staleClass = data.status_stale ? 'status-stale' : 'status-fresh';
-                const ageText = data.status_age ? Math.round(data.status_age) + 'm ago' : 'Just now';
 
                 cell.innerHTML = `
                     <span class="status-btn ${statusClass}">
@@ -536,27 +555,27 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                 cell.innerHTML = `
                     <div class="status-info">
                         <div><strong>Health:</strong>
-                            <span class="status-btn status-value status-${summary.health_status == 'pass' ? 'online' : 'offline'}" >
+                            <span class="status-btn status-value status-${summary.health_status == 'pass' ? 'online' : 'offline'}">
                                 ${summary.health_status ? summary.health_status.charAt(0).toUpperCase() + summary.health_status.slice(1) : 'Unknown'}
                             </span>
                         </div>
                         <div><strong>Atlas:</strong>
-                            <span class="status-btn status-value status-${summary.atlas_registered ? 'online' : 'offline'}" >
+                            <span class="status-btn status-value status-${summary.atlas_registered ? 'online' : 'offline'}">
                                 ${summary.atlas_registered ? 'Yes' : 'No'}
                             </span>
                         </div>
                         <div><strong>Pod:</strong>
-                            <span class="status-btn status-value status-${summary.pod_status == 'active' ? 'online' : 'offline'}" >
+                            <span class="status-btn status-value status-${summary.pod_status == 'active' ? 'online' : 'offline'}">
                                 ${summary.pod_status ? summary.pod_status.charAt(0).toUpperCase() + summary.pod_status.slice(1) : 'Unknown'}
                             </span>
                         </div>
                         <div><strong>XandMiner:</strong>
-                            <span class="status-btn status-value status-${summary.xandminer_status == 'active' ? 'online' : 'offline'}" >
+                            <span class="status-btn status-value status-${summary.xandminer_status == 'active' ? 'online' : 'offline'}">
                                 ${summary.xandminer_status ? summary.xandminer_status.charAt(0).toUpperCase() + summary.xandminer_status.slice(1) : 'Unknown'}
                             </span>
                         </div>
                         <div><strong>XandMinerD:</strong>
-                            <span class="status-btn status-value status-${summary.xandminerd_status == 'active' ? 'online' : 'offline'}" >
+                            <span class="status-btn status-value status-${summary.xandminerd_status == 'active' ? 'online' : 'offline'}">
                                 ${summary.xandminerd_status ? summary.xandminerd_status.charAt(0).toUpperCase() + summary.xandminerd_status.slice(1) : 'Unknown'}
                             </span>
                         </div>
@@ -625,18 +644,25 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
             }
         }
 
-        // Initialize the updater when page loads
+        // Combined DOMContentLoaded - only ONE event listener
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing dashboard features...');
+            
+            // Initialize device status updater
             if (document.querySelector('.device-table tbody tr')) {
+                console.log('Found device table, starting auto-refresh...');
                 new DeviceStatusUpdater();
+            }
+
+            // Initialize table sorting
+            const table = document.querySelector('.device-table');
+            if (table) {
+                console.log('Found device table, initializing sorting...');
+                initializeTableSorting(table);
             }
         });
 
-        // Table sorting functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            const table = document.querySelector('.device-table');
-            if (!table) return;
-
+        function initializeTableSorting(table) {
             const headers = table.querySelectorAll('.sortable-header');
             let currentSort = { column: null, direction: 'asc' };
 
@@ -662,7 +688,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                     sortTable(table, sortType, currentSort.direction);
                 });
             });
-        });
+        }
 
         function sortTable(table, sortType, direction) {
             const tbody = table.querySelector('tbody');
