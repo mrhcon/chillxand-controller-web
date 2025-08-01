@@ -877,6 +877,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                            <div class="last-check-date">
                                                <?php echo date('M j, H:i', strtotime($device['last_check'])); ?>
                                            </div>
+                                            <?php if ($device['response_time']): ?>
+                                                <div class="device-details">Response: <?php echo round($device['response_time'] * 1000, 1); ?>ms</div>
+                                            <?php endif; ?>                                           
                                        <?php else: ?>
                                            <div class="never-checked">Never checked</div>
                                        <?php endif; ?>
