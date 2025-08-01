@@ -11,99 +11,99 @@ if (!isset($_SESSION['user_id'])) {
 
 // Fetch user details
 try {
-   stmt =pdo->prepare("SELECT username, email, first_name, last_name, country, admin FROM users WHERE id = ?");
-   stmt->execute([$_SESSION['user_id']]);
-   user =stmt->fetch(PDO::FETCH_ASSOC);
-   _SESSION['admin'] =user['admin']; // Store admin status in session
-} catch (PDOExceptione) {
-   error = "Error fetching user details: " .e->getMessage();
-    logInteraction($pdo,_SESSION['user_id'],_SESSION['username'], 'dashboard_access_failed',error);
+    $stmt = $pdo->prepare("SELECT username, email, first_name, last_name, country, admin FROM users WHERE id = ?");
+    $stmt->execute([$_SESSION['user_id']]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    $_SESSION['admin'] = $user['admin']; // Store admin status in session
+} catch (PDOException $e) {
+    $error = "Error fetching user details: " . $e->getMessage();
+    logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_access_failed', $error);
 }
 
 // Fetch last login time
 try {
-   stmt =pdo->prepare("
+    $stmt = $pdo->prepare("
         SELECT timestamp 
         FROM user_interactions 
         WHERE user_id = ? AND action = 'login_success' 
         ORDER BY timestamp DESC 
         LIMIT 1 OFFSET 1
     ");
-   stmt->execute([$_SESSION['user_id']]);
-   last_login =stmt->fetchColumn();
-   last_login_display =last_login ? htmlspecialchars($last_login) : "No previous login recorded";
-} catch (PDOExceptione) {
-   error = "Error fetching last login: " .e->getMessage();
-    logInteraction($pdo,_SESSION['user_id'],_SESSION['username'], 'last_login_fetch_failed',error);
+    $stmt->execute([$_SESSION['user_id']]);
+    $last_login = $stmt->fetchColumn();
+    $last_login_display = $last_login ? htmlspecialchars($last_login) : "No previous login recorded";
+} catch (PDOException $e) {
+    $error = "Error fetching last login: " . $e->getMessage();
+    logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'last_login_fetch_failed', $error);
 }
 
 // Fetch user's devices with enhanced status and order by node name
 try {
-   stmt =pdo->prepare("
+    $stmt = $pdo->prepare("
         SELECT d.id, d.pnode_name, d.pnode_ip, d.registration_date
         FROM devices d
         WHERE d.username = ?
         ORDER BY d.pnode_name ASC
     ");
-   stmt->execute([$_SESSION['username']]);
-   devices =stmt->fetchAll(PDO::FETCH_ASSOC);
+    $stmt->execute([$_SESSION['username']]);
+    $devices = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     // Get latest statuses for all devices at once (super efficient!)
-   device_ids = array_column($devices, 'id');
-   cached_statuses = getLatestDeviceStatuses($pdo,device_ids);
+    $device_ids = array_column($devices, 'id');
+    $cached_statuses = getLatestDeviceStatuses($pdo, $device_ids);
     
     // Add cached status and health data to each device
-   updated_devices = [];
-   summaries = [];
+    $updated_devices = [];
+    $summaries = [];
     
-    foreach ($devices asdevice) {
-       device_id =device['id'];
-       cached_status =cached_statuses[$device_id] ?? [
+    foreach ($devices as $device) {
+        $device_id = $device['id'];
+        $cached_status = $cached_statuses[$device_id] ?? [
             'status' => 'Not Initialized',
             'is_stale' => true,
             'error_message' => 'Device has not been checked yet'
         ];
         
         // Add status from cache
-       device['status'] =cached_status['status'];
-       device['status_age'] =cached_status['age_minutes'];
-       device['status_stale'] =cached_status['is_stale'];
-       device['last_check'] =cached_status['check_time'];
-       device['response_time'] =cached_status['response_time'];
-       device['consecutive_failures'] =cached_status['consecutive_failures'];
-       device['health_status'] =cached_status['health_status'];
+        $device['status'] = $cached_status['status'];
+        $device['status_age'] = $cached_status['age_minutes'];
+        $device['status_stale'] = $cached_status['is_stale'];
+        $device['last_check'] = $cached_status['check_time'];
+        $device['response_time'] = $cached_status['response_time'];
+        $device['consecutive_failures'] = $cached_status['consecutive_failures'];
+        $device['health_status'] = $cached_status['health_status'];
         
         // Determine overall status (connectivity + health)
-       overall_status = 'Unknown';
+        $overall_status = 'Unknown';
         if ($device['status'] === 'Online') {
             if ($device['health_status'] === 'pass') {
-               overall_status = 'Healthy';
+                $overall_status = 'Healthy';
             } elseif ($device['health_status'] === 'fail') {
-               overall_status = 'Online (Issues)';
+                $overall_status = 'Online (Issues)';
             } else {
-               overall_status = 'Online';
+                $overall_status = 'Online';
             }
         } elseif ($device['status'] === 'Offline') {
-           overall_status = 'Offline';
+            $overall_status = 'Offline';
         } else {
-           overall_status =device['status'];
+            $overall_status = $device['status'];
         }
-       device['overall_status'] =overall_status;
+        $device['overall_status'] = $overall_status;
         
         // Parse health data from cached data
-       summaries[$device_id] = parseCachedDeviceHealth($cached_status);
+        $summaries[$device_id] = parseCachedDeviceHealth($cached_status);
         
-       updated_devices[] =device;
+        $updated_devices[] = $device;
     }
-   devices =updated_devices;
+    $devices = $updated_devices;
     
-} catch (PDOExceptione) {
-   error = "Error fetching devices: " .e->getMessage();
-    logInteraction($pdo,_SESSION['user_id'],_SESSION['username'], 'device_fetch_failed',error);
+} catch (PDOException $e) {
+    $error = "Error fetching devices: " . $e->getMessage();
+    logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_fetch_failed', $error);
 }
 
 // Log dashboard access
-logInteraction($pdo,_SESSION['user_id'],_SESSION['username'], 'dashboard_access');
+logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_access');
 ?>
 
 <!DOCTYPE html>
@@ -196,8 +196,8 @@ logInteraction($pdo,_SESSION['user_id'],_SESSION['username'], 'dashboard_access'
             </div>
             <!-- Right Panel -->
             <div class="info-panel">
-                <h2>Welcome, <?php echo htmlspecialchars($user['first_name'] . ' ' .user['last_name']); ?>!</h2>
-                <p>Last Login: <?php echolast_login_display; ?></p>
+                <h2>Welcome, <?php echo htmlspecialchars($user['first_name'] . ' ' . $user['last_name']); ?>!</h2>
+                <p>Last Login: <?php echo $last_login_display; ?></p>
                 
                 <!-- User Details Section -->
                 <div style="margin-bottom: 30px;">
@@ -209,7 +209,7 @@ logInteraction($pdo,_SESSION['user_id'],_SESSION['username'], 'dashboard_access'
                         </div>
                         <div>
                             <p><strong>Country:</strong> <?php echo htmlspecialchars($user['country']); ?></p>
-                            <p><strong>Account Type:</strong> <?php echouser['admin'] ? 'Administrator' : 'Standard User'; ?></p>
+                            <p><strong>Account Type:</strong> <?php echo $user['admin'] ? 'Administrator' : 'Standard User'; ?></p>
                         </div>
                     </div>
                 </div>
@@ -221,32 +221,32 @@ logInteraction($pdo,_SESSION['user_id'],_SESSION['username'], 'dashboard_access'
                 <!-- Device Summary Cards -->
                 <?php if (!empty($devices)): ?>
                     <?php
-                   total_devices = count($devices);
-                   online_devices = count(array_filter($devices, function($d) { returnd['status'] === 'Online'; }));
-                   offline_devices = count(array_filter($devices, function($d) { returnd['status'] === 'Offline'; }));
-                   healthy_devices = count(array_filter($devices, function($d) { returnd['overall_status'] === 'Healthy'; }));
-                   issues_devices = count(array_filter($devices, function($d) { returnd['overall_status'] === 'Online (Issues)'; }));
+                    $total_devices = count($devices);
+                    $online_devices = count(array_filter($devices, function($d) { return $d['status'] === 'Online'; }));
+                    $offline_devices = count(array_filter($devices, function($d) { return $d['status'] === 'Offline'; }));
+                    $healthy_devices = count(array_filter($devices, function($d) { return $d['overall_status'] === 'Healthy'; }));
+                    $issues_devices = count(array_filter($devices, function($d) { return $d['overall_status'] === 'Online (Issues)'; }));
                     ?>
                     <div class="dashboard-summary">
                         <div class="summary-card">
                             <h4>Total Devices</h4>
-                            <div class="summary-number summary-total"><?php echototal_devices; ?></div>
+                            <div class="summary-number summary-total"><?php echo $total_devices; ?></div>
                         </div>
                         <div class="summary-card">
                             <h4>Online</h4>
-                            <div class="summary-number summary-online"><?php echoonline_devices; ?></div>
+                            <div class="summary-number summary-online"><?php echo $online_devices; ?></div>
                         </div>
                         <div class="summary-card">
                             <h4>Healthy</h4>
-                            <div class="summary-number summary-online"><?php echohealthy_devices; ?></div>
+                            <div class="summary-number summary-online"><?php echo $healthy_devices; ?></div>
                         </div>
                         <div class="summary-card">
                             <h4>With Issues</h4>
-                            <div class="summary-number summary-issues"><?php echoissues_devices; ?></div>
+                            <div class="summary-number summary-issues"><?php echo $issues_devices; ?></div>
                         </div>
                         <div class="summary-card">
                             <h4>Offline</h4>
-                            <div class="summary-number summary-offline"><?php echooffline_devices; ?></div>
+                            <div class="summary-number summary-offline"><?php echo $offline_devices; ?></div>
                         </div>
                     </div>
                 <?php endif; ?>
@@ -268,18 +268,18 @@ logInteraction($pdo,_SESSION['user_id'],_SESSION['username'], 'dashboard_access'
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach ($devices asdevice): ?>
+                            <?php foreach ($devices as $device): ?>
                                 <tr>
-                                    <td><a href="device_details.php?device_id=<?php echodevice['id']; ?>"><?php echo htmlspecialchars($device['pnode_name']); ?></a></td>
+                                    <td><a href="device_details.php?device_id=<?php echo $device['id']; ?>"><?php echo htmlspecialchars($device['pnode_name']); ?></a></td>
                                     <td><?php echo htmlspecialchars($device['pnode_ip']); ?></td>
                                     <td><?php echo htmlspecialchars($device['registration_date']); ?></td>
                                     <td>
-                                        <span class="status-btn status-<?php echo strtolower(str_replace(' ', '-',device['status'])); ?>">
+                                        <span class="status-btn status-<?php echo strtolower(str_replace(' ', '-', $device['status'])); ?>">
                                             <?php echo htmlspecialchars($device['status']); ?>
                                         </span>
-                                        <div class="status-age <?php echodevice['status_stale'] ? 'status-stale' : 'status-fresh'; ?>">
+                                        <div class="status-age <?php echo $device['status_stale'] ? 'status-stale' : 'status-fresh'; ?>">
                                             <?php if ($device['last_check']): ?>
-                                                <?php echodevice['status_age'] ? round($device['status_age']) . 'm ago' : 'Just now'; ?>
+                                                <?php echo $device['status_age'] ? round($device['status_age']) . 'm ago' : 'Just now'; ?>
                                             <?php else: ?>
                                                 Never checked
                                             <?php endif; ?>
@@ -288,7 +288,7 @@ logInteraction($pdo,_SESSION['user_id'],_SESSION['username'], 'dashboard_access'
                                             <div class="device-status-details">Response: <?php echo round($device['response_time'] * 1000, 1); ?>ms</div>
                                         <?php endif; ?>
                                         <?php if ($device['consecutive_failures'] > 0): ?>
-                                            <div class="device-status-details" style="color: #dc3545;">Failures: <?php echodevice['consecutive_failures']; ?></div>
+                                            <div class="device-status-details" style="color: #dc3545;">Failures: <?php echo $device['consecutive_failures']; ?></div>
                                         <?php endif; ?>
                                     </td>
                                     <td>
@@ -297,27 +297,27 @@ logInteraction($pdo,_SESSION['user_id'],_SESSION['username'], 'dashboard_access'
                                         <?php else: ?>
                                             <div style="font-size: 10px; line-height: 1.3;">
                                                 <div><strong>Health:</strong> 
-                                                    <span class="status-btn status-<?php echosummaries[$device['id']]['health_status'] == 'pass' ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
+                                                    <span class="status-btn status-<?php echo $summaries[$device['id']]['health_status'] == 'pass' ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
                                                         <?php echo ucfirst($summaries[$device['id']]['health_status'] ?? 'unknown'); ?>
                                                     </span>
                                                 </div>
                                                 <div><strong>Atlas:</strong> 
-                                                    <span class="status-btn status-<?php echosummaries[$device['id']]['atlas_registered'] ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
-                                                        <?php echosummaries[$device['id']]['atlas_registered'] ? 'Yes' : 'No'; ?>
+                                                    <span class="status-btn status-<?php echo $summaries[$device['id']]['atlas_registered'] ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
+                                                        <?php echo $summaries[$device['id']]['atlas_registered'] ? 'Yes' : 'No'; ?>
                                                     </span>
                                                 </div>
                                                 <div><strong>Pod:</strong> 
-                                                    <span class="status-btn status-<?php echosummaries[$device['id']]['pod_status'] == 'active' ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
+                                                    <span class="status-btn status-<?php echo $summaries[$device['id']]['pod_status'] == 'active' ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
                                                         <?php echo ucfirst($summaries[$device['id']]['pod_status'] ?? 'unknown'); ?>
                                                     </span>
                                                 </div>
                                                 <div><strong>XandMiner:</strong> 
-                                                    <span class="status-btn status-<?php echosummaries[$device['id']]['xandminer_status'] == 'active' ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
+                                                    <span class="status-btn status-<?php echo $summaries[$device['id']]['xandminer_status'] == 'active' ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
                                                         <?php echo ucfirst($summaries[$device['id']]['xandminer_status'] ?? 'unknown'); ?>
                                                     </span>
                                                 </div>
                                                 <div><strong>XandMinerD:</strong> 
-                                                    <span class="status-btn status-<?php echosummaries[$device['id']]['xandminerd_status'] == 'active' ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
+                                                    <span class="status-btn status-<?php echo $summaries[$device['id']]['xandminerd_status'] == 'active' ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
                                                         <?php echo ucfirst($summaries[$device['id']]['xandminerd_status'] ?? 'unknown'); ?>
                                                     </span>
                                                 </div>
@@ -354,8 +354,8 @@ logInteraction($pdo,_SESSION['user_id'],_SESSION['username'], 'dashboard_access'
                                     </td>
                                     <td class="last-check-col">
                                         <?php if ($device['last_check']): ?>
-                                            <div class="<?php echodevice['status_stale'] ? 'status-stale' : 'status-fresh'; ?>">
-                                                <?php echodevice['status_age'] ? round($device['status_age']) . ' min ago' : 'Just now'; ?>
+                                            <div class="<?php echo $device['status_stale'] ? 'status-stale' : 'status-fresh'; ?>">
+                                                <?php echo $device['status_age'] ? round($device['status_age']) . ' min ago' : 'Just now'; ?>
                                             </div>
                                             <div style="font-size: 10px; color: #999;">
                                                 <?php echo date('M j, H:i', strtotime($device['last_check'])); ?>
@@ -412,7 +412,7 @@ logInteraction($pdo,_SESSION['user_id'],_SESSION['username'], 'dashboard_access'
                     }
                 });
                 
-                console.log(`Initialized status updater for{this.devices.length} devices`);
+                console.log(`Initialized status updater for ${this.devices.length} devices`);
                 
                 // Start staggered updates
                 this.startStaggeredUpdates();
@@ -463,7 +463,7 @@ logInteraction($pdo,_SESSION['user_id'],_SESSION['username'], 'dashboard_access'
             
             async updateDevice(device) {
                 try {
-                    console.log(`Updating device{device.id}...`);
+                    console.log(`Updating device ${device.id}...`);
                     
                     const response = await fetch(`ajax_device_status.php?device_id=${device.id}`);
                     const data = await response.json();
@@ -490,12 +490,12 @@ logInteraction($pdo,_SESSION['user_id'],_SESSION['username'], 'dashboard_access'
                         }
                         
                         device.lastUpdate = Date.now();
-                        console.log(`Device{device.id} updated successfully`);
+                        console.log(`Device ${device.id} updated successfully`);
                     } else {
-                        console.error(`Error updating device{device.id}:`, data.error);
+                        console.error(`Error updating device ${device.id}:`, data.error);
                     }
                 } catch (error) {
-                    console.error(`Failed to update device{device.id}:`, error);
+                    console.error(`Failed to update device ${device.id}:`, error);
                 }
             }
             
@@ -532,7 +532,7 @@ logInteraction($pdo,_SESSION['user_id'],_SESSION['username'], 'dashboard_access'
                     const offlineCard = summaryCards[4].querySelector('.summary-number');
                     if (offlineCard) offlineCard.textContent = offlineDevices;
                                        
-                    console.log(`Summary updated:{totalDevices} total,{onlineDevices} online,{healthyDevices} healthy,{issuesDevices} issues,{offlineDevices} offline`);
+                    console.log(`Summary updated: ${totalDevices} total, ${onlineDevices} online, ${healthyDevices} healthy, ${issuesDevices} issues, ${offlineDevices} offline`);
                 }
             }
             
@@ -562,10 +562,14 @@ logInteraction($pdo,_SESSION['user_id'],_SESSION['username'], 'dashboard_access'
                 const ageText = data.status_age ? Math.round(data.status_age) + 'm ago' : 'Just now';
                 
                 cell.innerHTML = `
-                    <span class="status-btn{statusClass}">
-                       {data.status}
+                    <span class="status-btn ${statusClass}">
+                        ${data.status}
                     </span>
-                   {data.consecutive_failures > 0 ? `<div class="device-status-details" style="color: #dc3545;">Failures:{data.consecutive_failures}</div>` : ''}
+                    <div class="status-age ${staleClass}">
+                        ${data.last_check ? ageText : 'Never checked'}
+                    </div>
+                    ${data.response_time ? `<div class="device-status-details">Response: ${Math.round(data.response_time * 1000)}ms</div>` : ''}
+                    ${data.consecutive_failures > 0 ? `<div class="device-status-details" style="color: #dc3545;">Failures: ${data.consecutive_failures}</div>` : ''}
                 `;
             }
             
@@ -580,27 +584,27 @@ logInteraction($pdo,_SESSION['user_id'],_SESSION['username'], 'dashboard_access'
                     <div style="font-size: 10px; line-height: 1.3;">
                         <div><strong>Health:</strong> 
                             <span class="status-btn status-${summary.health_status == 'pass' ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
-                               {summary.health_status ? summary.health_status.charAt(0).toUpperCase() + summary.health_status.slice(1) : 'Unknown'}
+                                ${summary.health_status ? summary.health_status.charAt(0).toUpperCase() + summary.health_status.slice(1) : 'Unknown'}
                             </span>
                         </div>
                         <div><strong>Atlas:</strong> 
                             <span class="status-btn status-${summary.atlas_registered ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
-                               {summary.atlas_registered ? 'Yes' : 'No'}
+                                ${summary.atlas_registered ? 'Yes' : 'No'}
                             </span>
                         </div>
                         <div><strong>Pod:</strong> 
                             <span class="status-btn status-${summary.pod_status == 'active' ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
-                               {summary.pod_status ? summary.pod_status.charAt(0).toUpperCase() + summary.pod_status.slice(1) : 'Unknown'}
+                                ${summary.pod_status ? summary.pod_status.charAt(0).toUpperCase() + summary.pod_status.slice(1) : 'Unknown'}
                             </span>
                         </div>
                         <div><strong>XandMiner:</strong> 
                             <span class="status-btn status-${summary.xandminer_status == 'active' ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
-                               {summary.xandminer_status ? summary.xandminer_status.charAt(0).toUpperCase() + summary.xandminer_status.slice(1) : 'Unknown'}
+                                ${summary.xandminer_status ? summary.xandminer_status.charAt(0).toUpperCase() + summary.xandminer_status.slice(1) : 'Unknown'}
                             </span>
                         </div>
                         <div><strong>XandMinerD:</strong> 
                             <span class="status-btn status-${summary.xandminerd_status == 'active' ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
-                               {summary.xandminerd_status ? summary.xandminerd_status.charAt(0).toUpperCase() + summary.xandminerd_status.slice(1) : 'Unknown'}
+                                ${summary.xandminerd_status ? summary.xandminerd_status.charAt(0).toUpperCase() + summary.xandminerd_status.slice(1) : 'Unknown'}
                             </span>
                         </div>
                     </div>
@@ -618,22 +622,22 @@ logInteraction($pdo,_SESSION['user_id'],_SESSION['username'], 'dashboard_access'
                     <div class="version-info">
                         <div><strong>Controller:</strong> 
                             <span class="version-value">
-                               {summary.chillxand_version || 'N/A'}
+                                ${summary.chillxand_version || 'N/A'}
                             </span>
                         </div>
                         <div><strong>Pod:</strong> 
                             <span class="version-value">
-                               {summary.pod_version || 'N/A'}
+                                ${summary.pod_version || 'N/A'}
                             </span>
                         </div>
                         <div><strong>XandMiner:</strong> 
                             <span class="version-value">
-                               {summary.xandminer_version || 'N/A'}
+                                ${summary.xandminer_version || 'N/A'}
                             </span>
                         </div>
                         <div><strong>XandMinerD:</strong> 
                             <span class="version-value">
-                               {summary.xandminerd_version || 'N/A'}
+                                ${summary.xandminerd_version || 'N/A'}
                             </span>
                         </div>
                     </div>
@@ -655,12 +659,11 @@ logInteraction($pdo,_SESSION['user_id'],_SESSION['username'], 'dashboard_access'
                     
                     cell.innerHTML = `
                         <div class="${staleClass}">
-                           {ageText}
+                            ${ageText}
                         </div>
                         <div style="font-size: 10px; color: #999;">
-                           {formattedDate}
+                            ${formattedDate}
                         </div>
-                       {data.response_time ? `<div class="device-status-details">Response:{Math.round(data.response_time * 1000)}ms</div>` : ''}                        
                     `;
                 } else {
                     cell.innerHTML = '<div class="never-checked">Never checked</div>';
