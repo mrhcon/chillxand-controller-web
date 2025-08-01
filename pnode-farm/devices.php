@@ -458,7 +458,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         .status-btn.status-value {
             color: white !important;
             text-align: center;
-            /* font-size: 9px; */
+            font-size: 9px;
             padding: 3px 6px;
             min-height: 18px;
             line-height: 1.2;
@@ -620,7 +620,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         .modal-buttons {
             display: flex;
             justify-content: flex-end;
-            gap: 5px;
+            gap: 2px;
         }
         .modal-btn {
             padding: 8px 16px;
