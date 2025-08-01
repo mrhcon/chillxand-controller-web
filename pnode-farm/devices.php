@@ -1126,8 +1126,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     // Update status
                     statusElement.innerHTML = `
                         <span class="status-btn status-${statusClass}">${overallStatus}</span>
-                        // <div class="status-age status-fresh">Just checked</div>
-                        // <div class="device-details">Response: ${data.response_time}ms</div>
                     `;
 
                     // Update health data if available
