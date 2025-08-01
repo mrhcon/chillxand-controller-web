@@ -794,7 +794,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                         <span class="status-btn status-<?php echo strtolower(str_replace(' ', '-', $device['status'])); ?>">
                                             <?php echo htmlspecialchars($device['status']); ?>
                                         </span>
-                                       <div class="status-age <?php echo $device['status_stale'] ? 'status-stale' : 'status-fresh'; ?>">
+                                       <!-- <div class="status-age <?php echo $device['status_stale'] ? 'status-stale' : 'status-fresh'; ?>">
                                            <?php if ($device['last_check']): ?>
                                                <?php echo $device['status_age'] ? round($device['status_age']) . 'm ago' : 'Just now'; ?>
                                            <?php else: ?>
@@ -803,7 +803,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                        </div>
                                        <?php if ($device['response_time']): ?>
                                            <div class="device-details">Response: <?php echo round($device['response_time'] * 1000, 1); ?>ms</div>
-                                       <?php endif; ?>
+                                       <?php endif; ?> -->
                                        <?php if ($device['consecutive_failures'] > 0): ?>
                                            <div class="device-details" style="color: #dc3545;">Failures: <?php echo $device['consecutive_failures']; ?></div>
                                        <?php endif; ?>
