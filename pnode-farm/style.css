@@ -532,7 +532,11 @@ details summary {
             align-items: center;
             justify-content: center;
         }
-
+        .version-info {
+            font-size: 10px;
+            line-height: 1.3;
+            color: #666;
+        }
 
 .user-info-line, .device-info-line {
     background-color: #e9ecef;

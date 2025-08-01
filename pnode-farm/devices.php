@@ -587,11 +587,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         .action-btn:hover {
             background-color: #0056b3;
         }
-        .version-info {
-            font-size: 10px;
-            line-height: 1.3;
-            color: #666;
-        }
         .dashboard-summary {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
