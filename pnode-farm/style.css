@@ -397,13 +397,18 @@ button:hover {
     margin: 2px 0;
 }
 
+.status-age {
+    font-size: inherit !important;
+    color: #666;
+}
+
 .device-table td:nth-child(7) {
     text-align: center;
 }
 
 .device-table td:nth-child(7) .status-fresh,
 .device-table td:nth-child(7) .status-stale {
-    font-size: inherit;
+    font-size: inherit !important;
     font-weight: normal;
     margin: 2px 0;
 }
