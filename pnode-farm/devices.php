@@ -326,7 +326,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
     <link rel="stylesheet" href="style.css">
     <style>
         .button-gap {
-            height: 10px;
+            height: 5px;
         }
         .sortable-header {
             cursor: pointer;
