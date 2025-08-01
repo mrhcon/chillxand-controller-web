@@ -302,17 +302,17 @@ button:hover {
     background-color: #dc3545;
 }
 
-.status-btn.status-healthy { 
-    background-color: #28a745; 
+.status-btn.status-healthy {
+    background-color: #28a745;
 }
 
-.status-btn.status-online-issues { 
-    background-color: #ffc107; 
-    color: #212529; 
+.status-btn.status-online-issues {
+    background-color: #ffc107;
+    color: #212529;
 }
 
-.status-btn.status-not-initialized { 
-    background-color: #6c757d; 
+.status-btn.status-not-initialized {
+    background-color: #6c757d;
 }
 
 .action-buttons {
@@ -387,7 +387,7 @@ button:hover {
     font-weight: bold;
     border: 1px solid #ddd;
     padding: 8px;
-    text-align: center;    
+    text-align: center;
 }
 
 .device-table tr:nth-child(even), .user-table tr:nth-child(even) {
@@ -449,7 +449,7 @@ button:hover {
 
 .last-check-col {
     text-align: center;
-    font-size: 11px; 
+    font-size: 11px;
     color: #666;
 }
 
@@ -688,59 +688,59 @@ details summary {
     color: white;
 }
 
-.action-button.refresh { 
-    background-color: #28a745; 
+.action-button.refresh {
+    background-color: #28a745;
 }
 
-.action-button.refresh:hover { 
-    background-color: #218838; 
+.action-button.refresh:hover {
+    background-color: #218838;
 }
 
-.action-button.refresh:disabled { 
-    background-color: #6c757d; 
-    cursor: not-allowed; 
+.action-button.refresh:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
 }
 
-.action-button.edit { 
-    background-color: #17a2b8; 
+.action-button.edit {
+    background-color: #17a2b8;
 }
 
-.action-button.edit:hover { 
-    background-color: #138496; 
+.action-button.edit:hover {
+    background-color: #138496;
 }
 
-.action-button.delete { 
-    background-color: #dc3545; 
+.action-button.delete {
+    background-color: #dc3545;
 }
 
-.action-button.delete:hover { 
-    background-color: #c82333; 
+.action-button.delete:hover {
+    background-color: #c82333;
 }
 
-.action-button.update-controller { 
-    background-color: #fd7e14; 
+.action-button.update-controller {
+    background-color: #fd7e14;
 }
 
-.action-button.update-controller:hover { 
-    background-color: #e66a00; 
+.action-button.update-controller:hover {
+    background-color: #e66a00;
 }
 
-.action-button.update-controller:disabled { 
-    background-color: #ccc; 
-    cursor: not-allowed; 
+.action-button.update-controller:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
 }
 
-.action-button.update-pod { 
-    background-color: #6f42c1; 
+.action-button.update-pod {
+    background-color: #6f42c1;
 }
 
-.action-button.update-pod:hover { 
-    background-color: #59359a; 
+.action-button.update-pod:hover {
+    background-color: #59359a;
 }
 
-.action-button.update-pod:disabled { 
-    background-color: #ccc; 
-    cursor: not-allowed; 
+.action-button.update-pod:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
 }
 
 .update-button-row {
@@ -750,19 +750,19 @@ details summary {
     width: 100%;
 }
 
-.summary-container { 
-    margin-bottom: 20px; 
-    padding: 10px; 
-    border: 1px solid #ccc; 
-    background: #f9f9f9; 
+.summary-container {
+    margin-bottom: 20px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    background: #f9f9f9;
 }
 
-.status-stale { 
-    color: #ff6600; 
+.status-stale {
+    color: #ff6600;
 }
 
-.status-fresh { 
-    color: #006600; 
+.status-fresh {
+    color: #006600;
 }
 
 .refresh-btn {
@@ -794,25 +794,25 @@ details summary {
     transform: none;
 }
 
-.device-details, .device-status-details { 
-    font-size: 11px; 
-    color: #666; 
-    margin-top: 3px; 
+.device-details, .device-status-details {
+    font-size: 11px;
+    color: #666;
+    margin-top: 3px;
 }
 
-.never-checked { 
-    font-style: italic; 
-    color: #999; 
+.never-checked {
+    font-style: italic;
+    color: #999;
 }
 
-.status-log-table { 
-    width: 100%; 
-    border-collapse: collapse; 
-    margin-top: 10px; 
-    font-size: 11px; 
+.status-log-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-size: 11px;
 }
 
-.status-log-table th, 
+.status-log-table th,
 .status-log-table td {
     border: 1px solid #ddd;
     padding: 4px;
@@ -821,58 +821,58 @@ details summary {
     vertical-align: top;
 }
 
-.status-log-table th { 
-    background-color: #f8f9fa; 
-    font-weight: bold; 
+.status-log-table th {
+    background-color: #f8f9fa;
+    font-weight: bold;
 }
 
-.log-status-online { 
-    color: #28a745; 
-    font-weight: bold; 
+.log-status-online {
+    color: #28a745;
+    font-weight: bold;
 }
 
-.log-status-offline { 
-    color: #dc3545; 
-    font-weight: bold; 
+.log-status-offline {
+    color: #dc3545;
+    font-weight: bold;
 }
 
-.log-status-error { 
-    color: #ffc107; 
-    font-weight: bold; 
+.log-status-error {
+    color: #ffc107;
+    font-weight: bold;
 }
 
-.log-health-pass { 
-    color: #28a745; 
+.log-health-pass {
+    color: #28a745;
 }
 
-.log-health-fail { 
-    color: #dc3545; 
+.log-health-fail {
+    color: #dc3545;
 }
 
-.log-atlas-yes { 
-    color: #28a745; 
+.log-atlas-yes {
+    color: #28a745;
 }
 
-.log-atlas-no { 
-    color: #dc3545; 
+.log-atlas-no {
+    color: #dc3545;
 }
 
-.log-service-active { 
-    color: #28a745; 
+.log-service-active {
+    color: #28a745;
 }
 
-.log-service-inactive { 
-    color: #dc3545; 
+.log-service-inactive {
+    color: #dc3545;
 }
 
-.log-metrics { 
-    font-size: 10px; 
-    color: #666; 
+.log-metrics {
+    font-size: 10px;
+    color: #666;
 }
 
-.log-error { 
-    color: #dc3545; 
-    font-size: 10px; 
+.log-error {
+    color: #dc3545;
+    font-size: 10px;
 }
 
 /* Dashboard summary cards */
@@ -902,20 +902,20 @@ details summary {
     margin: 5px 0;
 }
 
-.summary-online { 
-    color: #28a745; 
+.summary-online {
+    color: #28a745;
 }
 
-.summary-offline { 
-    color: #dc3545; 
+.summary-offline {
+    color: #dc3545;
 }
 
-.summary-total { 
-    color: #007bff; 
+.summary-total {
+    color: #007bff;
 }
 
-.summary-issues { 
-    color: #ffc107; 
+.summary-issues {
+    color: #ffc107;
 }
 
 /* Modal styling */

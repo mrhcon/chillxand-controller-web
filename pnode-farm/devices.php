@@ -509,7 +509,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                            </div>
                                             <?php if ($device['response_time']): ?>
                                                 <div class="device-details">Response: <?php echo round($device['response_time'] * 1000, 1); ?>ms</div>
-                                            <?php endif; ?>                                           
+                                            <?php endif; ?>
                                        <?php else: ?>
                                            <div class="never-checked">Never checked</div>
                                        <?php endif; ?>
