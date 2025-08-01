@@ -794,16 +794,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                         <span class="status-btn status-<?php echo strtolower(str_replace(' ', '-', $device['status'])); ?>">
                                             <?php echo htmlspecialchars($device['status']); ?>
                                         </span>
-                                       <!-- <div class="status-age <?php echo $device['status_stale'] ? 'status-stale' : 'status-fresh'; ?>">
-                                           <?php if ($device['last_check']): ?>
-                                               <?php echo $device['status_age'] ? round($device['status_age']) . 'm ago' : 'Just now'; ?>
-                                           <?php else: ?>
-                                               Never checked
-                                           <?php endif; ?>
-                                       </div>
-                                       <?php if ($device['response_time']): ?>
-                                           <div class="device-details">Response: <?php echo round($device['response_time'] * 1000, 1); ?>ms</div>
-                                       <?php endif; ?> -->
                                        <?php if ($device['consecutive_failures'] > 0): ?>
                                            <div class="device-details" style="color: #dc3545;">Failures: <?php echo $device['consecutive_failures']; ?></div>
                                        <?php endif; ?>
@@ -1136,8 +1126,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     // Update status
                     statusElement.innerHTML = `
                         <span class="status-btn status-${statusClass}">${overallStatus}</span>
-                        <div class="status-age status-fresh">Just checked</div>
-                        <div class="device-details">Response: ${data.response_time}ms</div>
+                        // <div class="status-age status-fresh">Just checked</div>
+                        // <div class="device-details">Response: ${data.response_time}ms</div>
                     `;
 
                     // Update health data if available
@@ -1209,6 +1199,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     lastCheckElement.innerHTML = `
                         <div class="status-fresh">Just now</div>
                         <div class="last-check-date">${data.timestamp}</div>
+                        <div class="device-details">Response: ${data.response_time}ms</div>
                     `;
                 }
                 refreshBtn.disabled = false;
