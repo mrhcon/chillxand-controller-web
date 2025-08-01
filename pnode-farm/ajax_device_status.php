@@ -22,9 +22,25 @@ if (!$device_id) {
 }
 
 try {
-    // Verify device belongs to user
-    $stmt = $pdo->prepare("SELECT id, pnode_name, pnode_ip FROM devices WHERE id = ? AND username = ?");
-    $stmt->execute([$device_id, $_SESSION['username']]);
+    // Get user admin status if not already in session
+    if (!isset($_SESSION['admin'])) {
+        $stmt = $pdo->prepare("SELECT admin FROM users WHERE id = ?");
+        $stmt->execute([$_SESSION['user_id']]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        $_SESSION['admin'] = $user['admin'] ?? 0;
+    }
+    
+    // Verify device belongs to user (or user is admin)
+    if ($_SESSION['admin']) {
+        // Admin can access any device
+        $stmt = $pdo->prepare("SELECT id, pnode_name, pnode_ip FROM devices WHERE id = ?");
+        $stmt->execute([$device_id]);
+    } else {
+        // Regular user can only access their own devices
+        $stmt = $pdo->prepare("SELECT id, pnode_name, pnode_ip FROM devices WHERE id = ? AND username = ?");
+        $stmt->execute([$device_id, $_SESSION['username']]);
+    }
+    
     $device = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if (!$device) {
@@ -73,7 +89,7 @@ try {
         'consecutive_failures' => $cached_status['consecutive_failures'],
         'health_status' => $cached_status['health_status'],
         'summary' => $summary,
-        'timestamp' => time()
+        'timestamp' => date('M j, H:i')
     ]);
     
 } catch (PDOException $e) {

@@ -134,14 +134,13 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
             	<img src="images/logo.png">
                 <ul>
                     <li><button class="menu-button active" onclick="window.location.href='dashboard.php'">Dashboard</button></li>
-                    <li><button class="menu-button" onclick="window.location.href='devices.php'">Manage Devices</button></li>
                     <li><button class="menu-button" onclick="window.location.href='device_logs.php'">Device Logs</button></li>
                     <?php if ($_SESSION['admin']): ?>
                         <li class="admin-section">
                             <strong>Admin</strong>
                             <ul>
                                 <li><button class="menu-button admin-button" onclick="window.location.href='admin_users.php'">Users</button></li>
-                                <li><button class="menu-button admin-button" onclick="window.location.href='admin_devices.php'">Devices</button></li>
+                                <li><button class="menu-button" onclick="window.location.href='devices.php'">Manage Devices</button></li>
                             </ul>
                         </li>
                     <?php endif; ?>
