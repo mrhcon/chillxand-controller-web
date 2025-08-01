@@ -418,14 +418,12 @@ button:hover {
 
 .device-table td:nth-child(7) .status-fresh,
 .device-table td:nth-child(7) .status-stale {
-    font-size: inherit !important;
-    font-weight: normal;
-    color: inherit !important;
+    font-size: 16px;
     margin: 2px 0;
 }
 
 .device-table td:nth-child(7) .never-checked {
-    font-size: inherit !important;
+    font-size: 16px;
     font-weight: normal;
     text-align: center;
     margin: 2px 0;
