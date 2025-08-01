@@ -1339,7 +1339,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
 
             console.log('User confirmed controller update for:', deviceName);
 
-            const btn = document.querySelector(`[data-device-id="${deviceId}"].update-btn-controller`);
+            const btn = document.querySelector(`[data-device-id="${deviceId}"].update-controller`);
             if (!btn) {
                 console.error('Could not find controller button for device', deviceId);
                 alert('Error: Could not find update button');
@@ -1438,7 +1438,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
 
             console.log('User confirmed pod update for:', deviceName);
 
-            const btn = document.querySelector(`[data-device-id="${deviceId}"].update-btn-pod`);
+            const btn = document.querySelector(`[data-device-id="${deviceId}"].update-pod`);
             if (!btn) {
                 console.error('Could not find pod button for device', deviceId);
                 alert('Error: Could not find update button');
