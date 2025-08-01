@@ -1111,3 +1111,83 @@ details summary {
     vertical-align: top;
     padding: 8px;
 }
+
+/* Fix conflicting styles - these override the device-table specific ones */
+.device-table .status-info {
+    line-height: 1.3;
+    color: #666;
+}
+
+.device-table .status-info > div {
+    display: flex;
+    align-items: center;
+    margin-bottom: 2px;
+    min-height: 16px;
+}
+
+.device-table .status-info strong {
+    font-weight: bold;
+    color: #333;
+    width: 120px;
+    flex-shrink: 0;
+    margin: 0 15px 0 0;
+    font-size: 12px;
+}
+
+.device-table .status-value {
+    color: #333;
+    font-weight: normal;
+    text-align: left;
+    flex: 1;
+    font-size: 12px;
+}
+
+.device-table .status-btn.status-value {
+    color: white !important;
+    text-align: center;
+    font-size: 9px;
+    padding: 3px 6px;
+    min-height: 18px;
+    line-height: 1.2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    border-radius: 3px;
+}
+
+.device-table .version-value {
+    color: #333;
+    font-weight: normal;
+    font-size: 12px;
+}
+
+/* Fix the padding and alignment for all status columns */
+.device-table td:nth-child(4),
+.device-table td:nth-child(5), 
+.device-table td:nth-child(6) {
+    vertical-align: top;
+    padding: 8px;
+    text-align: left;
+}
+
+.device-table td:nth-child(7) {
+    vertical-align: top;
+    padding: 8px;
+    text-align: center;
+}
+
+/* Remove margin from status buttons in cells */
+.device-table td .status-btn {
+    margin: 0;
+}
+
+/* Fix the connectivity column center alignment */
+.device-table td:nth-child(4) {
+    text-align: center;
+}
+
+.device-table td:nth-child(4) .device-details {
+    text-align: center;
+    margin: 2px 0;
+}
