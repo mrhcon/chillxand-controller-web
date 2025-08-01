@@ -428,7 +428,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             width: 100%;
         }
         .status-info {
-            font-size: 12px;
             line-height: 1.3;
             color: #666;
         }
@@ -447,7 +446,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             width: 80px;
             flex-shrink: 0;
             margin-right: 5px;
-            font-size: 12px;
         }
 
         .status-value {
@@ -455,16 +453,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             font-weight: normal;
             text-align: left;
             flex-shrink: 0;
-            font-size: 12px;
         }
 
         .status-btn.status-value {
             color: white !important;
             text-align: center;
-        }
-
-        .version-value {
-            font-family: 'Courier New', monospace;
         }
 
         .summary-container { margin-bottom: 20px; padding: 10px; border: 1px solid #ccc; background: #f9f9f9; }
@@ -620,7 +613,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         .modal-buttons {
             display: flex;
             justify-content: flex-end;
-            gap: 10px;
+            gap: 7px;
         }
         .modal-btn {
             padding: 8px 16px;
