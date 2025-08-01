@@ -348,18 +348,15 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
             }
 
             init() {
-                console.log('DeviceStatusUpdater init() called');
                 // Collect all device IDs from the table and their initial statuses
                 const deviceRows = document.querySelectorAll('.device-table tbody tr');
-                console.log(`Found ${deviceRows.length} device rows`);
-                
+
                 deviceRows.forEach((row, index) => {
                     const deviceLink = row.querySelector('td:first-child a');
                     if (deviceLink) {
                         const url = new URL(deviceLink.href);
                         const deviceId = url.searchParams.get('device_id');
                         if (deviceId) {
-                            console.log(`Adding device ${deviceId} for auto-refresh`);
                             // Get initial status from the row
                             const initialStatus = this.getRowStatus(row);
                             this.deviceStatuses.set(deviceId, initialStatus);
@@ -372,8 +369,6 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                         }
                     }
                 });
-
-                console.log(`Initialized status updater for ${this.devices.length} devices`);
 
                 if (this.devices.length > 0) {
                     // Start staggered updates
@@ -414,15 +409,13 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
             }
 
             startStaggeredUpdates() {
-                console.log('Starting staggered updates...');
                 this.devices.forEach((device, index) => {
                     const delay = index * this.staggerDelay;
-                    console.log(`Scheduling device ${device.id} update in ${delay}ms`);
-                    
+
                     // Stagger initial updates
                     setTimeout(() => {
-                        console.log(`Starting updates for device ${device.id}`);
                         this.updateDevice(device);
+
                         // Set up recurring updates for this device
                         setInterval(() => this.updateDevice(device), this.updateInterval);
                     }, delay);
@@ -431,15 +424,12 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
 
             async updateDevice(device) {
                 try {
-                    console.log(`Updating device ${device.id}...`);
-
                     const response = await fetch(`ajax_device_status.php?device_id=${device.id}`);
                     if (!response.ok) {
                         throw new Error(`HTTP ${response.status}`);
                     }
-                    
+
                     const data = await response.json();
-                    console.log(`Got response for device ${device.id}:`, data);
 
                     if (data.success) {
                         // Store old status for comparison
@@ -463,7 +453,6 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                         }
 
                         device.lastUpdate = Date.now();
-                        console.log(`Device ${device.id} updated successfully`);
                     } else {
                         console.error(`Error updating device ${device.id}:`, data.error);
                     }
@@ -481,8 +470,6 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                 const offlineDevices = statuses.filter(s => s.status === 'Offline').length;
                 const healthyDevices = statuses.filter(s => s.overallStatus === 'Healthy').length;
                 const issuesDevices = statuses.filter(s => s.overallStatus === 'Online (Issues)').length;
-
-                console.log(`Updating summary cards: ${totalDevices} total, ${onlineDevices} online, ${healthyDevices} healthy`);
 
                 // Update the summary cards
                 const summaryCards = document.querySelectorAll('.summary-card');
@@ -506,17 +493,14 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                     // Offline
                     const offlineCard = summaryCards[4].querySelector('.summary-number');
                     if (offlineCard) offlineCard.textContent = offlineDevices;
-
-                    console.log(`Summary cards updated successfully`);
                 }
             }
 
             updateDeviceRow(device, data) {
                 const row = device.row;
-                console.log(`Updating row for device ${device.id}`, row);
 
                // Add visual highlight to the entire row
-                row.style.backgroundColor = '#ffff99'; // Bright yellow highlight
+                row.style.backgroundColor = '#fffbf0';
                 row.style.transition = 'background-color 0.3s ease';
 
                 // Update connectivity status (4th column)
@@ -534,8 +518,6 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                 // Update last checked (7th column)
                 const lastCheckedCell = row.cells[6];
                 this.updateLastCheckedCell(lastCheckedCell, data);
-                
-                console.log(`Row updated for device ${device.id}`);
 
                 // Remove highlight after 2 seconds
                 setTimeout(() => {
@@ -544,7 +526,6 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
             }
 
             updateConnectivityCell(cell, data) {
-                console.log(`Connectivity cell BEFORE update:`, cell.innerHTML);
                 const statusClass = `status-${data.status.toLowerCase().replace(' ', '-')}`;
 
                 cell.innerHTML = `
@@ -553,11 +534,9 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                     </span>
                     ${data.consecutive_failures > 0 ? `<div class="device-status-details" style="color: #dc3545;">Failures: ${data.consecutive_failures}</div>` : ''}
                 `;
-                console.log(`Connectivity cell AFTER update:`, cell.innerHTML);
             }
 
             updateHealthCell(cell, data) {
-                console.log(`Health cell BEFORE update:`, cell.innerHTML);
                 if (data.status === 'Not Initialized') {
                     cell.innerHTML = '<span class="status-btn status-value status-not-initialized">Not Initialized</span>';
                     return;
@@ -593,11 +572,9 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                         </div>
                     </div>
                 `;
-                console.log(`Health cell AFTER update:`, cell.innerHTML);
             }
 
             updateVersionsCell(cell, data) {
-                console.log(`Versions cell BEFORE update:`, cell.innerHTML);
                 if (data.status === 'Not Initialized') {
                     cell.innerHTML = '<span class="status-btn status-value status-not-initialized">Not Initialized</span>';
                     return;
@@ -628,11 +605,9 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                         </div>
                     </div>
                 `;
-                console.log(`Versions cell AFTER update:`, cell.innerHTML);
             }
 
             updateLastCheckedCell(cell, data) {
-                console.log(`Last checked cell BEFORE update:`, cell.innerHTML);
                 if (data.last_check) {
                     const ageText = data.status_age ? Math.round(data.status_age) + ' min ago' : 'Just now';
                     const staleClass = data.status_stale ? 'status-stale' : 'status-fresh';
@@ -657,25 +632,19 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                 } else {
                     cell.innerHTML = '<div class="never-checked">Never checked</div>';
                 }
-                console.log(`Last checked cell AFTER update:`, cell.innerHTML);
             }
-
         }
 
         // Combined DOMContentLoaded - only ONE event listener
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM loaded, initializing dashboard features...');
-            
             // Initialize device status updater
             if (document.querySelector('.device-table tbody tr')) {
-                console.log('Found device table, starting auto-refresh...');
                 new DeviceStatusUpdater();
             }
 
             // Initialize table sorting
             const table = document.querySelector('.device-table');
             if (table) {
-                console.log('Found device table, initializing sorting...');
                 initializeTableSorting(table);
             }
         });
