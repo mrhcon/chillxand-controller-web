@@ -208,7 +208,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                 <?php if (empty($devices)): ?>
                     <p>No devices registered. <a href="devices.php">Add your first device</a> to get started!</p>
                 <?php else: ?>
-                    <table class="device-table">
+                    <table>
                         <thead>
                             <tr>
                                 <th>Node Name</th>
@@ -508,7 +508,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                 const ageText = data.status_age ? Math.round(data.status_age) + 'm ago' : 'Just now';
                 
                 cell.innerHTML = `
-                    <span class="status-btn status-value ${statusClass}">
+                    <span class="status-btn ${statusClass}">
                         ${data.status}
                     </span>
                     ${data.consecutive_failures > 0 ? `<div class="device-status-details" style="color: #dc3545;">Failures: ${data.consecutive_failures}</div>` : ''}
