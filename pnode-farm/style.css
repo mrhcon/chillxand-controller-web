@@ -402,6 +402,7 @@ button:hover {
     min-width: 80px;
     display: inline-block;
     margin: 2px auto;
+    font-size: 12px !important;
 }
 
 .device-table td:nth-child(4) .status-age,
@@ -1110,6 +1111,11 @@ details summary {
 .device-table td:nth-child(7) {
     vertical-align: middle;
     padding: 8px;
+}
+
+/* Larger font for health status buttons (column 5) */
+.device-table td:nth-child(5) .status-btn.status-value {
+    font-size: 12px !important;
 }
 
 /* Ensure consistent spacing for Health Status and Versions columns */
