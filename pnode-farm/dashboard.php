@@ -515,6 +515,10 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                 const row = device.row;
                 console.log(`Updating row for device ${device.id}`, row);
 
+               // Add visual highlight to the entire row
+                row.style.backgroundColor = '#ffff99'; // Bright yellow highlight
+                row.style.transition = 'background-color 0.3s ease';
+
                 // Update connectivity status (4th column)
                 const connectivityCell = row.cells[3];
                 this.updateConnectivityCell(connectivityCell, data);
@@ -532,6 +536,11 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                 this.updateLastCheckedCell(lastCheckedCell, data);
                 
                 console.log(`Row updated for device ${device.id}`);
+
+                // Remove highlight after 2 seconds
+                setTimeout(() => {
+                    row.style.backgroundColor = '';
+                }, 2000);
             }
 
             updateConnectivityCell(cell, data) {
