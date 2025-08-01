@@ -1101,25 +1101,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM loaded, initializing button handlers...');
 
-            document.querySelectorAll('.update-btn-controller').forEach(function(btn) {
-                btn.addEventListener('click', function() {
-                    const deviceId = this.getAttribute('data-device-id');
-                    const deviceIp = this.getAttribute('data-device-ip');
-                    const deviceName = this.getAttribute('data-device-name');
-                    console.log('Controller update clicked:', deviceId, deviceIp, deviceName);
-                    openUpdateControllerModal(deviceId, deviceIp, deviceName);
-                });
+        document.querySelectorAll('.action-button.update-controller').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                const deviceId = this.getAttribute('data-device-id');
+                const deviceIp = this.getAttribute('data-device-ip');
+                const deviceName = this.getAttribute('data-device-name');
+                console.log('Controller update clicked:', deviceId, deviceIp, deviceName);
+                openUpdateControllerModal(deviceId, deviceIp, deviceName);
             });
+        });
 
-            document.querySelectorAll('.update-btn-pod').forEach(function(btn) {
-                btn.addEventListener('click', function() {
-                    const deviceId = this.getAttribute('data-device-id');
-                    const deviceIp = this.getAttribute('data-device-ip');
-                    const deviceName = this.getAttribute('data-device-name');
-                    console.log('Pod update clicked:', deviceId, deviceIp, deviceName);
-                    openUpdatePodModal(deviceId, deviceIp, deviceName);
-                });
+        document.querySelectorAll('.action-button.update-pod').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                const deviceId = this.getAttribute('data-device-id');
+                const deviceIp = this.getAttribute('data-device-ip');
+                const deviceName = this.getAttribute('data-device-name');
+                console.log('Pod update clicked:', deviceId, deviceIp, deviceName);
+                openUpdatePodModal(deviceId, deviceIp, deviceName);
             });
+        });
 
             console.log('Button handlers initialized successfully');
         });
