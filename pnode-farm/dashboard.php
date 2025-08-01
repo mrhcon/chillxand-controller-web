@@ -317,10 +317,10 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                         </div>
                                     </td>
                                     <td>
-                                        <div class="status-info">
-                                            <?php if ($device['status'] === 'Not Initialized'): ?>
-                                                <span class="status-btn status-value status-not-initialized">Not Initialized</span>
-                                            <?php else: ?>
+                                        <?php if ($device['status'] === 'Not Initialized'): ?>
+                                            <span class="status-btn status-value status-not-initialized">Not Initialized</span>
+                                        <?php else: ?>
+                                            <div class="status-info">
                                                 <div class="version-info">
                                                     <div><strong>Controller:</strong> 
                                                     <span class="status-value version-value">
@@ -343,8 +343,8 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                                         </span>
                                                     </div>
                                                 </div>
-                                            <?php endif; ?>
-                                        </div>
+                                            </div>
+                                        <?php endif; ?>
                                     </td>
                                     <td class="last-check-col">
                                         <?php if ($device['last_check']): ?>
@@ -574,7 +574,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                 
                 const summary = data.summary;
                 cell.innerHTML = `
-                    <div style="font-size: 10px; line-height: 1.3;">
+                    <div class="status-info">
                         <div><strong>Health:</strong> 
                             <span class="status-btn status-value status-${summary.health_status == 'pass' ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
                                 ${summary.health_status ? summary.health_status.charAt(0).toUpperCase() + summary.health_status.slice(1) : 'Unknown'}
@@ -612,28 +612,30 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                 
                 const summary = data.summary;
                 cell.innerHTML = `
-                    <div class="version-info">
-                        <div><strong>Controller:</strong> 
-                           <span class="status-value version-value">
-                                ${summary.chillxand_version || 'N/A'}
-                            </span>
+                    <div class="status-info">
+                        <div class="version-info">
+                            <div><strong>Controller:</strong> 
+                            <span class="status-value version-value">
+                                    ${summary.chillxand_version || 'N/A'}
+                                </span>
+                            </div>
+                            <div><strong>Pod:</strong> 
+                            <span class="status-value version-value">
+                                    ${summary.pod_version || 'N/A'}
+                                </span>
+                            </div>
+                            <div><strong>XandMiner:</strong> 
+                            <span class="status-value version-value">
+                                    ${summary.xandminer_version || 'N/A'}
+                                </span>
+                            </div>
+                            <div><strong>XandMinerD:</strong> 
+                            <span class="status-value version-value">
+                                    ${summary.xandminerd_version || 'N/A'}
+                                </span>
+                            </div>
                         </div>
-                        <div><strong>Pod:</strong> 
-                           <span class="status-value version-value">
-                                ${summary.pod_version || 'N/A'}
-                            </span>
-                        </div>
-                        <div><strong>XandMiner:</strong> 
-                           <span class="status-value version-value">
-                                ${summary.xandminer_version || 'N/A'}
-                            </span>
-                        </div>
-                        <div><strong>XandMinerD:</strong> 
-                           <span class="status-value version-value">
-                                ${summary.xandminerd_version || 'N/A'}
-                            </span>
-                        </div>
-                    </div>
+                    </div>    
                 `;
             }
             
