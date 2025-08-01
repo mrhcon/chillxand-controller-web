@@ -535,6 +535,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
             }
 
             updateConnectivityCell(cell, data) {
+                console.log(`Connectivity cell BEFORE update:`, cell.innerHTML);
                 const statusClass = `status-${data.status.toLowerCase().replace(' ', '-')}`;
 
                 cell.innerHTML = `
@@ -543,9 +544,11 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                     </span>
                     ${data.consecutive_failures > 0 ? `<div class="device-status-details" style="color: #dc3545;">Failures: ${data.consecutive_failures}</div>` : ''}
                 `;
+                console.log(`Connectivity cell AFTER update:`, cell.innerHTML);
             }
 
             updateHealthCell(cell, data) {
+                console.log(`Health cell BEFORE update:`, cell.innerHTML);
                 if (data.status === 'Not Initialized') {
                     cell.innerHTML = '<span class="status-btn status-value status-not-initialized">Not Initialized</span>';
                     return;
@@ -581,9 +584,11 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                         </div>
                     </div>
                 `;
+                console.log(`Health cell AFTER update:`, cell.innerHTML);
             }
 
             updateVersionsCell(cell, data) {
+                console.log(`Versions cell BEFORE update:`, cell.innerHTML);
                 if (data.status === 'Not Initialized') {
                     cell.innerHTML = '<span class="status-btn status-value status-not-initialized">Not Initialized</span>';
                     return;
@@ -614,9 +619,11 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                         </div>
                     </div>
                 `;
+                console.log(`Versions cell AFTER update:`, cell.innerHTML);
             }
 
             updateLastCheckedCell(cell, data) {
+                console.log(`Last checked cell BEFORE update:`, cell.innerHTML);
                 if (data.last_check) {
                     const ageText = data.status_age ? Math.round(data.status_age) + ' min ago' : 'Just now';
                     const staleClass = data.status_stale ? 'status-stale' : 'status-fresh';
@@ -641,7 +648,9 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                 } else {
                     cell.innerHTML = '<div class="never-checked">Never checked</div>';
                 }
+                console.log(`Last checked cell AFTER update:`, cell.innerHTML);
             }
+
         }
 
         // Combined DOMContentLoaded - only ONE event listener
