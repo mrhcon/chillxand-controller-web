@@ -395,7 +395,147 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     </div>
                 <?php endif; ?>
 
-                <h3>Your Devices</h3>
+                <?php
+                // Calculate version statistics
+                $version_stats = [
+                    'controller' => [],
+                    'pod' => [],
+                    'xandminer' => [],
+                    'xandminerd' => []
+                ];
+
+                $total_online_devices = 0;
+
+                foreach ($devices as $device) {
+                    // Only count online devices for version stats
+                    if ($device['status'] === 'Online') {
+                        $total_online_devices++;
+                        
+                        // Count controller versions
+                        $controller_version = $summaries[$device['id']]['chillxand_version'] ?? 'Unknown';
+                        if (!isset($version_stats['controller'][$controller_version])) {
+                            $version_stats['controller'][$controller_version] = 0;
+                        }
+                        $version_stats['controller'][$controller_version]++;
+                        
+                        // Count pod versions
+                        $pod_version = $summaries[$device['id']]['pod_version'] ?? 'Unknown';
+                        if (!isset($version_stats['pod'][$pod_version])) {
+                            $version_stats['pod'][$pod_version] = 0;
+                        }
+                        $version_stats['pod'][$pod_version]++;
+                        
+                        // Count xandminer versions
+                        $xandminer_version = $summaries[$device['id']]['xandminer_version'] ?? 'Unknown';
+                        if (!isset($version_stats['xandminer'][$xandminer_version])) {
+                            $version_stats['xandminer'][$xandminer_version] = 0;
+                        }
+                        $version_stats['xandminer'][$xandminer_version]++;
+                        
+                        // Count xandminerd versions
+                        $xandminerd_version = $summaries[$device['id']]['xandminerd_version'] ?? 'Unknown';
+                        if (!isset($version_stats['xandminerd'][$xandminerd_version])) {
+                            $version_stats['xandminerd'][$xandminerd_version] = 0;
+                        }
+                        $version_stats['xandminerd'][$xandminerd_version]++;
+                    }
+                }
+
+                // Sort versions (latest first, Unknown last)
+                foreach ($version_stats as $service => &$versions) {
+                    uksort($versions, function($a, $b) {
+                        if ($a === 'Unknown') return 1;
+                        if ($b === 'Unknown') return -1;
+                        return version_compare($b, $a); // Descending order (latest first)
+                    });
+                }
+                ?>
+
+                <!-- Version Summary Cards -->
+                <?php if ($total_online_devices > 0): ?>
+                    <div style="margin-bottom: 20px;">
+                        <h3>Version Distribution (<?php echo $total_online_devices; ?> online devices)</h3>
+                        <div class="version-summary">
+                            <!-- Controller Versions -->
+                            <div class="version-card">
+                                <div class="version-card-header">
+                                    <h4>Controller</h4>
+                                    <span class="version-total"><?php echo $total_online_devices; ?> devices</span>
+                                </div>
+                                <div class="version-list">
+                                    <?php foreach ($version_stats['controller'] as $version => $count): ?>
+                                        <div class="version-item">
+                                            <span class="version-name"><?php echo htmlspecialchars($version); ?></span>
+                                            <span class="version-count"><?php echo $count; ?></span>
+                                            <div class="version-bar">
+                                                <div class="version-bar-fill" style="width: <?php echo ($count / $total_online_devices) * 100; ?>%"></div>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+
+                            <!-- Pod Versions -->
+                            <div class="version-card">
+                                <div class="version-card-header">
+                                    <h4>Pod</h4>
+                                    <span class="version-total"><?php echo $total_online_devices; ?> devices</span>
+                                </div>
+                                <div class="version-list">
+                                    <?php foreach ($version_stats['pod'] as $version => $count): ?>
+                                        <div class="version-item">
+                                            <span class="version-name"><?php echo htmlspecialchars($version); ?></span>
+                                            <span class="version-count"><?php echo $count; ?></span>
+                                            <div class="version-bar">
+                                                <div class="version-bar-fill" style="width: <?php echo ($count / $total_online_devices) * 100; ?>%"></div>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+
+                            <!-- XandMiner Versions -->
+                            <div class="version-card">
+                                <div class="version-card-header">
+                                    <h4>XandMiner</h4>
+                                    <span class="version-total"><?php echo $total_online_devices; ?> devices</span>
+                                </div>
+                                <div class="version-list">
+                                    <?php foreach ($version_stats['xandminer'] as $version => $count): ?>
+                                        <div class="version-item">
+                                            <span class="version-name"><?php echo htmlspecialchars($version); ?></span>
+                                            <span class="version-count"><?php echo $count; ?></span>
+                                            <div class="version-bar">
+                                                <div class="version-bar-fill" style="width: <?php echo ($count / $total_online_devices) * 100; ?>%"></div>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+
+                            <!-- XandMinerD Versions -->
+                            <div class="version-card">
+                                <div class="version-card-header">
+                                    <h4>XandMinerD</h4>
+                                    <span class="version-total"><?php echo $total_online_devices; ?> devices</span>
+                                </div>
+                                <div class="version-list">
+                                    <?php foreach ($version_stats['xandminerd'] as $version => $count): ?>
+                                        <div class="version-item">
+                                            <span class="version-name"><?php echo htmlspecialchars($version); ?></span>
+                                            <span class="version-count"><?php echo $count; ?></span>
+                                            <div class="version-bar">
+                                                <div class="version-bar-fill" style="width: <?php echo ($count / $total_online_devices) * 100; ?>%"></div>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
+                <h3>Devices</h3>
                 <?php if (empty($devices)): ?>
                     <p>No devices registered.</p>
                 <?php else: ?>
