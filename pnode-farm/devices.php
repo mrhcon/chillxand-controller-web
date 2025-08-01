@@ -452,7 +452,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         .status-value {
             color: #333;
             font-weight: normal;
-            text-align: right;
+            text-align: left;
             flex-shrink: 0;
         }
 
@@ -1133,7 +1133,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             const lastCheckElement = document.querySelector(`#lastcheck-${deviceId}`);
 
             refreshBtn.disabled = true;
-            refreshBtn.textContent = '⟳';
+            refreshBtn.textContent = '⟳ Refreshing Status...';
 
             fetch('manual_device_check.php', {
                 method: 'POST',
@@ -1187,29 +1187,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     if (data.health_data && healthElement) {
                         const healthData = data.health_data;
                         healthElement.innerHTML = `
-                            <div style="font-size: 10px; line-height: 1.3;">
+                            <div class="status-info">
                                 <div><strong>Health:</strong>
-                                    <span class="status-btn status-${healthData.health_status == 'pass' ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
+                                    <span class="status-btn status-value status-${healthData.health_status == 'pass' ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
                                         ${healthData.health_status ? healthData.health_status.charAt(0).toUpperCase() + healthData.health_status.slice(1) : 'Unknown'}
                                     </span>
                                 </div>
                                 <div><strong>Atlas:</strong>
-                                    <span class="status-btn status-${healthData.atlas_registered ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
+                                    <span class="status-btn status-value status-${healthData.atlas_registered ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
                                         ${healthData.atlas_registered ? 'Yes' : 'No'}
                                     </span>
                                 </div>
                                 <div><strong>Pod:</strong>
-                                    <span class="status-btn status-${healthData.pod_status == 'active' ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
+                                    <span class="status-btn status-value status-${healthData.pod_status == 'active' ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
                                         ${healthData.pod_status ? healthData.pod_status.charAt(0).toUpperCase() + healthData.pod_status.slice(1) : 'Unknown'}
                                     </span>
                                 </div>
                                 <div><strong>XandMiner:</strong>
-                                    <span class="status-btn status-${healthData.xandminer_status == 'active' ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
+                                    <span class="status-btn status-value status-${healthData.xandminer_status == 'active' ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
                                         ${healthData.xandminer_status ? healthData.xandminer_status.charAt(0).toUpperCase() + healthData.xandminer_status.slice(1) : 'Unknown'}
                                     </span>
                                 </div>
                                 <div><strong>XandMinerD:</strong>
-                                    <span class="status-btn status-${healthData.xandminerd_status == 'active' ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
+                                    <span class="status-btn status-value status-${healthData.xandminerd_status == 'active' ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
                                         ${healthData.xandminerd_status ? healthData.xandminerd_status.charAt(0).toUpperCase() + healthData.xandminerd_status.slice(1) : 'Unknown'}
                                     </span>
                                 </div>
@@ -1222,7 +1222,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     if (data.version_data && versionsElement) {
                         const versionData = data.version_data;
                         versionsElement.innerHTML = `
-                            <div class="version-info">
+                            <div class="status-info">
                                 <div><strong>Controller:</strong>
                                     <span class="status-value version-value">
                                         ${versionData.chillxand_version || 'N/A'}
