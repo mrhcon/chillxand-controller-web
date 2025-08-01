@@ -525,48 +525,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         .log-metrics { font-size: 10px; color: #666; }
         .log-error { color: #dc3545; font-size: 10px; }
 
-        .update-btn-controller, .update-btn-pod {
-            padding: 5px 8px;
-            margin: 1px;
-            cursor: pointer;
-            display: inline-block;
-            vertical-align: top;
-            min-width: 50px;
-            width: 200px;
-            text-align: center;
-            font-size: 10px;
-            border: none;
-            border-radius: 3px;
-            color: white;
-            box-sizing: border-box; /* Important for consistent sizing */
-        }
-
-        .update-btn-controller {
-            background-color: #fd7e14;
-        }
-
-        .update-btn-controller:hover {
-            background-color: #e66a00;
-        }
-
-        .update-btn-controller:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-        }
-
-        .update-btn-pod {
-            background-color: #6f42c1;
-        }
-
-        .update-btn-pod:hover {
-            background-color: #59359a;
-        }
-
-        .update-btn-pod:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-        }
-
         /* Modal styling */
         .modal {
             display: none;
