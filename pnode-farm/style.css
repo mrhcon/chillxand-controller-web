@@ -410,13 +410,10 @@ button:hover {
 .device-table td .status-fresh,
 .device-table td .status-stale {
     font-size: 16px !important;
-    font-weight: normal !important;
 }
 
 .device-table td .last-check-date {
     color: #666 !important;
-    font-size: 16px !important;
-    font-weight: normal !important;
 }
 
 .device-table td:nth-child(7) .status-fresh,
