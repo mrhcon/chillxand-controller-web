@@ -302,6 +302,19 @@ button:hover {
     background-color: #dc3545;
 }
 
+.status-btn.status-healthy { 
+    background-color: #28a745; 
+}
+
+.status-btn.status-online-issues { 
+    background-color: #ffc107; 
+    color: #212529; 
+}
+
+.status-btn.status-not-initialized { 
+    background-color: #6c757d; 
+}
+
 .action-buttons {
     display: flex;
     justify-content: center;
@@ -398,7 +411,7 @@ button:hover {
 }
 
 .status-age {
-    font-size: inherit !important;
+    font-size: 10px;
     color: #666;
 }
 
@@ -435,6 +448,8 @@ button:hover {
 
 .last-check-col {
     text-align: center;
+    font-size: 11px; 
+    color: #666;
 }
 
 .last-check-col > div {
@@ -492,51 +507,50 @@ details summary {
     border-radius: 4px;
 }
 
+.status-info {
+    line-height: 1.3;
+    color: #666;
+}
 
-       .status-info {
-            line-height: 1.3;
-            color: #666;
-        }
+.status-info > div {
+    display: flex;
+    align-items: center;
+    margin-bottom: 2px;
+    min-height: 16px;
+}
 
-        /* Align labels and values horizontally */
-        .status-info > div {
-            display: flex;
-            align-items: center;
-            margin-bottom: 2px;
-            min-height: 16px;
-        }
+.status-info strong {
+    font-weight: bold;
+    color: #333;
+    width: 120px;
+    flex-shrink: 0;
+    margin: 0 15px 0 0;
+}
 
-        .status-info strong {
-            font-weight: bold;
-            color: #333;
-            width: 120px;
-            flex-shrink: 0;
-            margin: 0 15x 0 0;
-        }
+.status-value {
+    color: #333;
+    font-weight: normal;
+    text-align: left;
+    flex: 1;
+}
 
-        .status-value {
-            color: #333;
-            font-weight: normal;
-            text-align: left;
-            flex: 1;
-        }
+.status-btn.status-value {
+    color: white !important;
+    text-align: center;
+    font-size: 9px;
+    padding: 3px 6px;
+    min-height: 18px;
+    line-height: 1.2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
 
-        .status-btn.status-value {
-            color: white !important;
-            text-align: center;
-            font-size: 9px;
-            padding: 3px 6px;
-            min-height: 18px;
-            line-height: 1.2;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .version-info {
-            font-size: 10px;
-            line-height: 1.3;
-            color: #666;
-        }
+.version-info {
+    font-size: 10px;
+    line-height: 1.3;
+    color: #666;
+}
 
 .user-info-line, .device-info-line {
     background-color: #e9ecef;
@@ -595,4 +609,445 @@ details summary {
 
 .log-table tr:nth-child(even) {
     background-color: #e9ecef;
+}
+
+/* Device management styles (shared between devices.php and dashboard.php) */
+.button-gap {
+    height: 5px;
+}
+
+.sortable-header {
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    padding-right: 20px;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    transition: background-color 0.2s ease;
+}
+
+.sortable-header:hover {
+    background-color: #e9ecef;
+    color: #007bff;
+}
+
+.sortable-header::before {
+    content: "⇅";
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 10px;
+    color: #999;
+    opacity: 0.7;
+}
+
+.sort-indicator {
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+    color: #007bff;
+    font-weight: bold;
+}
+
+.sort-asc .sort-indicator::after {
+    content: " ▲";
+}
+
+.sort-desc .sort-indicator::after {
+    content: " ▼";
+}
+
+.sort-asc::before,
+.sort-desc::before {
+    display: none;
+}
+
+.update-buttons-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+}
+
+.action-button {
+    width: 200px;
+    padding: 5px 8px;
+    margin: 1px;
+    cursor: pointer;
+    display: inline-block;
+    vertical-align: top;
+    text-align: center;
+    font-size: 10px;
+    border: none;
+    border-radius: 3px;
+    box-sizing: border-box;
+    color: white;
+}
+
+.action-button.refresh { 
+    background-color: #28a745; 
+}
+
+.action-button.refresh:hover { 
+    background-color: #218838; 
+}
+
+.action-button.refresh:disabled { 
+    background-color: #6c757d; 
+    cursor: not-allowed; 
+}
+
+.action-button.edit { 
+    background-color: #17a2b8; 
+}
+
+.action-button.edit:hover { 
+    background-color: #138496; 
+}
+
+.action-button.delete { 
+    background-color: #dc3545; 
+}
+
+.action-button.delete:hover { 
+    background-color: #c82333; 
+}
+
+.action-button.update-controller { 
+    background-color: #fd7e14; 
+}
+
+.action-button.update-controller:hover { 
+    background-color: #e66a00; 
+}
+
+.action-button.update-controller:disabled { 
+    background-color: #ccc; 
+    cursor: not-allowed; 
+}
+
+.action-button.update-pod { 
+    background-color: #6f42c1; 
+}
+
+.action-button.update-pod:hover { 
+    background-color: #59359a; 
+}
+
+.action-button.update-pod:disabled { 
+    background-color: #ccc; 
+    cursor: not-allowed; 
+}
+
+.update-button-row {
+    display: flex;
+    align-items: center;
+    margin: 1px 0;
+    width: 100%;
+}
+
+.summary-container { 
+    margin-bottom: 20px; 
+    padding: 10px; 
+    border: 1px solid #ccc; 
+    background: #f9f9f9; 
+}
+
+.status-stale { 
+    color: #ff6600; 
+}
+
+.status-fresh { 
+    color: #006600; 
+}
+
+.refresh-btn {
+    background-color: #17a2b8;
+    color: white;
+    border: none;
+    padding: 3px 6px;
+    font-size: 11px;
+    border-radius: 3px;
+    cursor: pointer;
+    margin-left: 5px;
+    width: 18px;
+    height: 18px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.refresh-btn:hover {
+    background-color: #138496;
+    transform: scale(1.1);
+}
+
+.refresh-btn:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.device-details, .device-status-details { 
+    font-size: 11px; 
+    color: #666; 
+    margin-top: 3px; 
+}
+
+.never-checked { 
+    font-style: italic; 
+    color: #999; 
+}
+
+.status-log-table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    margin-top: 10px; 
+    font-size: 11px; 
+}
+
+.status-log-table th, 
+.status-log-table td {
+    border: 1px solid #ddd;
+    padding: 4px;
+    text-align: center;
+    font-size: 11px;
+    vertical-align: top;
+}
+
+.status-log-table th { 
+    background-color: #f8f9fa; 
+    font-weight: bold; 
+}
+
+.log-status-online { 
+    color: #28a745; 
+    font-weight: bold; 
+}
+
+.log-status-offline { 
+    color: #dc3545; 
+    font-weight: bold; 
+}
+
+.log-status-error { 
+    color: #ffc107; 
+    font-weight: bold; 
+}
+
+.log-health-pass { 
+    color: #28a745; 
+}
+
+.log-health-fail { 
+    color: #dc3545; 
+}
+
+.log-atlas-yes { 
+    color: #28a745; 
+}
+
+.log-atlas-no { 
+    color: #dc3545; 
+}
+
+.log-service-active { 
+    color: #28a745; 
+}
+
+.log-service-inactive { 
+    color: #dc3545; 
+}
+
+.log-metrics { 
+    font-size: 10px; 
+    color: #666; 
+}
+
+.log-error { 
+    color: #dc3545; 
+    font-size: 10px; 
+}
+
+/* Dashboard summary cards */
+.dashboard-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.summary-card {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    padding: 15px;
+    text-align: center;
+}
+
+.summary-card h4 {
+    margin: 0 0 10px 0;
+    color: #495057;
+}
+
+.summary-number {
+    font-size: 24px;
+    font-weight: bold;
+    margin: 5px 0;
+}
+
+.summary-online { 
+    color: #28a745; 
+}
+
+.summary-offline { 
+    color: #dc3545; 
+}
+
+.summary-total { 
+    color: #007bff; 
+}
+
+.summary-issues { 
+    color: #ffc107; 
+}
+
+/* Modal styling */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    border-radius: 5px;
+    width: 400px;
+    max-width: 90%;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.close {
+    color: #aaa;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover {
+    color: black;
+}
+
+.modal-form-group {
+    margin-bottom: 15px;
+}
+
+.modal-form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.modal-form-group input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    box-sizing: border-box;
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 2px;
+}
+
+.modal-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.modal-btn-primary {
+    background-color: #007bff;
+    color: white;
+}
+
+.modal-btn-primary:hover {
+    background-color: #0056b3;
+}
+
+.modal-btn-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+.modal-btn-secondary:hover {
+    background-color: #545b62;
+}
+
+.modal-btn-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+.modal-btn-danger:hover {
+    background-color: #c82333;
+}
+
+.modal-btn-warning {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.modal-btn-warning:hover {
+    background-color: #e0a800;
+}
+
+/* Update status icons */
+.update-status-icon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-left: 5px;
+    vertical-align: middle;
+    font-size: 14px;
+    line-height: 1;
+    cursor: help;
+}
+
+.update-status-error {
+    color: #dc3545;
+}
+
+.update-status-warning {
+    color: #ffc107;
+}
+
+.update-status-success {
+    color: #28a745;
+}
+
+.update-status-icon:hover {
+    opacity: 0.8;
 }

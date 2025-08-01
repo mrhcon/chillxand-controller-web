@@ -116,43 +116,6 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
     <link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon-16x16.png">
     <link rel="stylesheet" href="style.css">
-    <style>
-        .status-healthy { background-color: #28a745; }
-        .status-online-issues { background-color: #ffc107; color: #212529; }
-        .status-not-initialized { background-color: #6c757d; }
-        .device-status-details { font-size: 11px; color: #666; margin-top: 3px; }
-        .status-age { font-size: 10px; color: #666; }
-        .status-stale { color: #ff6600; }
-        .status-fresh { color: #006600; }
-        .never-checked { font-style: italic; color: #999; }
-        .last-check-col { font-size: 11px; color: #666; }
-        .dashboard-summary {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        .summary-card {
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 5px;
-            padding: 15px;
-            text-align: center;
-        }
-        .summary-card h4 {
-            margin: 0 0 10px 0;
-            color: #495057;
-        }
-        .summary-number {
-            font-size: 24px;
-            font-weight: bold;
-            margin: 5px 0;
-        }
-        .summary-online { color: #28a745; }
-        .summary-offline { color: #dc3545; }
-        .summary-total { color: #007bff; }
-        .summary-issues { color: #ffc107; }
-    </style>
 </head>
 <body>
     <div class="console-container">
@@ -264,7 +227,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                     <td><?php echo htmlspecialchars($device['pnode_ip']); ?></td>
                                     <td><?php echo htmlspecialchars($device['registration_date']); ?></td>
                                     <td>
-                                        <span class="status-btn status-value status-value status-<?php echo strtolower(str_replace(' ', '-', $device['status'])); ?>">
+                                        <span class="status-btn status-<?php echo strtolower(str_replace(' ', '-', $device['status'])); ?>">
                                             <?php echo htmlspecialchars($device['status']); ?>
                                         </span>
                                         <?php if ($device['consecutive_failures'] > 0): ?>
