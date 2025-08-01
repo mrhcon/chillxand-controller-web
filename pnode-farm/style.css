@@ -381,6 +381,22 @@ button:hover {
     background-color: #f9f9f9;
 }
 
+.device-table td:nth-child(4) {
+    text-align: center;
+}
+
+.device-table td:nth-child(4) .status-btn {
+    min-width: 80px;
+    display: inline-block;
+    margin: 2px auto;
+}
+
+.device-table td:nth-child(4) .status-age,
+.device-table td:nth-child(4) .device-details {
+    text-align: center;
+    margin: 2px 0;
+}
+
 .device-table input {
     padding: 5px;
     margin: 0;
