@@ -397,6 +397,32 @@ button:hover {
     margin: 2px 0;
 }
 
+.device-table td:nth-child(7) {
+    text-align: center;
+}
+
+.device-table td:nth-child(7) .status-fresh,
+.device-table td:nth-child(7) .status-stale {
+    font-size: inherit;
+    font-weight: normal;
+    margin: 2px 0;
+}
+
+.device-table td:nth-child(7) .never-checked {
+    font-size: inherit;
+    font-weight: normal;
+    text-align: center;
+    margin: 2px 0;
+}
+
+.last-check-col {
+    text-align: center;
+}
+
+.last-check-col > div {
+    margin: 2px 0;
+}
+
 .device-table input {
     padding: 5px;
     margin: 0;

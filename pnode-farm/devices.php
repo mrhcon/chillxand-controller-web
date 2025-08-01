@@ -620,7 +620,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         .modal-buttons {
             display: flex;
             justify-content: flex-end;
-            gap: 7px;
+            gap: 5px;
         }
         .modal-btn {
             padding: 8px 16px;
