@@ -126,16 +126,6 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
         .status-fresh { color: #006600; }
         .never-checked { font-style: italic; color: #999; }
         .last-check-col { font-size: 11px; color: #666; }
-        .version-info {
-            font-size: 10px; 
-            line-height: 1.3; 
-            color: #666;
-        }
-        .version-value {
-            font-family: 'Courier New', monospace;
-            color: #333;
-            font-weight: 500;
-        }
         .dashboard-summary {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -319,7 +309,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                             <span class="status-btn status-value status-not-initialized">Not Initialized</span>
                                         <?php else: ?>
                                             <div class="status-info">
-                                                <div class="version-info">
+                                                <div class="status-info">
                                                     <div><strong>Controller:</strong> 
                                                         <span class="status-value version-value">
                                                             <?php echo htmlspecialchars($summaries[$device['id']]['chillxand_version'] ?? 'N/A'); ?>
@@ -611,7 +601,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                 const summary = data.summary;
                 cell.innerHTML = `
                     <div class="status-info">
-                        <div class="version-info">
+                        <div class="status-info">
                             <div><strong>Controller:</strong> 
                             <span class="status-value version-value">
                                     ${summary.chillxand_version || 'N/A'}
