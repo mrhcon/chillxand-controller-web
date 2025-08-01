@@ -1051,3 +1051,63 @@ details summary {
 .update-status-icon:hover {
     opacity: 0.8;
 }
+
+/* Standardized device table styling (used by both devices.php and dashboard.php) */
+/* Use the more spacious devices.php styling for both pages */
+.device-table .status-info {
+    line-height: 1.3;
+    color: #666;
+}
+
+.device-table .status-info > div {
+    display: flex;
+    align-items: center;
+    margin-bottom: 2px;
+    min-height: 16px;
+}
+
+.device-table .status-info strong {
+    font-weight: bold;
+    color: #333;
+    width: 120px;
+    flex-shrink: 0;
+    margin-right: 15px;
+    font-size: 12px;
+}
+
+.device-table .status-value {
+    color: #333;
+    font-weight: normal;
+    text-align: left;
+    flex: 1;
+    font-size: 12px;
+}
+
+.device-table .status-btn.status-value {
+    color: white !important;
+    text-align: center;
+    font-size: 9px;
+    padding: 3px 6px;
+    min-height: 18px;
+    line-height: 1.2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    border-radius: 3px;
+}
+
+.device-table .version-value {
+    color: #333;
+    font-weight: normal;
+    font-size: 12px;
+}
+
+/* Ensure consistent cell alignment with more spacious padding */
+.device-table td:nth-child(4),
+.device-table td:nth-child(5),
+.device-table td:nth-child(6),
+.device-table td:nth-child(7) {
+    vertical-align: top;
+    padding: 8px;
+}
