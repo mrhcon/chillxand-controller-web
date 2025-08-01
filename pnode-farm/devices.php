@@ -443,7 +443,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         .status-info strong {
             font-weight: bold;
             color: #333;
-            width: 100px;
+            width: 120px;
             flex-shrink: 0;
             margin: 0 15x 0 0;
         }
