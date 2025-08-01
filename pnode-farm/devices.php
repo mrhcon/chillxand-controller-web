@@ -1151,7 +1151,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     console.error('JSON Parse Error:', parseError.message);
                     alert('Error parsing response. Please try again.');
                     refreshBtn.disabled = false;
-                    refreshBtn.textContent = '↻';
+                    refreshBtn.textContent = '↻ Refresh Status';
                     return;
                 }
 
@@ -1178,7 +1178,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     // Update status
                     statusElement.innerHTML = `
                         <span class="status-btn status-${statusClass}">${overallStatus}</span>
-                        <button class="refresh-btn" id="refresh-${deviceId}" onclick="refreshDeviceStatus(${deviceId})" title="Refresh status">↻</button>
                         <div class="status-age status-fresh">Just checked</div>
                         <div class="device-details">Response: ${data.response_time}ms</div>
                     `;
@@ -1255,13 +1254,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     `;
                 }
                 refreshBtn.disabled = false;
-                refreshBtn.textContent = '↻';
+                refreshBtn.textContent = '↻ Refresh Status';
             })
             .catch(error => {
                 console.error('Fetch Error:', error.message);
                 alert('Failed to refresh status: ' + error.message);
                 refreshBtn.disabled = false;
-                refreshBtn.textContent = '↻';
+                refreshBtn.textContent = '↻ Refresh Status';
             });
         }
 
