@@ -469,7 +469,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
 
         .summary-container { margin-bottom: 20px; padding: 10px; border: 1px solid #ccc; background: #f9f9f9; }
         .error { color: red; }
-        .status-age { font-size: 10px; color: #666; }
+        .status-age { color: #666; }
         .status-stale { color: #ff6600; }
         .status-fresh { color: #006600; }
         .refresh-btn {
@@ -1247,7 +1247,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     // Update timestamp
                     lastCheckElement.innerHTML = `
                         <div class="status-fresh">Just now</div>
-                        <div style="font-size: 10px; color: #999;">${data.timestamp}</div>
+                        <div class="last-check-date">${data.timestamp}</div>
                     `;
                 }
                 refreshBtn.disabled = false;

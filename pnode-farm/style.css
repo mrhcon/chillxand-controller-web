@@ -414,7 +414,7 @@ button:hover {
 }
 
 .last-check-date {
-    color: black;
+    color: #666;
     font-size: inherit;
     margin: 2px 0;
 }
