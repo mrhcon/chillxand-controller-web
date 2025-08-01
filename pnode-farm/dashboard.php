@@ -274,7 +274,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                     <td><?php echo htmlspecialchars($device['pnode_ip']); ?></td>
                                     <td><?php echo htmlspecialchars($device['registration_date']); ?></td>
                                     <td>
-                                        <span class="status-btn status-<?php echo strtolower(str_replace(' ', '-', $device['status'])); ?>">
+                                        <span class="status-btn status-value status-value status-<?php echo strtolower(str_replace(' ', '-', $device['status'])); ?>">
                                             <?php echo htmlspecialchars($device['status']); ?>
                                         </span>
                                         <?php if ($device['consecutive_failures'] > 0): ?>
@@ -283,31 +283,31 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                     </td>
                                     <td>
                                         <?php if ($device['status'] === 'Not Initialized'): ?>
-                                            <span class="status-btn status-not-initialized">Not Initialized</span>
+                                            <span class="status-btn status-value status-not-initialized">Not Initialized</span>
                                         <?php else: ?>
                                             <div style="font-size: 10px; line-height: 1.3;">
                                                 <div><strong>Health:</strong> 
-                                                    <span class="status-btn status-<?php echo $summaries[$device['id']]['health_status'] == 'pass' ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
+                                                    <span class="status-btn status-value status-<?php echo $summaries[$device['id']]['health_status'] == 'pass' ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
                                                         <?php echo ucfirst($summaries[$device['id']]['health_status'] ?? 'unknown'); ?>
                                                     </span>
                                                 </div>
                                                 <div><strong>Atlas:</strong> 
-                                                    <span class="status-btn status-<?php echo $summaries[$device['id']]['atlas_registered'] ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
+                                                    <span class="status-btn status-value status-<?php echo $summaries[$device['id']]['atlas_registered'] ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
                                                         <?php echo $summaries[$device['id']]['atlas_registered'] ? 'Yes' : 'No'; ?>
                                                     </span>
                                                 </div>
                                                 <div><strong>Pod:</strong> 
-                                                    <span class="status-btn status-<?php echo $summaries[$device['id']]['pod_status'] == 'active' ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
+                                                    <span class="status-btn status-value status-<?php echo $summaries[$device['id']]['pod_status'] == 'active' ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
                                                         <?php echo ucfirst($summaries[$device['id']]['pod_status'] ?? 'unknown'); ?>
                                                     </span>
                                                 </div>
                                                 <div><strong>XandMiner:</strong> 
-                                                    <span class="status-btn status-<?php echo $summaries[$device['id']]['xandminer_status'] == 'active' ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
+                                                    <span class="status-btn status-value status-<?php echo $summaries[$device['id']]['xandminer_status'] == 'active' ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
                                                         <?php echo ucfirst($summaries[$device['id']]['xandminer_status'] ?? 'unknown'); ?>
                                                     </span>
                                                 </div>
                                                 <div><strong>XandMinerD:</strong> 
-                                                    <span class="status-btn status-<?php echo $summaries[$device['id']]['xandminerd_status'] == 'active' ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
+                                                    <span class="status-btn status-value status-<?php echo $summaries[$device['id']]['xandminerd_status'] == 'active' ? 'online' : 'offline'; ?>" style="padding: 1px 4px; font-size: 9px;">
                                                         <?php echo ucfirst($summaries[$device['id']]['xandminerd_status'] ?? 'unknown'); ?>
                                                     </span>
                                                 </div>
@@ -316,26 +316,26 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                     </td>
                                     <td>
                                         <?php if ($device['status'] === 'Not Initialized'): ?>
-                                            <span class="status-btn status-not-initialized">Not Initialized</span>
+                                            <span class="status-btn status-value status-not-initialized">Not Initialized</span>
                                         <?php else: ?>
                                             <div class="version-info">
                                                 <div><strong>Controller:</strong> 
-                                                    <span class="version-value">
+                                                   <span class="status-value version-value">
                                                         <?php echo htmlspecialchars($summaries[$device['id']]['chillxand_version'] ?? 'N/A'); ?>
                                                     </span>
                                                 </div>
                                                 <div><strong>Pod:</strong> 
-                                                    <span class="version-value">
+                                                   <span class="status-value version-value">
                                                         <?php echo htmlspecialchars($summaries[$device['id']]['pod_version'] ?? 'N/A'); ?>
                                                     </span>
                                                 </div>
                                                 <div><strong>XandMiner:</strong> 
-                                                    <span class="version-value">
+                                                   <span class="status-value version-value">
                                                         <?php echo htmlspecialchars($summaries[$device['id']]['xandminer_version'] ?? 'N/A'); ?>
                                                     </span>
                                                 </div>
                                                 <div><strong>XandMinerD:</strong> 
-                                                    <span class="version-value">
+                                                   <span class="status-value version-value">
                                                         <?php echo htmlspecialchars($summaries[$device['id']]['xandminerd_version'] ?? 'N/A'); ?>
                                                     </span>
                                                 </div>
@@ -555,7 +555,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                 const ageText = data.status_age ? Math.round(data.status_age) + 'm ago' : 'Just now';
                 
                 cell.innerHTML = `
-                    <span class="status-btn ${statusClass}">
+                    <span class="status-btn status-value ${statusClass}">
                         ${data.status}
                     </span>
                     ${data.consecutive_failures > 0 ? `<div class="device-status-details" style="color: #dc3545;">Failures: ${data.consecutive_failures}</div>` : ''}
@@ -564,7 +564,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
             
             updateHealthCell(cell, data) {
                 if (data.status === 'Not Initialized') {
-                    cell.innerHTML = '<span class="status-btn status-not-initialized">Not Initialized</span>';
+                    cell.innerHTML = '<span class="status-btn status-value status-not-initialized">Not Initialized</span>';
                     return;
                 }
                 
@@ -572,27 +572,27 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                 cell.innerHTML = `
                     <div style="font-size: 10px; line-height: 1.3;">
                         <div><strong>Health:</strong> 
-                            <span class="status-btn status-${summary.health_status == 'pass' ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
+                            <span class="status-btn status-value status-${summary.health_status == 'pass' ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
                                 ${summary.health_status ? summary.health_status.charAt(0).toUpperCase() + summary.health_status.slice(1) : 'Unknown'}
                             </span>
                         </div>
                         <div><strong>Atlas:</strong> 
-                            <span class="status-btn status-${summary.atlas_registered ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
+                            <span class="status-btn status-value status-${summary.atlas_registered ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
                                 ${summary.atlas_registered ? 'Yes' : 'No'}
                             </span>
                         </div>
                         <div><strong>Pod:</strong> 
-                            <span class="status-btn status-${summary.pod_status == 'active' ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
+                            <span class="status-btn status-value status-${summary.pod_status == 'active' ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
                                 ${summary.pod_status ? summary.pod_status.charAt(0).toUpperCase() + summary.pod_status.slice(1) : 'Unknown'}
                             </span>
                         </div>
                         <div><strong>XandMiner:</strong> 
-                            <span class="status-btn status-${summary.xandminer_status == 'active' ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
+                            <span class="status-btn status-value status-${summary.xandminer_status == 'active' ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
                                 ${summary.xandminer_status ? summary.xandminer_status.charAt(0).toUpperCase() + summary.xandminer_status.slice(1) : 'Unknown'}
                             </span>
                         </div>
                         <div><strong>XandMinerD:</strong> 
-                            <span class="status-btn status-${summary.xandminerd_status == 'active' ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
+                            <span class="status-btn status-value status-${summary.xandminerd_status == 'active' ? 'online' : 'offline'}" style="padding: 1px 4px; font-size: 9px;">
                                 ${summary.xandminerd_status ? summary.xandminerd_status.charAt(0).toUpperCase() + summary.xandminerd_status.slice(1) : 'Unknown'}
                             </span>
                         </div>
@@ -602,7 +602,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
             
             updateVersionsCell(cell, data) {
                 if (data.status === 'Not Initialized') {
-                    cell.innerHTML = '<span class="status-btn status-not-initialized">Not Initialized</span>';
+                    cell.innerHTML = '<span class="status-btn status-value status-not-initialized">Not Initialized</span>';
                     return;
                 }
                 
@@ -610,22 +610,22 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                 cell.innerHTML = `
                     <div class="version-info">
                         <div><strong>Controller:</strong> 
-                            <span class="version-value">
+                           <span class="status-value version-value">
                                 ${summary.chillxand_version || 'N/A'}
                             </span>
                         </div>
                         <div><strong>Pod:</strong> 
-                            <span class="version-value">
+                           <span class="status-value version-value">
                                 ${summary.pod_version || 'N/A'}
                             </span>
                         </div>
                         <div><strong>XandMiner:</strong> 
-                            <span class="version-value">
+                           <span class="status-value version-value">
                                 ${summary.xandminer_version || 'N/A'}
                             </span>
                         </div>
                         <div><strong>XandMinerD:</strong> 
-                            <span class="version-value">
+                           <span class="status-value version-value">
                                 ${summary.xandminerd_version || 'N/A'}
                             </span>
                         </div>
