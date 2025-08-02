@@ -13,28 +13,6 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-// Fetch admin status and enforce admin access
-if (!isset($_SESSION['admin'])) {
-    try {
-        $stmt = $pdo->prepare("SELECT admin FROM users WHERE id = :user_id");
-        $stmt->bindValue(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
-        $stmt->execute();
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-        $_SESSION['admin'] = $user['admin'] ?? 0;
-    } catch (PDOException $e) {
-        http_response_code(500);
-        echo json_encode(['error' => 'Database error fetching user details']);
-        exit();
-    }
-}
-
-// Enforce admin access
-if (!$_SESSION['admin']) {
-    http_response_code(403);
-    echo json_encode(['error' => 'Admin access required']);
-    exit();
-}
-
 // Get device ID from request
 $device_id = $_GET['device_id'] ?? null;
 if (!$device_id) {
@@ -44,9 +22,9 @@ if (!$device_id) {
 }
 
 try {
-    // Get device (admin can access any device)
-    $stmt = $pdo->prepare("SELECT id, pnode_name, pnode_ip, username FROM devices WHERE id = ?");
-    $stmt->execute([$device_id]);
+    // Verify device belongs to user
+    $stmt = $pdo->prepare("SELECT id, pnode_name, pnode_ip FROM devices WHERE id = ? AND username = ?");
+    $stmt->execute([$device_id, $_SESSION['username']]);
     $device = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if (!$device) {
@@ -66,7 +44,7 @@ try {
     // Parse health data
     $summary = parseCachedDeviceHealth($cached_status);
     
-    // Determine overall status (must match the logic from dashboard.php and devices.php)
+    // Determine overall status (must match the logic from dashboard.php)
     $overall_status = 'Unknown';
     if ($cached_status['status'] === 'Online') {
         if ($summary['health_status'] === 'pass') {
@@ -82,7 +60,7 @@ try {
         $overall_status = $cached_status['status'];
     }
     
-    // Return JSON response
+    // Return JSON response - keeping exact same format as original
     echo json_encode([
         'success' => true,
         'device_id' => $device_id,
@@ -95,7 +73,7 @@ try {
         'consecutive_failures' => $cached_status['consecutive_failures'],
         'health_status' => $cached_status['health_status'],
         'summary' => $summary,
-        'timestamp' => date('M j, H:i', time())
+        'timestamp' => time()  // Back to original format
     ]);
     
 } catch (PDOException $e) {

@@ -46,7 +46,7 @@ if (!isset($_SESSION['user_id'])) {
     }
 }
 
-// Fetch admin status
+// Fetch admin status and enforce admin access
 try {
     $stmt = $pdo->prepare("SELECT admin FROM users WHERE id = :user_id");
     $stmt->bindValue(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
@@ -64,26 +64,35 @@ try {
         }
     }
     $_SESSION['admin'] = $user['admin'];
-    error_log("Admin status fetched: admin={$_SESSION['admin']}");
+    
+    // ADMIN ACCESS REQUIRED - Redirect non-admins to dashboard
+    if (!$_SESSION['admin']) {
+        if (PHP_SAPI !== 'cli') {
+            header("Location: dashboard.php");
+            exit();
+        } else {
+            echo "Error: Admin access required for device management.\n";
+            exit(1);
+        }
+    }
+    
+    error_log("Admin access confirmed for user {$_SESSION['username']}");
 } catch (PDOException $e) {
     $error = "Error fetching user details: " . $e->getMessage();
     error_log($error);
     logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'user_fetch_failed', $error);
 }
 
-// Fetch user's devices with latest status (FAST - no blocking operations!)
+// Fetch ALL devices (admin only page)
 try {
     $stmt = $pdo->prepare("
-        SELECT d.id, d.pnode_name, d.pnode_ip, d.registration_date
+        SELECT d.id, d.pnode_name, d.pnode_ip, d.registration_date, d.username
         FROM devices d
-        WHERE d.username = :username OR :admin = 1
         ORDER BY d.pnode_name ASC
     ");
-    $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
-    $stmt->bindValue(':admin', $_SESSION['admin'], PDO::PARAM_INT);
     $stmt->execute();
     $devices = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    error_log("Fetched " . count($devices) . " devices for user {$_SESSION['username']}");
+    error_log("Fetched " . count($devices) . " devices for admin user {$_SESSION['username']}");
 
     // Get latest statuses for all devices at once (super efficient!)
     $device_ids = array_column($devices, 'id');
@@ -282,20 +291,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['action'] == 'delete') {
     $device_id = $_POST['device_id'];
     try {
-        $stmt = $pdo->prepare("SELECT pnode_name, pnode_ip FROM devices WHERE id = :device_id AND (username = :username OR :admin = 1)");
+        $stmt = $pdo->prepare("SELECT pnode_name, pnode_ip, username FROM devices WHERE id = :device_id");
         $stmt->bindValue(':device_id', $device_id, PDO::PARAM_INT);
-        $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
-        $stmt->bindValue(':admin', $_SESSION['admin'], PDO::PARAM_INT);
         $stmt->execute();
         $device = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($device) {
             // Delete device (cascade will handle device_status_log)
-            $stmt = $pdo->prepare("DELETE FROM devices WHERE id = :device_id AND (username = :username OR :admin = 1)");
+            $stmt = $pdo->prepare("DELETE FROM devices WHERE id = :device_id");
             $stmt->bindValue(':device_id', $device_id, PDO::PARAM_INT);
-            $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
-            $stmt->bindValue(':admin', $_SESSION['admin'], PDO::PARAM_INT);
             $stmt->execute();
-            logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_delete_success', "Device: {$device['pnode_name']}, IP: {$device['pnode_ip']}");
+            logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_delete_success', "Device: {$device['pnode_name']}, IP: {$device['pnode_ip']}, Owner: {$device['username']}");
             if (PHP_SAPI !== 'cli') {
                 header("Location: devices.php");
                 exit();
@@ -303,8 +308,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 echo "Device deleted successfully: {$device['pnode_name']}, {$device['pnode_ip']}\n";
             }
         } else {
-            $error = "Device not found or not authorized.";
-            logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_delete_failed', 'Unauthorized device access');
+            $error = "Device not found.";
+            logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_delete_failed', 'Device not found');
         }
     } catch (PDOException $e) {
         $error = "Error deleting device: " . $e->getMessage();
@@ -549,7 +554,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                     IP Address
                                     <span class="sort-indicator"></span>
                                 </th>
-                                <th>Registration Date</th>
+                                <th>Registration Date & Owner</th>
                                 <th class="sortable-header" data-sort="connectivity">
                                     Connectivity
                                     <span class="sort-indicator"></span>
@@ -568,7 +573,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                 <tr>
                                     <td><a href="device_details.php?device_id=<?php echo $device['id']; ?>"><?php echo htmlspecialchars($device['pnode_name']); ?></a></td>
                                     <td><?php echo htmlspecialchars($device['pnode_ip']); ?></td>
-                                    <td><?php echo htmlspecialchars($device['registration_date']); ?></td>
+                                    <td>
+                                        <div><?php echo htmlspecialchars($device['registration_date']); ?></div>
+                                        <div style="color: #666; font-size: 0.9em;">Owner: <?php echo htmlspecialchars($device['username']); ?></div>
+                                    </td>
                                     <td id="status-<?php echo $device['id']; ?>">
                                         <span class="status-btn status-<?php echo strtolower(str_replace(' ', '-', $device['status'])); ?>">
                                             <?php echo htmlspecialchars($device['status']); ?>
@@ -833,10 +841,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM loaded, initializing handlers...');
 
-            // Initialize device status updater
-            if (document.querySelector('.device-table tbody tr')) {
-                deviceStatusUpdater = new DeviceStatusUpdater();
-            }
+            // Initialize device status updater (temporarily disabled until ajax_device_status.php is available)
+            // if (document.querySelector('.device-table tbody tr')) {
+            //     deviceStatusUpdater = new DeviceStatusUpdater();
+            // }
 
             // Initialize table sorting
             const table = document.querySelector('.device-table');
@@ -977,8 +985,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
 
                 try {
                     const response = await fetch(`ajax_device_status.php?device_id=${device.id}`);
+                    
+                    // Check if file exists
+                    if (response.status === 404) {
+                        console.warn(`ajax_device_status.php not found - auto-refresh disabled for device ${device.id}`);
+                        return;
+                    }
+                    
                     if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}`);
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                     }
 
                     const data = await response.json();
@@ -1009,7 +1024,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         console.error(`Error updating device ${device.id}:`, data.error);
                     }
                 } catch (error) {
-                    console.error(`Failed to auto-update device ${device.id}:`, error);
+                    // Only log 404 errors once per device
+                    if (error.message.includes('404')) {
+                        if (!this.logged404Devices) this.logged404Devices = new Set();
+                        if (!this.logged404Devices.has(device.id)) {
+                            console.warn(`ajax_device_status.php not accessible for device ${device.id} - skipping auto-updates`);
+                            this.logged404Devices.add(device.id);
+                        }
+                    } else {
+                        console.error(`Failed to auto-update device ${device.id}:`, error);
+                    }
                 }
             }
 
