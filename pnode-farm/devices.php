@@ -841,10 +841,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM loaded, initializing handlers...');
 
-            // Initialize device status updater (temporarily disabled until ajax_device_status.php is available)
-            // if (document.querySelector('.device-table tbody tr')) {
-            //     deviceStatusUpdater = new DeviceStatusUpdater();
-            // }
+            // Initialize device status updater
+            if (document.querySelector('.device-table tbody tr')) {
+                deviceStatusUpdater = new DeviceStatusUpdater();
+            }
 
             // Initialize table sorting
             const table = document.querySelector('.device-table');
