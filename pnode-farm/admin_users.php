@@ -61,7 +61,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
                             <strong>Admin</strong>
                             <ul>
                                 <li><button class="menu-button admin-button active" onclick="window.location.href='admin_users.php'">Users</button></li>
-                                <li><button class="menu-button" onclick="window.location.href='devices.php'">Manage Devices</button></li>
+                                <li><button class="menu-button admin-button" onclick="window.location.href='devices.php'">Manage Devices</button></li>
                             </ul>
                         </li>
                     <?php endif; ?>
