@@ -827,37 +827,378 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         var pendingControllerUpdate = null;
         var pendingPodUpdate = null;
         var updateMonitors = {};
+        var deviceStatusUpdater = null;
 
+        // Combined DOMContentLoaded - only ONE event listener
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM loaded, initializing button handlers...');
+            console.log('DOM loaded, initializing handlers...');
 
-        document.querySelectorAll('.action-button.update-controller').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                const deviceId = this.getAttribute('data-device-id');
-                const deviceIp = this.getAttribute('data-device-ip');
-                const deviceName = this.getAttribute('data-device-name');
-                console.log('Controller update clicked:', deviceId, deviceIp, deviceName);
-                openUpdateControllerModal(deviceId, deviceIp, deviceName);
+            // Initialize device status updater
+            if (document.querySelector('.device-table tbody tr')) {
+                deviceStatusUpdater = new DeviceStatusUpdater();
+            }
+
+            // Initialize table sorting
+            const table = document.querySelector('.device-table');
+            if (table) {
+                initializeTableSorting(table);
+            }
+
+            // Initialize update button handlers
+            document.querySelectorAll('.action-button.update-controller').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    const deviceId = this.getAttribute('data-device-id');
+                    const deviceIp = this.getAttribute('data-device-ip');
+                    const deviceName = this.getAttribute('data-device-name');
+                    console.log('Controller update clicked:', deviceId, deviceIp, deviceName);
+                    openUpdateControllerModal(deviceId, deviceIp, deviceName);
+                });
             });
-        });
 
-        document.querySelectorAll('.action-button.update-pod').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                const deviceId = this.getAttribute('data-device-id');
-                const deviceIp = this.getAttribute('data-device-ip');
-                const deviceName = this.getAttribute('data-device-name');
-                console.log('Pod update clicked:', deviceId, deviceIp, deviceName);
-                openUpdatePodModal(deviceId, deviceIp, deviceName);
+            document.querySelectorAll('.action-button.update-pod').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    const deviceId = this.getAttribute('data-device-id');
+                    const deviceIp = this.getAttribute('data-device-ip');
+                    const deviceName = this.getAttribute('data-device-name');
+                    console.log('Pod update clicked:', deviceId, deviceIp, deviceName);
+                    openUpdatePodModal(deviceId, deviceIp, deviceName);
+                });
             });
+
+            console.log('All handlers initialized successfully');
         });
 
-            console.log('Button handlers initialized successfully');
-        });
+        // Device Status Updater Class (similar to dashboard but with update monitoring awareness)
+        class DeviceStatusUpdater {
+            constructor() {
+                this.devices = [];
+                this.updateInterval = 30000; // 30 seconds per device
+                this.staggerDelay = 2000; // 2 seconds between device updates
+                this.deviceStatuses = new Map(); // Track current status of each device
+                this.activeOperations = new Set(); // Track devices with active operations
+                this.init();
+            }
+
+            init() {
+                // Collect all device IDs from the table and their initial statuses
+                const deviceRows = document.querySelectorAll('.device-table tbody tr');
+
+                deviceRows.forEach((row, index) => {
+                    const deviceLink = row.querySelector('td:first-child a');
+                    if (deviceLink) {
+                        const url = new URL(deviceLink.href);
+                        const deviceId = url.searchParams.get('device_id');
+                        if (deviceId) {
+                            // Get initial status from the row
+                            const initialStatus = this.getRowStatus(row);
+                            this.deviceStatuses.set(deviceId, initialStatus);
+
+                            this.devices.push({
+                                id: deviceId,
+                                row: row,
+                                lastUpdate: 0
+                            });
+                        }
+                    }
+                });
+
+                if (this.devices.length > 0) {
+                    // Start staggered updates
+                    this.startStaggeredUpdates();
+                }
+            }
+
+            getRowStatus(row) {
+                // Extract current status from a table row
+                const connectivityCell = row.cells[3];
+                const statusBtn = connectivityCell.querySelector('.status-btn');
+                const status = statusBtn ? statusBtn.textContent.trim() : 'Unknown';
+
+                // Determine overall status based on current row content
+                const healthCell = row.cells[4];
+                let overallStatus = 'Unknown';
+
+                if (status === 'Online') {
+                    // Check if health shows "Pass" for healthy status
+                    const healthText = healthCell.textContent;
+                    if (healthText.includes('Pass')) {
+                        overallStatus = 'Healthy';
+                    } else if (healthText.includes('Fail')) {
+                        overallStatus = 'Online (Issues)';
+                    } else {
+                        overallStatus = 'Online';
+                    }
+                } else if (status === 'Offline') {
+                    overallStatus = 'Offline';
+                } else {
+                    overallStatus = status;
+                }
+
+                return {
+                    status: status,
+                    overallStatus: overallStatus
+                };
+            }
+
+            markDeviceOperationActive(deviceId) {
+                this.activeOperations.add(deviceId);
+                console.log(`Marked device ${deviceId} as having active operation`);
+            }
+
+            markDeviceOperationInactive(deviceId) {
+                this.activeOperations.delete(deviceId);
+                console.log(`Marked device ${deviceId} as operation complete`);
+            }
+
+            isDeviceOperationActive(deviceId) {
+                return this.activeOperations.has(deviceId);
+            }
+
+            startStaggeredUpdates() {
+                this.devices.forEach((device, index) => {
+                    const delay = index * this.staggerDelay;
+
+                    // Stagger initial updates
+                    setTimeout(() => {
+                        this.updateDevice(device);
+
+                        // Set up recurring updates for this device
+                        setInterval(() => this.updateDevice(device), this.updateInterval);
+                    }, delay);
+                });
+            }
+
+            async updateDevice(device) {
+                // Skip update if device has active operations
+                if (this.isDeviceOperationActive(device.id)) {
+                    console.log(`Skipping auto-update for device ${device.id} - operation in progress`);
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`ajax_device_status.php?device_id=${device.id}`);
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        // Store old status for comparison
+                        const oldStatus = this.deviceStatuses.get(device.id);
+
+                        // Update the row
+                        this.updateDeviceRow(device, data);
+
+                        // Store new status
+                        const newStatus = {
+                            status: data.status,
+                            overallStatus: data.overall_status
+                        };
+                        this.deviceStatuses.set(device.id, newStatus);
+
+                        // Update summary cards if status changed or on first update
+                        if (!oldStatus ||
+                            oldStatus.status !== newStatus.status ||
+                            oldStatus.overallStatus !== newStatus.overallStatus) {
+                            this.updateSummaryCards();
+                        }
+
+                        device.lastUpdate = Date.now();
+                    } else {
+                        console.error(`Error updating device ${device.id}:`, data.error);
+                    }
+                } catch (error) {
+                    console.error(`Failed to auto-update device ${device.id}:`, error);
+                }
+            }
+
+            updateSummaryCards() {
+                const statuses = Array.from(this.deviceStatuses.values());
+
+                // Calculate totals
+                const totalDevices = statuses.length;
+                const onlineDevices = statuses.filter(s => s.status === 'Online').length;
+                const offlineDevices = statuses.filter(s => s.status === 'Offline').length;
+                const healthyDevices = statuses.filter(s => s.overallStatus === 'Healthy').length;
+                const issuesDevices = statuses.filter(s => s.overallStatus === 'Online (Issues)').length;
+
+                // Update the summary cards
+                const summaryCards = document.querySelectorAll('.summary-card');
+                if (summaryCards.length >= 5) {
+                    // Total Devices
+                    const totalCard = summaryCards[0].querySelector('.summary-number');
+                    if (totalCard) totalCard.textContent = totalDevices;
+
+                    // Online
+                    const onlineCard = summaryCards[1].querySelector('.summary-number');
+                    if (onlineCard) onlineCard.textContent = onlineDevices;
+
+                    // Healthy
+                    const healthyCard = summaryCards[2].querySelector('.summary-number');
+                    if (healthyCard) healthyCard.textContent = healthyDevices;
+
+                    // With Issues
+                    const issuesCard = summaryCards[3].querySelector('.summary-number');
+                    if (issuesCard) issuesCard.textContent = issuesDevices;
+
+                    // Offline
+                    const offlineCard = summaryCards[4].querySelector('.summary-number');
+                    if (offlineCard) offlineCard.textContent = offlineDevices;
+                }
+            }
+
+            updateDeviceRow(device, data) {
+                const row = device.row;
+
+                // Add visual highlight to the entire row
+                row.style.backgroundColor = '#fffbf0';
+                row.style.transition = 'background-color 0.3s ease';
+
+                // Update connectivity status (4th column)
+                const connectivityCell = row.cells[3];
+                this.updateConnectivityCell(connectivityCell, data);
+
+                // Update health status (5th column)
+                const healthCell = row.cells[4];
+                this.updateHealthCell(healthCell, data);
+
+                // Update versions (6th column)
+                const versionsCell = row.cells[5];
+                this.updateVersionsCell(versionsCell, data);
+
+                // Update last checked (7th column)
+                const lastCheckedCell = row.cells[6];
+                this.updateLastCheckedCell(lastCheckedCell, data);
+
+                // Remove highlight after 2 seconds
+                setTimeout(() => {
+                    row.style.backgroundColor = '';
+                }, 2000);
+            }
+
+            updateConnectivityCell(cell, data) {
+                const statusClass = `status-${data.status.toLowerCase().replace(' ', '-')}`;
+
+                cell.innerHTML = `
+                    <span class="status-btn ${statusClass}">
+                        ${data.status}
+                    </span>
+                    ${data.consecutive_failures > 0 ? `<div class="device-details" style="color: #dc3545;">Failures: ${data.consecutive_failures}</div>` : ''}
+                `;
+            }
+
+            updateHealthCell(cell, data) {
+                if (data.status === 'Not Initialized') {
+                    cell.innerHTML = '<span class="status-btn status-value status-not-initialized">Not Initialized</span>';
+                    return;
+                }
+
+                const summary = data.summary;
+                cell.innerHTML = `
+                    <div class="status-info">
+                        <div><strong>Health:</strong>
+                            <span class="status-btn status-value status-${summary.health_status == 'pass' ? 'online' : 'offline'}">
+                                ${summary.health_status ? summary.health_status.charAt(0).toUpperCase() + summary.health_status.slice(1) : 'Unknown'}
+                            </span>
+                        </div>
+                        <div><strong>Atlas:</strong>
+                            <span class="status-btn status-value status-${summary.atlas_registered ? 'online' : 'offline'}">
+                                ${summary.atlas_registered ? 'Yes' : 'No'}
+                            </span>
+                        </div>
+                        <div><strong>Pod:</strong>
+                            <span class="status-btn status-value status-${summary.pod_status == 'active' ? 'online' : 'offline'}">
+                                ${summary.pod_status ? summary.pod_status.charAt(0).toUpperCase() + summary.pod_status.slice(1) : 'Unknown'}
+                            </span>
+                        </div>
+                        <div><strong>XandMiner:</strong>
+                            <span class="status-btn status-value status-${summary.xandminer_status == 'active' ? 'online' : 'offline'}">
+                                ${summary.xandminer_status ? summary.xandminer_status.charAt(0).toUpperCase() + summary.xandminer_status.slice(1) : 'Unknown'}
+                            </span>
+                        </div>
+                        <div><strong>XandMinerD:</strong>
+                            <span class="status-btn status-value status-${summary.xandminerd_status == 'active' ? 'online' : 'offline'}">
+                                ${summary.xandminerd_status ? summary.xandminerd_status.charAt(0).toUpperCase() + summary.xandminerd_status.slice(1) : 'Unknown'}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            updateVersionsCell(cell, data) {
+                if (data.status === 'Not Initialized') {
+                    cell.innerHTML = '<span class="status-btn status-value status-not-initialized">Not Initialized</span>';
+                    return;
+                }
+
+                const summary = data.summary;
+                cell.innerHTML = `
+                    <div class="status-info">
+                        <div><strong>Controller:</strong>
+                        <span class="status-value version-value">
+                                ${summary.chillxand_version || 'N/A'}
+                            </span>
+                        </div>
+                        <div><strong>Pod:</strong>
+                        <span class="status-value version-value">
+                                ${summary.pod_version || 'N/A'}
+                            </span>
+                        </div>
+                        <div><strong>XandMiner:</strong>
+                        <span class="status-value version-value">
+                                ${summary.xandminer_version || 'N/A'}
+                            </span>
+                        </div>
+                        <div><strong>XandMinerD:</strong>
+                        <span class="status-value version-value">
+                                ${summary.xandminerd_version || 'N/A'}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            updateLastCheckedCell(cell, data) {
+                if (data.last_check) {
+                    const ageText = data.status_age ? Math.round(data.status_age) + ' min ago' : 'Just now';
+                    const staleClass = data.status_stale ? 'status-stale' : 'status-fresh';
+                    const checkDate = new Date(data.last_check);
+                    const formattedDate = checkDate.toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                    });
+
+                    cell.innerHTML = `
+                        <div class="${staleClass}">
+                            ${ageText}
+                        </div>
+                        <div class="last-check-date">
+                            ${formattedDate}
+                        </div>
+                        ${data.response_time ? `<div class="device-details">Response: ${Math.round(data.response_time * 1000)}ms</div>` : ''}
+                    `;
+                } else {
+                    cell.innerHTML = '<div class="never-checked">Never checked</div>';
+                }
+            }
+        }
 
         function refreshDeviceStatus(deviceId) {
             const statusElement = document.querySelector(`#status-${deviceId}`);
             const refreshBtn = document.querySelector(`#refresh-${deviceId}`);
             const lastCheckElement = document.querySelector(`#lastcheck-${deviceId}`);
+
+            // Mark device as having active operation to prevent auto-updates
+            if (deviceStatusUpdater) {
+                deviceStatusUpdater.markDeviceOperationActive(deviceId);
+            }
+
+            // Disable all buttons for this device
+            disableDeviceButtons(deviceId);
 
             refreshBtn.disabled = true;
             refreshBtn.textContent = '⟳ Refreshing Status...';
@@ -877,8 +1218,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 } catch (parseError) {
                     console.error('JSON Parse Error:', parseError.message);
                     alert('Error parsing response. Please try again.');
-                    refreshBtn.disabled = false;
-                    refreshBtn.textContent = '↻ Refresh Status';
                     return;
                 }
 
@@ -979,15 +1318,46 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         <div class="device-details">Response: ${data.response_time}ms</div>
                     `;
                 }
-                refreshBtn.disabled = false;
-                refreshBtn.textContent = '↻ Refresh Status';
             })
             .catch(error => {
                 console.error('Fetch Error:', error.message);
                 alert('Failed to refresh status: ' + error.message);
+            })
+            .finally(() => {
+                // Re-enable buttons
+                enableDeviceButtons(deviceId);
                 refreshBtn.disabled = false;
                 refreshBtn.textContent = '↻ Refresh Status';
+
+                // Mark device operation as complete to allow auto-updates
+                if (deviceStatusUpdater) {
+                    deviceStatusUpdater.markDeviceOperationInactive(deviceId);
+                }
             });
+        }
+
+        function disableDeviceButtons(deviceId) {
+            // Disable refresh button
+            const refreshBtn = document.querySelector(`#refresh-${deviceId}`);
+            if (refreshBtn) refreshBtn.disabled = true;
+
+            // Disable update buttons
+            const controllerBtn = document.querySelector(`[data-device-id="${deviceId}"].update-controller`);
+            const podBtn = document.querySelector(`[data-device-id="${deviceId}"].update-pod`);
+            if (controllerBtn) controllerBtn.disabled = true;
+            if (podBtn) podBtn.disabled = true;
+        }
+
+        function enableDeviceButtons(deviceId) {
+            // Enable refresh button
+            const refreshBtn = document.querySelector(`#refresh-${deviceId}`);
+            if (refreshBtn) refreshBtn.disabled = false;
+
+            // Enable update buttons
+            const controllerBtn = document.querySelector(`[data-device-id="${deviceId}"].update-controller`);
+            const podBtn = document.querySelector(`[data-device-id="${deviceId}"].update-pod`);
+            if (controllerBtn) controllerBtn.disabled = false;
+            if (podBtn) podBtn.disabled = false;
         }
 
         function openAddModal() {
@@ -1068,6 +1438,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
 
             console.log('User confirmed controller update for:', deviceName);
 
+            // Mark device as having active operation to prevent auto-updates
+            if (deviceStatusUpdater) {
+                deviceStatusUpdater.markDeviceOperationActive(deviceId);
+            }
+
+            // Disable all buttons for this device during update
+            disableDeviceButtons(deviceId);
+
             const btn = document.querySelector(`[data-device-id="${deviceId}"].update-controller`);
             if (!btn) {
                 console.error('Could not find controller button for device', deviceId);
@@ -1109,6 +1487,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         btn.disabled = false;
                         setTimeout(() => {
                             btn.textContent = originalText;
+                            // Re-enable other buttons and allow auto-updates
+                            enableDeviceButtons(deviceId);
+                            if (deviceStatusUpdater) {
+                                deviceStatusUpdater.markDeviceOperationInactive(deviceId);
+                            }
                         }, 3000);
                         console.log(`Controller update: ${data.message}`);
                     } else if (data.status === 'update_initiated') {
@@ -1121,6 +1504,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         btn.disabled = false;
                         setTimeout(() => {
                             btn.textContent = originalText;
+                            enableDeviceButtons(deviceId);
+                            if (deviceStatusUpdater) {
+                                deviceStatusUpdater.markDeviceOperationInactive(deviceId);
+                            }
                         }, 5000);
                         console.error(`Controller update GitHub error for ${deviceName}: ${data.message}`);
                         alert(`Controller update failed for ${deviceName}\n\nGitHub Error: ${data.message}`);
@@ -1130,6 +1517,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         btn.disabled = false;
                         setTimeout(() => {
                             btn.textContent = originalText;
+                            enableDeviceButtons(deviceId);
+                            if (deviceStatusUpdater) {
+                                deviceStatusUpdater.markDeviceOperationInactive(deviceId);
+                            }
                         }, 5000);
                         console.error(`Controller update exception for ${deviceName}: ${data.message}`);
                         alert(`Controller update failed for ${deviceName}\n\nException: ${data.message}`);
@@ -1140,12 +1531,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         setTimeout(() => {
                             btn.disabled = false;
                             btn.textContent = originalText;
+                            enableDeviceButtons(deviceId);
+                            if (deviceStatusUpdater) {
+                                deviceStatusUpdater.markDeviceOperationInactive(deviceId);
+                            }
                         }, 3000);
                     }
                 } else {
                     alert(`Controller update failed for ${deviceName}.\n\nError: ${data.error || 'Unknown error'}`);
                     btn.disabled = false;
                     btn.textContent = originalText;
+                    enableDeviceButtons(deviceId);
+                    if (deviceStatusUpdater) {
+                        deviceStatusUpdater.markDeviceOperationInactive(deviceId);
+                    }
                 }
             })
             .catch(error => {
@@ -1153,6 +1552,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 alert(`Controller update failed for ${deviceName}.\n\nNetwork error: ${error.message}`);
                 btn.disabled = false;
                 btn.textContent = originalText;
+                enableDeviceButtons(deviceId);
+                if (deviceStatusUpdater) {
+                    deviceStatusUpdater.markDeviceOperationInactive(deviceId);
+                }
             });
         }
 
@@ -1166,6 +1569,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             closeUpdatePodModal();
 
             console.log('User confirmed pod update for:', deviceName);
+
+            // Mark device as having active operation to prevent auto-updates
+            if (deviceStatusUpdater) {
+                deviceStatusUpdater.markDeviceOperationActive(deviceId);
+            }
+
+            // Disable all buttons for this device during update
+            disableDeviceButtons(deviceId);
 
             const btn = document.querySelector(`[data-device-id="${deviceId}"].update-pod`);
             if (!btn) {
@@ -1207,6 +1618,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         btn.disabled = false;
                         setTimeout(() => {
                             btn.textContent = originalText;
+                            enableDeviceButtons(deviceId);
+                            if (deviceStatusUpdater) {
+                                deviceStatusUpdater.markDeviceOperationInactive(deviceId);
+                            }
                         }, 3000);
                         console.log(`Pod update: ${data.message}`);
                     } else if (data.status === 'update_initiated') {
@@ -1218,6 +1633,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         btn.disabled = false;
                         setTimeout(() => {
                             btn.textContent = originalText;
+                            enableDeviceButtons(deviceId);
+                            if (deviceStatusUpdater) {
+                                deviceStatusUpdater.markDeviceOperationInactive(deviceId);
+                            }
                         }, 5000);
                         console.error(`Pod update GitHub error for ${deviceName}: ${data.message}`);
                         alert(`Pod update failed for ${deviceName}\n\nGitHub Error: ${data.message}`);
@@ -1226,6 +1645,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         btn.disabled = false;
                         setTimeout(() => {
                             btn.textContent = originalText;
+                            enableDeviceButtons(deviceId);
+                            if (deviceStatusUpdater) {
+                                deviceStatusUpdater.markDeviceOperationInactive(deviceId);
+                            }
                         }, 5000);
                         console.error(`Pod update exception for ${deviceName}: ${data.message}`);
                         alert(`Pod update failed for ${deviceName}\n\nException: ${data.message}`);
@@ -1235,12 +1658,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         setTimeout(() => {
                             btn.disabled = false;
                             btn.textContent = originalText;
+                            enableDeviceButtons(deviceId);
+                            if (deviceStatusUpdater) {
+                                deviceStatusUpdater.markDeviceOperationInactive(deviceId);
+                            }
                         }, 3000);
                     }
                 } else {
                     alert(`Pod update failed for ${deviceName}.\n\nError: ${data.error || 'Unknown error'}`);
                     btn.disabled = false;
                     btn.textContent = originalText;
+                    enableDeviceButtons(deviceId);
+                    if (deviceStatusUpdater) {
+                        deviceStatusUpdater.markDeviceOperationInactive(deviceId);
+                    }
                 }
             })
             .catch(error => {
@@ -1248,6 +1679,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 alert(`Pod update failed for ${deviceName}.\n\nNetwork error: ${error.message}`);
                 btn.disabled = false;
                 btn.textContent = originalText;
+                enableDeviceButtons(deviceId);
+                if (deviceStatusUpdater) {
+                    deviceStatusUpdater.markDeviceOperationInactive(deviceId);
+                }
             });
         }
 
@@ -1783,7 +2218,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     addUpdateStatusIcon(monitor.btn, 'success', '✅', 'Update completed successfully');
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
-                        monitor.btn.disabled = false;
+                        enableDeviceButtons(monitor.deviceId);
+                        if (deviceStatusUpdater) {
+                            deviceStatusUpdater.markDeviceOperationInactive(monitor.deviceId);
+                        }
                         // Wait before checking device status after successful completion
                         setTimeout(() => {
                             refreshDeviceStatus(monitor.deviceId);
@@ -1794,7 +2232,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     addUpdateStatusIcon(monitor.btn, 'success', '✅', 'No update needed - already up to date');
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
-                        monitor.btn.disabled = false;
+                        enableDeviceButtons(monitor.deviceId);
+                        if (deviceStatusUpdater) {
+                            deviceStatusUpdater.markDeviceOperationInactive(monitor.deviceId);
+                        }
                         // Quick refresh if no update was needed
                         setTimeout(() => {
                             refreshDeviceStatus(monitor.deviceId);
@@ -1807,7 +2248,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     addUpdateStatusIcon(monitor.btn, 'error', '❌', errorMessage);
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
-                        monitor.btn.disabled = false;
+                        enableDeviceButtons(monitor.deviceId);
+                        if (deviceStatusUpdater) {
+                            deviceStatusUpdater.markDeviceOperationInactive(monitor.deviceId);
+                        }
                         // Wait a bit in case device is recovering
                         setTimeout(() => {
                             refreshDeviceStatus(monitor.deviceId);
@@ -1819,7 +2263,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     addUpdateStatusIcon(monitor.btn, 'warning', '⚠️', warningMessage);
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
-                        monitor.btn.disabled = false;
+                        enableDeviceButtons(monitor.deviceId);
+                        if (deviceStatusUpdater) {
+                            deviceStatusUpdater.markDeviceOperationInactive(monitor.deviceId);
+                        }
                         setTimeout(() => {
                             refreshDeviceStatus(monitor.deviceId);
                         }, 3000);
@@ -1830,7 +2277,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     addUpdateStatusIcon(monitor.btn, 'error', '❌', failMessage);
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
-                        monitor.btn.disabled = false;
+                        enableDeviceButtons(monitor.deviceId);
+                        if (deviceStatusUpdater) {
+                            deviceStatusUpdater.markDeviceOperationInactive(monitor.deviceId);
+                        }
                         setTimeout(() => {
                             refreshDeviceStatus(monitor.deviceId);
                         }, 3000);
@@ -1838,10 +2288,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     break;
                 case 'timeout':
                     addUpdateStatusIcon(monitor.btn, 'error', '❌', 'Update monitoring timed out - check device status manually');
-                    // monitor.btn.textContent = 'Timed Out - Check Manually';
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
-                        monitor.btn.disabled = false;
+                        enableDeviceButtons(monitor.deviceId);
+                        if (deviceStatusUpdater) {
+                            deviceStatusUpdater.markDeviceOperationInactive(monitor.deviceId);
+                        }
                         // Give extra time before refreshing after timeout
                         setTimeout(() => {
                             refreshDeviceStatus(monitor.deviceId);
@@ -1850,10 +2302,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     break;
                 case 'timeout_after_restart':
                     addUpdateStatusIcon(monitor.btn, 'warning', '⚠️', 'Update likely completed but monitoring timed out after restart');
-                    // monitor.btn.textContent = 'Update Likely Complete';
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
-                        monitor.btn.disabled = false;
+                        enableDeviceButtons(monitor.deviceId);
+                        if (deviceStatusUpdater) {
+                            deviceStatusUpdater.markDeviceOperationInactive(monitor.deviceId);
+                        }
                         // After restart was confirmed, wait longer before checking
                         setTimeout(() => {
                             refreshDeviceStatus(monitor.deviceId);
@@ -1862,10 +2316,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     break;
                 case 'timeout_after_update_start':
                     addUpdateStatusIcon(monitor.btn, 'warning', '⚠️', 'Update started but final status unclear - check device manually');
-                    // monitor.btn.textContent = 'Check Device Status';
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
-                        monitor.btn.disabled = false;
+                        enableDeviceButtons(monitor.deviceId);
+                        if (deviceStatusUpdater) {
+                            deviceStatusUpdater.markDeviceOperationInactive(monitor.deviceId);
+                        }
                         // Update started but status unclear
                         setTimeout(() => {
                             refreshDeviceStatus(monitor.deviceId);
@@ -1876,7 +2332,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     addUpdateStatusIcon(monitor.btn, 'success', '✅', 'Update likely completed successfully');
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
-                        monitor.btn.disabled = false;
+                        enableDeviceButtons(monitor.deviceId);
+                        if (deviceStatusUpdater) {
+                            deviceStatusUpdater.markDeviceOperationInactive(monitor.deviceId);
+                        }
                         // Wait after restart to ensure device is fully ready
                         setTimeout(() => {
                             refreshDeviceStatus(monitor.deviceId);
@@ -1886,7 +2345,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 default:
                     addUpdateStatusIcon(monitor.btn, 'warning', '⚠️', 'Update finished with unknown status');
                     monitor.btn.textContent = monitor.originalText;
-                    monitor.btn.disabled = false;
+                    enableDeviceButtons(monitor.deviceId);
+                    if (deviceStatusUpdater) {
+                        deviceStatusUpdater.markDeviceOperationInactive(monitor.deviceId);
+                    }
                     setTimeout(() => {
                         refreshDeviceStatus(monitor.deviceId);
                     }, 5000);
@@ -1894,7 +2356,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
 
             console.log(`Finished monitoring ${monitor.updateType} update for ${monitor.deviceName} - reason: ${reason}`);
         }
-
 
         window.onclick = function(event) {
             const addModal = document.getElementById('addModal');
@@ -1931,10 +2392,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         });
 
         // Table sorting functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            const table = document.querySelector('.device-table');
-            if (!table) return;
-
+        function initializeTableSorting(table) {
             const headers = table.querySelectorAll('.sortable-header');
             let currentSort = { column: null, direction: 'asc' };
 
@@ -1960,7 +2418,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     sortTable(table, sortType, currentSort.direction);
                 });
             });
-        });
+        }
 
         function sortTable(table, sortType, direction) {
             const tbody = table.querySelector('tbody');
