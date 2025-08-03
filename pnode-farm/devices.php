@@ -2005,8 +2005,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         monitor.restartDetected = true;
                         monitor.consecutiveFailures = 0;
                     } else {
-                        monitor.btn.textContent = `Update in Progress... (checking ${monitor.consecutiveFailures})`;
-                    }
+                        monitor.btn.textContent = updateInProgressTimer(monitor);
+                   }
                 } else if (monitor.restartDetected) {
                     // We're in restart phase - connection failures are expected
                     monitor.postRestartAttempts++;
@@ -2076,33 +2076,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             return `In Progress (${timeDisplay})`;
         }
 
-        // function addUpdateStatusIcon(button, type, icon, message) {
-        //     // Remove any existing status icon from the button row
-        //     const buttonRow = button.closest('.update-button-row');
-        //     const existingIcon = buttonRow.querySelector('.update-status-icon');
-        //     if (existingIcon) {
-        //         existingIcon.remove();
-        //     }
 
-        //     // Create new status icon
-        //     const iconSpan = document.createElement('span');
-        //     iconSpan.className = `update-status-icon update-status-${type}`;
-        //     iconSpan.textContent = icon;
-        //     iconSpan.title = message;
-        //     iconSpan.style.cssText = `
-        //         cursor: help;
-        //         margin-left: 5px;
-        //         display: inline-block;
-        //         vertical-align: middle;
-        //         font-size: 14px;
-        //         line-height: 1;
-        //     `;
-
-        //     // Add icon to the same row as the button
-        //     buttonRow.appendChild(iconSpan);
-
-        //     console.log('Added icon to button row:', buttonRow);
-        // }
 
         function addUpdateStatusIcon(button, type, icon, message) {
             // Remove any existing status icon from the button row first
