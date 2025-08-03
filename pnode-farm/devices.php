@@ -1482,6 +1482,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             btn.disabled = true;
             btn.textContent = 'Starting...';
 
+            // Remove any existing status icon from previous updates
+            removeUpdateStatusIcon(btn);            
+
             fetch('device_update.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -1584,6 +1587,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             });
         }
 
+        function removeUpdateStatusIcon(button) {
+            // Remove any existing status icon from the button row
+            const buttonRow = button.closest('.update-button-row');
+            if (buttonRow) {
+                const existingIcon = buttonRow.querySelector('.update-status-icon');
+                if (existingIcon) {
+                    existingIcon.remove();
+                    console.log('Removed existing status icon for button:', button.textContent);
+                }
+            }
+        }
+
         function confirmUpdatePod() {
             if (!pendingPodUpdate) return;
 
@@ -1613,6 +1628,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             const originalText = btn.textContent;
             btn.disabled = true;
             btn.textContent = 'Starting...';
+
+            // Remove any existing status icon from previous updates
+            removeUpdateStatusIcon(btn);               
 
             fetch('device_update.php', {
                 method: 'POST',
@@ -2058,13 +2076,37 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             return `In Progress (${timeDisplay})`;
         }
 
+        // function addUpdateStatusIcon(button, type, icon, message) {
+        //     // Remove any existing status icon from the button row
+        //     const buttonRow = button.closest('.update-button-row');
+        //     const existingIcon = buttonRow.querySelector('.update-status-icon');
+        //     if (existingIcon) {
+        //         existingIcon.remove();
+        //     }
+
+        //     // Create new status icon
+        //     const iconSpan = document.createElement('span');
+        //     iconSpan.className = `update-status-icon update-status-${type}`;
+        //     iconSpan.textContent = icon;
+        //     iconSpan.title = message;
+        //     iconSpan.style.cssText = `
+        //         cursor: help;
+        //         margin-left: 5px;
+        //         display: inline-block;
+        //         vertical-align: middle;
+        //         font-size: 14px;
+        //         line-height: 1;
+        //     `;
+
+        //     // Add icon to the same row as the button
+        //     buttonRow.appendChild(iconSpan);
+
+        //     console.log('Added icon to button row:', buttonRow);
+        // }
+
         function addUpdateStatusIcon(button, type, icon, message) {
-            // Remove any existing status icon from the button row
-            const buttonRow = button.closest('.update-button-row');
-            const existingIcon = buttonRow.querySelector('.update-status-icon');
-            if (existingIcon) {
-                existingIcon.remove();
-            }
+            // Remove any existing status icon from the button row first
+            removeUpdateStatusIcon(button);
 
             // Create new status icon
             const iconSpan = document.createElement('span');
@@ -2081,10 +2123,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             `;
 
             // Add icon to the same row as the button
+            const buttonRow = button.closest('.update-button-row');
             buttonRow.appendChild(iconSpan);
 
             console.log('Added icon to button row:', buttonRow);
-        }
+        }        
 
         function finishUpdateMonitoring(monitorKey, monitor, reason) {
             if (monitor.interval) {
