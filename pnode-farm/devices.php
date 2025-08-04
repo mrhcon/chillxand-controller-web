@@ -884,6 +884,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 this.staggerDelay = 2000; // 2 seconds between device updates
                 this.deviceStatuses = new Map(); // Track current status of each device
                 this.activeOperations = new Set(); // Track devices with active operations
+                this.deviceVersions = new Map();
                 this.init();
             }
 
@@ -900,6 +901,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                             // Get initial status from the row
                             const initialStatus = this.getRowStatus(row);
                             this.deviceStatuses.set(deviceId, initialStatus);
+                            const initialVersions = this.getRowVersions(row);
+                            this.deviceVersions.set(deviceId, initialVersions);
 
                             this.devices.push({
                                 id: deviceId,
@@ -916,6 +919,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 }
             }
 
+            getRowVersions(row) {
+                // Extract current versions from a table row (6th column - versions)
+                const versionsCell = row.cells[5];
+                const versions = {
+                    controller: 'N/A',
+                    pod: 'N/A',
+                    xandminer: 'N/A',
+                    xandminerd: 'N/A'
+                };
+
+                if (versionsCell) {
+                    const versionElements = versionsCell.querySelectorAll('.version-value');
+                    if (versionElements.length >= 4) {
+                        versions.controller = versionElements[0].textContent.trim();
+                        versions.pod = versionElements[1].textContent.trim();
+                        versions.xandminer = versionElements[2].textContent.trim();
+                        versions.xandminerd = versionElements[3].textContent.trim();
+                    }
+                }
+
+                return versions;
+            }
+            
             getRowStatus(row) {
                 // Extract current status from a table row
                 const connectivityCell = row.cells[3];
@@ -1000,27 +1026,66 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     const data = await response.json();
 
                     if (data.success) {
-                        // Store old status for comparison
+                        // // Store old status for comparison
+                        // const oldStatus = this.deviceStatuses.get(device.id);
+
+                        // // Update the row
+                        // this.updateDeviceRow(device, data);
+
+                        // // Store new status
+                        // const newStatus = {
+                        //     status: data.status,
+                        //     overallStatus: data.overall_status
+                        // };
+                        // this.deviceStatuses.set(device.id, newStatus);
+
+                        // // Update summary cards if status changed or on first update
+                        // if (!oldStatus ||
+                        //     oldStatus.status !== newStatus.status ||
+                        //     oldStatus.overallStatus !== newStatus.overallStatus) {
+                        //     this.updateSummaryCards();
+                        // }
+
+                        // device.lastUpdate = Date.now();
+                        // Store old status and versions for comparison
                         const oldStatus = this.deviceStatuses.get(device.id);
+                        const oldVersions = this.deviceVersions.get(device.id);
 
                         // Update the row
                         this.updateDeviceRow(device, data);
 
-                        // Store new status
+                        // Store new status and versions
                         const newStatus = {
                             status: data.status,
                             overallStatus: data.overall_status
                         };
+                        const newVersions = {
+                            controller: data.summary?.chillxand_version || 'N/A',
+                            pod: data.summary?.pod_version || 'N/A',
+                            xandminer: data.summary?.xandminer_version || 'N/A',
+                            xandminerd: data.summary?.xandminerd_version || 'N/A'
+                        };
+
                         this.deviceStatuses.set(device.id, newStatus);
+                        this.deviceVersions.set(device.id, newVersions);
 
-                        // Update summary cards if status changed or on first update
-                        if (!oldStatus ||
-                            oldStatus.status !== newStatus.status ||
-                            oldStatus.overallStatus !== newStatus.overallStatus) {
+                        // Update summary cards if status or versions changed
+                        const statusChanged = !oldStatus || 
+                            oldStatus.status !== newStatus.status || 
+                            oldStatus.overallStatus !== newStatus.overallStatus;
+
+                        const versionsChanged = !oldVersions ||
+                            oldVersions.controller !== newVersions.controller ||
+                            oldVersions.pod !== newVersions.pod ||
+                            oldVersions.xandminer !== newVersions.xandminer ||
+                            oldVersions.xandminerd !== newVersions.xandminerd;
+
+                        if (statusChanged || versionsChanged) {
                             this.updateSummaryCards();
-                        }
-
-                        device.lastUpdate = Date.now();
+                            if (versionsChanged) {
+                                this.updateVersionCards();
+                            }
+                        }                        
                     } else {
                         console.error(`Error updating device ${device.id}:`, data.error);
                     }
@@ -1036,6 +1101,121 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         console.error(`Failed to auto-update device ${device.id}:`, error);
                     }
                 }
+            }
+
+            updateVersionCards() {
+                // Get all online devices and their versions
+                const onlineDevices = [];
+                for (const [deviceId, status] of this.deviceStatuses.entries()) {
+                    if (status.status === 'Online') {
+                        const versions = this.deviceVersions.get(deviceId);
+                        if (versions) {
+                            onlineDevices.push(versions);
+                        }
+                    }
+                }
+
+                if (onlineDevices.length === 0) return;
+
+                // Calculate version statistics
+                const versionStats = {
+                    controller: {},
+                    pod: {},
+                    xandminer: {},
+                    xandminerd: {}
+                };
+
+                onlineDevices.forEach(device => {
+                    // Count each version type
+                    ['controller', 'pod', 'xandminer', 'xandminerd'].forEach(service => {
+                        const version = device[service] || 'Unknown';
+                        if (!versionStats[service][version]) {
+                            versionStats[service][version] = 0;
+                        }
+                        versionStats[service][version]++;
+                    });
+                });
+
+                // Sort versions (latest first, Unknown last)
+                Object.keys(versionStats).forEach(service => {
+                    const sorted = {};
+                    const versions = Object.keys(versionStats[service]).sort((a, b) => {
+                        if (a === 'Unknown') return 1;
+                        if (b === 'Unknown') return -1;
+                        if (a === 'N/A') return 1;
+                        if (b === 'N/A') return -1;
+                        return this.compareVersions(b, a); // Descending order
+                    });
+                    
+                    versions.forEach(version => {
+                        sorted[version] = versionStats[service][version];
+                    });
+                    versionStats[service] = sorted;
+                });
+
+                // Update the version cards in the DOM
+                this.updateVersionCardsDOM(versionStats, onlineDevices.length);
+            }
+
+            compareVersions(a, b) {
+                // Simple version comparison - you may need to enhance this based on your version format
+                const aParts = a.split('.').map(n => parseInt(n) || 0);
+                const bParts = b.split('.').map(n => parseInt(n) || 0);
+                
+                for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
+                    const aPart = aParts[i] || 0;
+                    const bPart = bParts[i] || 0;
+                    if (aPart !== bPart) {
+                        return aPart - bPart;
+                    }
+                }
+                return 0;
+            }
+
+            updateVersionCardsDOM(versionStats, totalOnlineDevices) {
+                const versionCards = document.querySelectorAll('.version-card');
+                const serviceNames = ['controller', 'pod', 'xandminer', 'xandminerd'];
+                
+                versionCards.forEach((card, index) => {
+                    if (index < serviceNames.length) {
+                        const serviceName = serviceNames[index];
+                        const versions = versionStats[serviceName];
+                        
+                        // Update the total count
+                        const totalSpan = card.querySelector('.version-total');
+                        if (totalSpan) {
+                            totalSpan.textContent = `${totalOnlineDevices} devices`;
+                        }
+                        
+                        // Update the version list
+                        const versionList = card.querySelector('.version-list');
+                        if (versionList && versions) {
+                            versionList.innerHTML = '';
+                            
+                            Object.entries(versions).forEach(([version, count]) => {
+                                const percentage = (count / totalOnlineDevices) * 100;
+                                
+                                const versionItem = document.createElement('div');
+                                versionItem.className = 'version-item';
+                                versionItem.innerHTML = `
+                                    <span class="version-name">${this.escapeHtml(version)}</span>
+                                    <span class="version-count">${count}</span>
+                                    <div class="version-bar">
+                                        <div class="version-bar-fill" style="width: ${percentage}%"></div>
+                                    </div>
+                                `;
+                                
+                                versionList.appendChild(versionItem);
+                            });
+                        }
+                    }
+                });
+            }
+
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
             }
 
             updateSummaryCards() {
@@ -1335,6 +1515,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                             </div>
                         `;
                     }
+
+                    // After updating the versions element, also update our tracked versions
+                    if (data.version_data) {
+                        const newVersions = {
+                            controller: data.version_data.chillxand_version || 'N/A',
+                            pod: data.version_data.pod_version || 'N/A',
+                            xandminer: data.version_data.xandminer_version || 'N/A',
+                            xandminerd: data.version_data.xandminerd_version || 'N/A'
+                        };
+                        
+                        if (deviceStatusUpdater) {
+                            deviceStatusUpdater.deviceVersions.set(deviceId, newVersions);
+                            deviceStatusUpdater.updateVersionCards();
+                        }
+                    }                    
 
                     // Update timestamp
                     lastCheckElement.innerHTML = `
