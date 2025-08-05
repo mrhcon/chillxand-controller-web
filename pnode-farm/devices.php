@@ -1010,7 +1010,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 }
 
                 try {
-                    return;
                     const response = await fetch(`ajax_device_status.php?device_id=${device.id}`);
                     
                     // Check if file exists
