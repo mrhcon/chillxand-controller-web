@@ -362,9 +362,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     <p class="error"><?php echo htmlspecialchars($error); ?></p>
                 <?php endif; ?>
 
-                <div style="margin-bottom: 20px;">
+                <!-- <div style="margin-bottom: 20px;">
                     <button type="button" class="action-btn" id="add-device-btn" onclick="openAddModal()">Add New Device</button>
-                </div>
+                </div> -->
 
                 <!-- Device Summary Cards -->
                 <?php if (!empty($devices)): ?>
@@ -1026,27 +1026,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     const data = await response.json();
 
                     if (data.success) {
-                        // // Store old status for comparison
-                        // const oldStatus = this.deviceStatuses.get(device.id);
-
-                        // // Update the row
-                        // this.updateDeviceRow(device, data);
-
-                        // // Store new status
-                        // const newStatus = {
-                        //     status: data.status,
-                        //     overallStatus: data.overall_status
-                        // };
-                        // this.deviceStatuses.set(device.id, newStatus);
-
-                        // // Update summary cards if status changed or on first update
-                        // if (!oldStatus ||
-                        //     oldStatus.status !== newStatus.status ||
-                        //     oldStatus.overallStatus !== newStatus.overallStatus) {
-                        //     this.updateSummaryCards();
-                        // }
-
-                        // device.lastUpdate = Date.now();
                         // Store old status and versions for comparison
                         const oldStatus = this.deviceStatuses.get(device.id);
                         const oldVersions = this.deviceVersions.get(device.id);
