@@ -389,10 +389,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     <p class="error"><?php echo htmlspecialchars($error); ?></p>
                 <?php endif; ?>
 
-                <div style="margin-bottom: 20px;">
-                    <button type="button" class="action-btn" id="add-device-btn" onclick="openAddModal()">Add New Device</button>
-                </div>
-
                 <!-- Device Summary Cards -->
                 <?php if (!empty($devices)): ?>
                     <?php
@@ -566,7 +562,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     </div>
                 <?php endif; ?>
 
-                <h3>Devices</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h3 style="margin: 0;">Devices</h3>
+                    <button type="button" class="add-device-header-btn" onclick="openAddModal()" title="Add New Device">
+                        + Add Device
+                    </button>
+                </div>
                 <?php if (empty($devices)): ?>
                     <p>No devices registered.</p>
                 <?php else: ?>
@@ -793,22 +794,33 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 <h3>Add New Device</h3>
                 <span class="close" onclick="closeAddModal()">&times;</span>
             </div>
+            
+            <!-- NEW: Error display inside modal -->
+            <?php if (isset($add_error)): ?>
+                <div class="modal-error">
+                    <p class="error"><?php echo htmlspecialchars($add_error); ?></p>
+                </div>
+            <?php endif; ?>
+            
             <form id="addForm" method="POST" action="">
                 <input type="hidden" name="action" value="add">
                 <div class="modal-form-group">
                     <label for="add-pnode-name">Node Name:</label>
-                    <input type="text" id="add-pnode-name" name="pnode_name" required>
+                    <input type="text" id="add-pnode-name" name="pnode_name" 
+                        value="<?php echo isset($add_form_data['pnode_name']) ? htmlspecialchars($add_form_data['pnode_name']) : ''; ?>" required>
                 </div>
                 <div class="modal-form-group">
                     <label for="add-pnode-ip">IP Address:</label>
-                    <input type="text" id="add-pnode-ip" name="pnode_ip" required>
+                    <input type="text" id="add-pnode-ip" name="pnode_ip" 
+                        value="<?php echo isset($add_form_data['pnode_ip']) ? htmlspecialchars($add_form_data['pnode_ip']) : ''; ?>" required>
                 </div>
                 <div class="modal-form-group">
                     <label for="add-owner-username">Device Owner:</label>
                     <select id="add-owner-username" name="owner_username" required>
                         <option value="">Select an owner...</option>
                         <?php foreach ($all_users as $user): ?>
-                            <option value="<?php echo htmlspecialchars($user['username']); ?>">
+                            <option value="<?php echo htmlspecialchars($user['username']); ?>"
+                                    <?php echo (isset($add_form_data['owner_username']) && $add_form_data['owner_username'] === $user['username']) ? 'selected' : ''; ?>>
                                 <?php 
                                 $display_name = trim($user['first_name'] . ' ' . $user['last_name']);
                                 if (empty($display_name)) {
@@ -829,31 +841,61 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         </div>
     </div>
 
-   <!-- Edit Device Modal -->
-   <div id="editModal" class="modal">
-       <div class="modal-content">
-           <div class="modal-header">
-               <h3>Edit Device</h3>
-               <span class="close" onclick="closeEditModal()">&times;</span>
-           </div>
-           <form id="editForm" method="POST" action="">
-               <input type="hidden" name="action" value="edit">
-               <input type="hidden" id="edit-device-id" name="device_id">
-               <div class="modal-form-group">
-                   <label for="edit-pnode-name">Node Name:</label>
-                   <input type="text" id="edit-pnode-name" name="pnode_name" required>
-               </div>
-               <div class="modal-form-group">
-                   <label for="edit-pnode-ip">IP Address:</label>
-                   <input type="text" id="edit-pnode-ip" name="pnode_ip" required>
-               </div>
-               <div class="modal-buttons">
-                   <button type="button" class="modal-btn modal-btn-secondary" onclick="closeEditModal()">Cancel</button>
-                   <button type="button" class="modal-btn modal-btn-primary" onclick="submitEdit()">Save Changes</button>
-               </div>
-           </form>
-       </div>
-   </div>
+    <!-- Edit Device Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Device</h3>
+                <span class="close" onclick="closeEditModal()">&times;</span>
+            </div>
+            
+            <!-- Error display inside modal -->
+            <?php if (isset($edit_error)): ?>
+                <div class="modal-error">
+                    <p class="error"><?php echo htmlspecialchars($edit_error); ?></p>
+                </div>
+            <?php endif; ?>
+            
+            <form id="editForm" method="POST" action="">
+                <input type="hidden" name="action" value="edit">
+                <input type="hidden" id="edit-device-id" name="device_id" 
+                    value="<?php echo isset($edit_form_data['device_id']) ? htmlspecialchars($edit_form_data['device_id']) : ''; ?>">
+                <div class="modal-form-group">
+                    <label for="edit-pnode-name">Node Name:</label>
+                    <input type="text" id="edit-pnode-name" name="pnode_name" 
+                        value="<?php echo isset($edit_form_data['pnode_name']) ? htmlspecialchars($edit_form_data['pnode_name']) : ''; ?>" required>
+                </div>
+                <div class="modal-form-group">
+                    <label for="edit-pnode-ip">IP Address:</label>
+                    <input type="text" id="edit-pnode-ip" name="pnode_ip" 
+                        value="<?php echo isset($edit_form_data['pnode_ip']) ? htmlspecialchars($edit_form_data['pnode_ip']) : ''; ?>" required>
+                </div>
+                <div class="modal-form-group">
+                    <label for="edit-owner-username">Device Owner:</label>
+                    <select id="edit-owner-username" name="owner_username" required>
+                        <option value="">Select an owner...</option>
+                        <?php foreach ($all_users as $user): ?>
+                            <option value="<?php echo htmlspecialchars($user['username']); ?>"
+                                    <?php echo (isset($edit_form_data['owner_username']) && $edit_form_data['owner_username'] === $user['username']) ? 'selected' : ''; ?>>
+                                <?php 
+                                $display_name = trim($user['first_name'] . ' ' . $user['last_name']);
+                                if (empty($display_name)) {
+                                    echo htmlspecialchars($user['username']);
+                                } else {
+                                    echo htmlspecialchars($display_name . ' (' . $user['username'] . ')');
+                                }
+                                ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="modal-btn modal-btn-secondary" onclick="closeEditModal()">Cancel</button>
+                    <button type="button" class="modal-btn modal-btn-primary" onclick="submitEdit()">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
    <!-- Delete Device Modal -->
    <div id="deleteModal" class="modal">
