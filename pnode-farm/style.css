@@ -987,13 +987,17 @@ details summary {
     background-color: #fff;
     color: #333;
     
-    /* Custom dropdown arrow */
+    /* Remove default styling */
     appearance: none;
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    
+    /* Add custom dropdown arrow */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M3 4.5l3 3 3-3z'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 8px center;
-    background-size: 16px;
-    padding-right: 32px;
+    background-size: 12px;
+    padding-right: 30px;
 }
 
 .modal-form-group select:focus {
@@ -1004,6 +1008,44 @@ details summary {
 
 .modal-form-group select:hover {
     border-color: #999;
+}
+
+/* Modal error styling */
+.modal-error {
+    margin-bottom: 15px;
+    padding: 10px;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+}
+
+.modal-error .error {
+    color: #721c24;
+    margin: 0;
+    font-weight: 500;
+}
+
+/* Header add button styling */
+.add-device-header-btn {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    font-weight: 500;
+    width: auto;
+}
+
+.add-device-header-btn:hover {
+    background-color: #218838;
+}
+
+.add-device-header-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.25);
 }
 
 .modal-buttons {
