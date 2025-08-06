@@ -171,6 +171,22 @@ try {
     }
     $devices = $updated_devices;
 
+    // Fetch all users for the owner dropdown (admin only)
+    try {
+        $stmt = $pdo->prepare("
+            SELECT username, first_name, last_name, email 
+            FROM users 
+            ORDER BY first_name ASC, last_name ASC, username ASC
+        ");
+        $stmt->execute();
+        $all_users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        error_log("Fetched " . count($all_users) . " users for owner selection");
+    } catch (PDOException $e) {
+        $error = "Error fetching users: " . $e->getMessage();
+        error_log($error);
+        $all_users = [];
+    }    
+
 } catch (PDOException $e) {
     $error = "Error fetching devices or logs: " . $e->getMessage();
     error_log("PDOException in device/log fetch: " . $e->getMessage());
@@ -181,8 +197,9 @@ try {
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['action'] == 'add') {
     $pnode_name = trim($_POST['pnode_name']);
     $pnode_ip = trim($_POST['pnode_ip']);
+    $owner_username = trim($_POST['owner_username']); // NEW: Get selected owner
 
-    if (empty($pnode_name) || empty($pnode_ip)) {
+    if (empty($pnode_name) || empty($pnode_ip) || empty($owner_username)) {
         $error = "Please fill in all fields.";
         logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Empty fields');
     } elseif (strlen($pnode_name) > 100) {
@@ -193,30 +210,40 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Invalid IP address');
     } else {
         try {
-            $stmt = $pdo->prepare("SELECT COUNT(*) FROM devices WHERE username = :username AND pnode_name = :pnode_name");
-            $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
-            $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
+            // Check if the selected owner exists
+            $stmt = $pdo->prepare("SELECT COUNT(*) FROM users WHERE username = :owner_username");
+            $stmt->bindValue(':owner_username', $owner_username, PDO::PARAM_STR);
             $stmt->execute();
-            if ($stmt->fetchColumn() > 0) {
-                $error = "Device name already registered.";
-                logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Duplicate device name');
+            if ($stmt->fetchColumn() == 0) {
+                $error = "Selected owner does not exist.";
+                logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Invalid owner username');
             } else {
-                // Add device (no seeding required)
-                $stmt = $pdo->prepare("INSERT INTO devices (username, pnode_name, pnode_ip, registration_date) VALUES (:username, :pnode_name, :pnode_ip, NOW())");
-                $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
+                // Check for duplicate device name for the selected owner
+                $stmt = $pdo->prepare("SELECT COUNT(*) FROM devices WHERE username = :owner_username AND pnode_name = :pnode_name");
+                $stmt->bindValue(':owner_username', $owner_username, PDO::PARAM_STR);
                 $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
-                $stmt->bindValue(':pnode_ip', $pnode_ip, PDO::PARAM_STR);
                 $stmt->execute();
-
-                // Get the new device ID (no seeding required - system handles gracefully)
-                $new_device_id = $pdo->lastInsertId();
-
-                logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_success', "Device: $pnode_name, IP: $pnode_ip");
-                if (PHP_SAPI !== 'cli') {
-                    header("Location: devices.php");
-                    exit();
+                if ($stmt->fetchColumn() > 0) {
+                    $error = "Device name already registered for this owner.";
+                    logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Duplicate device name for owner');
                 } else {
-                    echo "Device added successfully: $pnode_name, $pnode_ip\n";
+                    // Add device with selected owner
+                    $stmt = $pdo->prepare("INSERT INTO devices (username, pnode_name, pnode_ip, registration_date) VALUES (:owner_username, :pnode_name, :pnode_ip, NOW())");
+                    $stmt->bindValue(':owner_username', $owner_username, PDO::PARAM_STR);
+                    $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
+                    $stmt->bindValue(':pnode_ip', $pnode_ip, PDO::PARAM_STR);
+                    $stmt->execute();
+
+                    // Get the new device ID
+                    $new_device_id = $pdo->lastInsertId();
+
+                    logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_success', "Device: $pnode_name, IP: $pnode_ip, Owner: $owner_username");
+                    if (PHP_SAPI !== 'cli') {
+                        header("Location: devices.php");
+                        exit();
+                    } else {
+                        echo "Device added successfully: $pnode_name, $pnode_ip, Owner: $owner_username\n";
+                    }
                 }
             }
         } catch (PDOException $e) {
@@ -362,9 +389,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     <p class="error"><?php echo htmlspecialchars($error); ?></p>
                 <?php endif; ?>
 
-                <!-- <div style="margin-bottom: 20px;">
+                <div style="margin-bottom: 20px;">
                     <button type="button" class="action-btn" id="add-device-btn" onclick="openAddModal()">Add New Device</button>
-                </div> -->
+                </div>
 
                 <!-- Device Summary Cards -->
                 <?php if (!empty($devices)): ?>
@@ -759,30 +786,48 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
        </div>
    </div>
 
-   <!-- Add Device Modal -->
-   <div id="addModal" class="modal">
-       <div class="modal-content">
-           <div class="modal-header">
-               <h3>Add New Device</h3>
-               <span class="close" onclick="closeAddModal()">&times;</span>
-           </div>
-           <form id="addForm" method="POST" action="">
-               <input type="hidden" name="action" value="add">
-               <div class="modal-form-group">
-                   <label for="add-pnode-name">Node Name:</label>
-                   <input type="text" id="add-pnode-name" name="pnode_name" required>
-               </div>
-               <div class="modal-form-group">
-                   <label for="add-pnode-ip">IP Address:</label>
-                   <input type="text" id="add-pnode-ip" name="pnode_ip" required>
-               </div>
-               <div class="modal-buttons">
-                   <button type="button" class="modal-btn modal-btn-secondary" onclick="closeAddModal()">Cancel</button>
-                   <button type="button" class="modal-btn modal-btn-primary" onclick="submitAdd()">Add Device</button>
-               </div>
-           </form>
-       </div>
-   </div>
+    <!-- Add Device Modal -->
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Device</h3>
+                <span class="close" onclick="closeAddModal()">&times;</span>
+            </div>
+            <form id="addForm" method="POST" action="">
+                <input type="hidden" name="action" value="add">
+                <div class="modal-form-group">
+                    <label for="add-pnode-name">Node Name:</label>
+                    <input type="text" id="add-pnode-name" name="pnode_name" required>
+                </div>
+                <div class="modal-form-group">
+                    <label for="add-pnode-ip">IP Address:</label>
+                    <input type="text" id="add-pnode-ip" name="pnode_ip" required>
+                </div>
+                <div class="modal-form-group">
+                    <label for="add-owner-username">Device Owner:</label>
+                    <select id="add-owner-username" name="owner_username" required>
+                        <option value="">Select an owner...</option>
+                        <?php foreach ($all_users as $user): ?>
+                            <option value="<?php echo htmlspecialchars($user['username']); ?>">
+                                <?php 
+                                $display_name = trim($user['first_name'] . ' ' . $user['last_name']);
+                                if (empty($display_name)) {
+                                    echo htmlspecialchars($user['username']);
+                                } else {
+                                    echo htmlspecialchars($display_name . ' (' . $user['username'] . ')');
+                                }
+                                ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="modal-btn modal-btn-secondary" onclick="closeAddModal()">Cancel</button>
+                    <button type="button" class="modal-btn modal-btn-primary" onclick="submitAdd()">Add Device</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
    <!-- Edit Device Modal -->
    <div id="editModal" class="modal">
@@ -873,6 +918,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 });
             });
 
+            // Initialize user list updater
+            const userListUpdater = new UserListUpdater();
+
             console.log('All handlers initialized successfully');
         });
 
@@ -880,16 +928,34 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         class DeviceStatusUpdater {
             constructor() {
                 this.devices = [];
-                this.updateInterval = 30000; // 30 seconds per device
-                this.staggerDelay = 2000; // 2 seconds between device updates
-                this.deviceStatuses = new Map(); // Track current status of each device
-                this.activeOperations = new Set(); // Track devices with active operations
+                this.updateInterval = 30000;
+                this.staggerDelay = 2000;
+                this.deviceStatuses = new Map();
+                this.activeOperations = new Map();
                 this.deviceVersions = new Map();
+                this.updateTimeouts = new Map();
+                this.cycleCount = 0; // NEW: Track update cycles
+                this.deviceListRefreshInterval = 5; // NEW: Refresh device list every 5 cycles (2.5 minutes)
+                this.lastKnownDeviceCount = 0; // NEW: Track device count changes                
                 this.init();
             }
 
             init() {
-                // Collect all device IDs from the table and their initial statuses
+                // Collect device info first
+                this.collectDevices();
+                
+                // Check for active operations on all devices at startup
+                this.detectActiveOperationsAtStartup();
+
+                if (this.devices.length > 0) {
+                    // Delay staggered updates to give operation detection time to complete
+                    setTimeout(() => {
+                        this.startStaggeredUpdates();
+                    }, 3000); // Wait 3 seconds for operation detection
+                }
+            }
+
+            collectDevices() {
                 const deviceRows = document.querySelectorAll('.device-table tbody tr');
 
                 deviceRows.forEach((row, index) => {
@@ -898,7 +964,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         const url = new URL(deviceLink.href);
                         const deviceId = url.searchParams.get('device_id');
                         if (deviceId) {
-                            // Get initial status from the row
+                            // Get device IP from the row
+                            const deviceIp = row.cells[1].textContent.trim();
+                            
+                            // Get initial status and versions
                             const initialStatus = this.getRowStatus(row);
                             this.deviceStatuses.set(deviceId, initialStatus);
                             const initialVersions = this.getRowVersions(row);
@@ -906,17 +975,322 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
 
                             this.devices.push({
                                 id: deviceId,
+                                ip: deviceIp,
                                 row: row,
                                 lastUpdate: 0
                             });
                         }
                     }
                 });
+            }
 
-                if (this.devices.length > 0) {
-                    // Start staggered updates
-                    this.startStaggeredUpdates();
+            async checkForDeviceListChanges() {
+                try {
+                    const response = await fetch('get_devices_count.php', {
+                        method: 'GET',
+                        headers: { 'Accept': 'application/json' }
+                    });
+
+                    if (!response.ok) {
+                        console.warn('Failed to check device count:', response.status);
+                        return;
+                    }
+
+                    const data = await response.json();
+                    
+                    if (data.success && data.device_count !== undefined) {
+                        if (this.lastKnownDeviceCount === 0) {
+                            // First time - just store the count
+                            this.lastKnownDeviceCount = data.device_count;
+                            console.log(`Initial device count: ${data.device_count}`);
+                        } else if (data.device_count !== this.lastKnownDeviceCount) {
+                            const difference = data.device_count - this.lastKnownDeviceCount;
+                            console.log(`Device count changed: ${this.lastKnownDeviceCount} -> ${data.device_count} (${difference > 0 ? '+' : ''}${difference})`);
+                            
+                            // Show notification and reload page
+                            this.showDeviceListChangeNotification(difference);
+                            
+                            // Reload page after short delay to show new devices
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 2000);
+                        }
+                    }
+                } catch (error) {
+                    console.warn('Error checking for device list changes:', error.message);
                 }
+            }
+
+            showDeviceListChangeNotification(difference) {
+                const notification = document.createElement('div');
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: ${difference > 0 ? '#28a745' : '#dc3545'};
+                    color: white;
+                    padding: 12px 18px;
+                    border-radius: 4px;
+                    z-index: 1000;
+                    font-size: 14px;
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+                    font-weight: bold;
+                `;
+                
+                if (difference > 0) {
+                    notification.textContent = `${difference} new device(s) detected! Refreshing list...`;
+                } else {
+                    notification.textContent = `${Math.abs(difference)} device(s) removed. Refreshing list...`;
+                }
+                
+                document.body.appendChild(notification);
+                
+                // Remove notification after page reload
+            }
+
+            async detectActiveOperationsAtStartup() {
+                console.log('Checking for active operations on page load...');
+                
+                // Check each device concurrently
+                const checks = this.devices.map(device => this.checkDeviceForActiveOperation(device));
+                
+                // Wait for all checks to complete
+                await Promise.allSettled(checks);
+                
+                console.log('Active operation detection complete');
+            }
+
+            async checkDeviceForActiveOperation(device) {
+                const deviceId = device.id;
+                const deviceIp = device.ip;
+                
+                try {
+                    // Check both controller and pod logs simultaneously
+                    const [controllerCheck, podCheck] = await Promise.allSettled([
+                        this.checkLogEndpoint(deviceIp, 'controller'),
+                        this.checkLogEndpoint(deviceIp, 'pod')
+                    ]);
+
+                    // Analyze controller log
+                    if (controllerCheck.status === 'fulfilled' && controllerCheck.value.isActive) {
+                        console.log(`Found active controller operation for device ${deviceId}`);
+                        this.markDeviceOperationActive(deviceId, 'controller_update');
+                        this.showDetectedOperation(deviceId, 'controller', controllerCheck.value);
+                    }
+
+                    // Analyze pod log
+                    if (podCheck.status === 'fulfilled' && podCheck.value.isActive) {
+                        console.log(`Found active pod operation for device ${deviceId}`);
+                        this.markDeviceOperationActive(deviceId, 'pod_update');
+                        this.showDetectedOperation(deviceId, 'pod', podCheck.value);
+                    }
+
+                } catch (error) {
+                    console.log(`No active operations detected for device ${deviceId}:`, error.message);
+                }
+            }
+
+            async checkLogEndpoint(deviceIp, updateType) {
+                const logUrl = `update_log_proxy.php?device_ip=${encodeURIComponent(deviceIp)}&update_type=${encodeURIComponent(updateType)}`;
+                
+                try {
+                    const response = await fetch(logUrl, {
+                        method: 'GET',
+                        headers: { 'Accept': 'text/plain' }
+                    });
+
+                    // If 500 error, device is likely restarting (active operation)
+                    if (response.status === 500) {
+                        return {
+                            isActive: true,
+                            status: 'restarting',
+                            message: 'Device appears to be restarting (500 error)'
+                        };
+                    }
+
+                    if (!response.ok) {
+                        return {
+                            isActive: false,
+                            status: 'error',
+                            message: `HTTP ${response.status}`
+                        };
+                    }
+
+                    const responseText = await response.text();
+
+                    // Try to parse as JSON first (structured status)
+                    let jsonData = null;
+                    try {
+                        jsonData = JSON.parse(responseText);
+                    } catch (e) {
+                        // Not JSON, treat as plain text logs
+                    }
+
+                    // Handle JSON status responses
+                    if (jsonData && jsonData.status) {
+                        const activeStatuses = ['update_initiated', 'in_progress', 'restarting'];
+                        return {
+                            isActive: activeStatuses.includes(jsonData.status),
+                            status: jsonData.status,
+                            message: jsonData.message || ''
+                        };
+                    }
+
+                    // Handle plain text logs
+                    if (responseText.trim()) {
+                        const lines = responseText.trim().split('\n').filter(line => line.trim());
+                        if (lines.length > 0) {
+                            const lastLine = lines[lines.length - 1].trim().toLowerCase();
+                            const lastFewLines = lines.slice(-3).join(' ').toLowerCase();
+
+                            // Check for completion patterns first
+                            if (lastFewLines.includes('no upgrade required') ||
+                                lastFewLines.includes('no update required') ||
+                                lastFewLines.includes('already up to date') ||
+                                lastFewLines.includes('update completed successfully') ||
+                                (lastLine.includes('latest') && lastLine.includes('version'))) {
+                                return {
+                                    isActive: false,
+                                    status: 'completed',
+                                    message: 'Update appears to be completed'
+                                };
+                            }
+
+                            // Check for active operation patterns
+                            if (lastLine.includes('downloading') ||
+                                lastLine.includes('installing') ||
+                                lastLine.includes('updating') ||
+                                lastLine.includes('upgrade') ||
+                                lastLine.includes('restarting') ||
+                                lastLine.includes('configuring')) {
+                                return {
+                                    isActive: true,
+                                    status: 'in_progress',
+                                    message: `Active: ${lastLine.substring(0, 50)}...`
+                                };
+                            }
+                        }
+                    }
+
+                    // No clear indication of active operation
+                    return {
+                        isActive: false,
+                        status: 'idle',
+                        message: 'No active operation detected'
+                    };
+
+                } catch (error) {
+                    return {
+                        isActive: false,
+                        status: 'error',
+                        message: error.message
+                    };
+                }
+            }
+
+            showDetectedOperation(deviceId, operationType, operationInfo) {
+                // Find the appropriate button
+                let btn;
+                if (operationType === 'controller') {
+                    btn = document.querySelector(`[data-device-id="${deviceId}"].update-controller`);
+                } else if (operationType === 'pod') {
+                    btn = document.querySelector(`[data-device-id="${deviceId}"].update-pod`);
+                }
+
+                if (btn) {
+                    const originalText = btn.textContent;
+                    
+                    // Update button based on detected status
+                    if (operationInfo.status === 'restarting') {
+                        btn.textContent = 'Restarting (Detected)';
+                    } else if (operationInfo.status === 'in_progress') {
+                        btn.textContent = 'In Progress (Detected)';
+                    } else {
+                        btn.textContent = 'Operation Detected';
+                    }
+                    
+                    btn.disabled = true;
+                    disableDeviceButtons(deviceId);
+
+                    // Add status icon
+                    addUpdateStatusIcon(btn, 'info', 'ℹ️', `Detected operation: ${operationInfo.message}`);
+
+                    // Start monitoring this detected operation
+                    console.log(`Starting monitoring for detected ${operationType} operation on device ${deviceId}`);
+                    startUpdateMonitoring(deviceId, this.devices.find(d => d.id === deviceId).ip, 
+                                        this.getDeviceName(deviceId), operationType, btn, originalText);
+                }
+            }
+
+            getDeviceName(deviceId) {
+                const device = this.devices.find(d => d.id === deviceId);
+                if (device && device.row) {
+                    return device.row.cells[0].textContent.trim();
+                }
+                return `Device ${deviceId}`;
+            }
+
+            // Your existing methods remain the same...
+            markDeviceOperationActive(deviceId, operationType = 'unknown') {
+                this.activeOperations.set(deviceId, {
+                    type: operationType,
+                    startTime: Date.now()
+                });
+                
+                if (this.updateTimeouts.has(deviceId)) {
+                    clearTimeout(this.updateTimeouts.get(deviceId));
+                    this.updateTimeouts.delete(deviceId);
+                }
+                
+                console.log(`Marked device ${deviceId} as having active ${operationType} operation`);
+            }
+
+            markDeviceOperationInactive(deviceId) {
+                const operation = this.activeOperations.get(deviceId);
+                if (operation) {
+                    const duration = Date.now() - operation.startTime;
+                    console.log(`Completed ${operation.type} operation for device ${deviceId} after ${Math.round(duration/1000)}s`);
+                }
+                this.activeOperations.delete(deviceId);
+                
+                this.scheduleDelayedUpdate(deviceId, 5000);
+            }
+
+            isDeviceOperationActive(deviceId) {
+                const isActive = this.activeOperations.has(deviceId);
+                if (isActive) {
+                    const operation = this.activeOperations.get(deviceId);
+                    const duration = Date.now() - operation.startTime;
+                    if (duration > 600000) { // 10 minutes
+                        console.log(`Auto-clearing stale ${operation.type} operation for device ${deviceId} after ${Math.round(duration/60000)} minutes`);
+                        this.activeOperations.delete(deviceId);
+                        return false;
+                    }
+                }
+                return isActive;
+            }
+
+            getActiveOperationType(deviceId) {
+                const operation = this.activeOperations.get(deviceId);
+                return operation ? operation.type : null;
+            }
+
+            scheduleDelayedUpdate(deviceId, delay) {
+                if (this.updateTimeouts.has(deviceId)) {
+                    clearTimeout(this.updateTimeouts.get(deviceId));
+                }
+                
+                const timeoutId = setTimeout(() => {
+                    this.updateTimeouts.delete(deviceId);
+                    const device = this.devices.find(d => d.id === deviceId);
+                    if (device && !this.isDeviceOperationActive(deviceId)) {
+                        console.log(`Executing delayed auto-update for device ${deviceId}`);
+                        this.updateDevice(device);
+                    }
+                }, delay);
+                
+                this.updateTimeouts.set(deviceId, timeoutId);
+                console.log(`Scheduled delayed update for device ${deviceId} in ${delay}ms`);
             }
 
             getRowVersions(row) {
@@ -974,18 +1348,73 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 };
             }
 
-            markDeviceOperationActive(deviceId) {
-                this.activeOperations.add(deviceId);
-                console.log(`Marked device ${deviceId} as having active operation`);
+            markDeviceOperationActive(deviceId, operationType = 'unknown') {
+                this.activeOperations.set(deviceId, {
+                    type: operationType,
+                    startTime: Date.now()
+                });
+                
+                // Cancel any pending auto-update for this device
+                if (this.updateTimeouts.has(deviceId)) {
+                    clearTimeout(this.updateTimeouts.get(deviceId));
+                    this.updateTimeouts.delete(deviceId);
+                }
+                
+                console.log(`Marked device ${deviceId} as having active ${operationType} operation`);
             }
 
             markDeviceOperationInactive(deviceId) {
+                const operation = this.activeOperations.get(deviceId);
+                if (operation) {
+                    const duration = Date.now() - operation.startTime;
+                    console.log(`Completed ${operation.type} operation for device ${deviceId} after ${Math.round(duration/1000)}s`);
+                }
                 this.activeOperations.delete(deviceId);
-                console.log(`Marked device ${deviceId} as operation complete`);
+                
+                // Schedule a delayed auto-update to give the device time to settle
+                this.scheduleDelayedUpdate(deviceId, 5000); // Wait 5 seconds before resuming auto-updates
             }
 
             isDeviceOperationActive(deviceId) {
-                return this.activeOperations.has(deviceId);
+                const isActive = this.activeOperations.has(deviceId);
+                if (isActive) {
+                    const operation = this.activeOperations.get(deviceId);
+                    const duration = Date.now() - operation.startTime;
+                    // Auto-clear very old operations (safety mechanism)
+                    if (duration > 600000) { // 10 minutes
+                        console.log(`Auto-clearing stale ${operation.type} operation for device ${deviceId} after ${Math.round(duration/60000)} minutes`);
+                        this.activeOperations.delete(deviceId);
+                        return false;
+                    }
+                }
+                return isActive;
+            }
+
+            // NEW METHOD: Get the type of active operation
+            getActiveOperationType(deviceId) {
+                const operation = this.activeOperations.get(deviceId);
+                return operation ? operation.type : null;
+            }
+
+            // NEW METHOD: Schedule delayed auto-updates
+            scheduleDelayedUpdate(deviceId, delay) {
+                // Clear any existing delayed update
+                if (this.updateTimeouts.has(deviceId)) {
+                    clearTimeout(this.updateTimeouts.get(deviceId));
+                }
+                
+                // Schedule new delayed update
+                const timeoutId = setTimeout(() => {
+                    this.updateTimeouts.delete(deviceId);
+                    const device = this.devices.find(d => d.id === deviceId);
+                    if (device && !this.isDeviceOperationActive(deviceId)) {
+                        console.log(`Executing delayed auto-update for device ${deviceId}`);
+                        this.updateDevice(device);
+                    }
+                }, delay);
+                
+                this.updateTimeouts.set(deviceId, timeoutId);
+                console.log(`Scheduled delayed update for device ${deviceId} in ${delay}ms`);
             }
 
             startStaggeredUpdates() {
@@ -997,7 +1426,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         this.updateDevice(device);
 
                         // Set up recurring updates for this device
-                        setInterval(() => this.updateDevice(device), this.updateInterval);
+                        setInterval(() => {
+                            // Double-check for active operations before each auto-update
+                            if (!this.isDeviceOperationActive(device.id)) {
+                                this.updateDevice(device);
+                            } else {
+                                const operationType = this.getActiveOperationType(device.id);
+                                console.log(`Skipping auto-update for device ${device.id} - ${operationType} operation in progress`);
+                            }
+                            
+                            // NEW: Check for device list changes after completing a full cycle
+                            if (index === this.devices.length - 1) { // Last device in the cycle
+                                this.cycleCount++;
+                                if (this.cycleCount % this.deviceListRefreshInterval === 0) {
+                                    console.log(`Completed update cycle ${this.cycleCount} - checking for device list changes`);
+                                    this.checkForDeviceListChanges();
+                                }
+                            }
+                        }, this.updateInterval);
                     }, delay);
                 });
             }
@@ -1370,14 +1816,138 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             }
         }
 
+        // This will periodically check for new users and update the dropdown
+        class UserListUpdater {
+            constructor() {
+                this.updateInterval = 300000; // 5 minutes
+                this.lastUserCount = 0;
+                this.init();
+            }
+
+            init() {
+                // Get initial user count
+                this.countCurrentUsers();
+                
+                // Start periodic checking
+                setInterval(() => {
+                    this.checkForNewUsers();
+                }, this.updateInterval);
+                
+                console.log('UserListUpdater initialized - checking for new users every 5 minutes');
+            }
+
+            countCurrentUsers() {
+                const dropdown = document.getElementById('add-owner-username');
+                if (dropdown) {
+                    // Count options (excluding the "Select an owner..." option)
+                    this.lastUserCount = dropdown.options.length - 1;
+                    console.log(`Current user count: ${this.lastUserCount}`);
+                }
+            }
+
+            async checkForNewUsers() {
+                try {
+                    const response = await fetch('get_users_list.php', {
+                        method: 'GET',
+                        headers: { 'Accept': 'application/json' }
+                    });
+
+                    if (!response.ok) {
+                        console.warn('Failed to check for new users:', response.status);
+                        return;
+                    }
+
+                    const data = await response.json();
+                    
+                    if (data.success && data.users) {
+                        if (data.users.length !== this.lastUserCount) {
+                            console.log(`User count changed: ${this.lastUserCount} -> ${data.users.length}`);
+                            this.updateUserDropdown(data.users);
+                            this.lastUserCount = data.users.length;
+                            
+                            // Show notification
+                            this.showUserUpdateNotification(data.users.length - this.lastUserCount);
+                        }
+                    }
+                } catch (error) {
+                    console.warn('Error checking for new users:', error.message);
+                }
+            }
+
+            updateUserDropdown(users) {
+                const dropdown = document.getElementById('add-owner-username');
+                if (!dropdown) return;
+
+                // Store current selection
+                const currentValue = dropdown.value;
+                
+                // Clear existing options except the first one
+                dropdown.innerHTML = '<option value="">Select an owner...</option>';
+                
+                // Add updated user list
+                users.forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user.username;
+                    
+                    const displayName = (user.first_name && user.last_name) 
+                        ? `${user.first_name.trim()} ${user.last_name.trim()}`.trim()
+                        : '';
+                    
+                    if (displayName) {
+                        option.textContent = `${displayName} (${user.username})`;
+                    } else {
+                        option.textContent = user.username;
+                    }
+                    
+                    dropdown.appendChild(option);
+                });
+                
+                // Restore selection if it still exists
+                if (currentValue) {
+                    dropdown.value = currentValue;
+                }
+                
+                console.log('User dropdown updated with', users.length, 'users');
+            }
+
+            showUserUpdateNotification(newUserCount) {
+                // Create a subtle notification
+                const notification = document.createElement('div');
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: #28a745;
+                    color: white;
+                    padding: 10px 15px;
+                    border-radius: 4px;
+                    z-index: 1000;
+                    font-size: 14px;
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+                `;
+                notification.textContent = newUserCount > 0 
+                    ? `${newUserCount} new user(s) added to owner list`
+                    : 'User list updated';
+                
+                document.body.appendChild(notification);
+                
+                // Remove notification after 3 seconds
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 3000);
+            }
+        }
+
         function refreshDeviceStatus(deviceId) {
             const statusElement = document.querySelector(`#status-${deviceId}`);
             const refreshBtn = document.querySelector(`#refresh-${deviceId}`);
             const lastCheckElement = document.querySelector(`#lastcheck-${deviceId}`);
 
-            // Mark device as having active operation to prevent auto-updates
+            // Mark device as having active operation FIRST - before any other actions
             if (deviceStatusUpdater) {
-                deviceStatusUpdater.markDeviceOperationActive(deviceId);
+                deviceStatusUpdater.markDeviceOperationActive(deviceId, 'manual_refresh');
             }
 
             // Disable all buttons for this device
@@ -1527,7 +2097,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 refreshBtn.disabled = false;
                 refreshBtn.textContent = '↻ Refresh Status';
 
-                // Mark device operation as complete to allow auto-updates
+                // ENHANCED: Mark device operation as complete - this will schedule a delayed auto-update
                 if (deviceStatusUpdater) {
                     deviceStatusUpdater.markDeviceOperationInactive(deviceId);
                 }
@@ -1561,6 +2131,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         function openAddModal() {
             document.getElementById('add-pnode-name').value = '';
             document.getElementById('add-pnode-ip').value = '';
+            document.getElementById('add-owner-username').value = ''; // NEW: Reset owner selection
             document.getElementById('addModal').style.display = 'block';
         }
 
@@ -1636,9 +2207,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
 
             console.log('User confirmed controller update for:', deviceName);
 
-            // Mark device as having active operation to prevent auto-updates
+            // ENHANCED: Mark device as having active operation FIRST with specific operation type
             if (deviceStatusUpdater) {
-                deviceStatusUpdater.markDeviceOperationActive(deviceId);
+                deviceStatusUpdater.markDeviceOperationActive(deviceId, 'controller_update');
             }
 
             // Disable all buttons for this device during update
@@ -1648,6 +2219,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             if (!btn) {
                 console.error('Could not find controller button for device', deviceId);
                 alert('Error: Could not find update button');
+                // ENHANCED: Clean up operation tracking if button not found
+                if (deviceStatusUpdater) {
+                    deviceStatusUpdater.markDeviceOperationInactive(deviceId);
+                }
                 return;
             }
 
@@ -1783,9 +2358,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
 
             console.log('User confirmed pod update for:', deviceName);
 
-            // Mark device as having active operation to prevent auto-updates
+            // ENHANCED: Mark device as having active operation FIRST with specific operation type
             if (deviceStatusUpdater) {
-                deviceStatusUpdater.markDeviceOperationActive(deviceId);
+                deviceStatusUpdater.markDeviceOperationActive(deviceId, 'pod_update');
             }
 
             // Disable all buttons for this device during update
@@ -1795,6 +2370,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             if (!btn) {
                 console.error('Could not find pod button for device', deviceId);
                 alert('Error: Could not find update button');
+                // ENHANCED: Clean up operation tracking if button not found
+                if (deviceStatusUpdater) {
+                    deviceStatusUpdater.markDeviceOperationInactive(deviceId);
+                }
                 return;
             }
 
@@ -2249,8 +2828,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             return `In Progress (${timeDisplay})`;
         }
 
-
-
         function addUpdateStatusIcon(button, type, icon, message) {
             // Remove any existing status icon from the button row first
             removeUpdateStatusIcon(button);
@@ -2289,6 +2866,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
                         enableDeviceButtons(monitor.deviceId);
+                        // ENHANCED: Mark operation as complete for proper auto-update coordination
                         if (deviceStatusUpdater) {
                             deviceStatusUpdater.markDeviceOperationInactive(monitor.deviceId);
                         }
@@ -2303,6 +2881,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
                         enableDeviceButtons(monitor.deviceId);
+                        // ENHANCED: Mark operation as complete
                         if (deviceStatusUpdater) {
                             deviceStatusUpdater.markDeviceOperationInactive(monitor.deviceId);
                         }
@@ -2319,6 +2898,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
                         enableDeviceButtons(monitor.deviceId);
+                        // ENHANCED: Mark operation as complete
                         if (deviceStatusUpdater) {
                             deviceStatusUpdater.markDeviceOperationInactive(monitor.deviceId);
                         }
@@ -2334,6 +2914,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
                         enableDeviceButtons(monitor.deviceId);
+                        // ENHANCED: Mark operation as complete
                         if (deviceStatusUpdater) {
                             deviceStatusUpdater.markDeviceOperationInactive(monitor.deviceId);
                         }
@@ -2348,6 +2929,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
                         enableDeviceButtons(monitor.deviceId);
+                        // ENHANCED: Mark operation as complete
                         if (deviceStatusUpdater) {
                             deviceStatusUpdater.markDeviceOperationInactive(monitor.deviceId);
                         }
@@ -2361,6 +2943,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
                         enableDeviceButtons(monitor.deviceId);
+                        // ENHANCED: Mark operation as complete
                         if (deviceStatusUpdater) {
                             deviceStatusUpdater.markDeviceOperationInactive(monitor.deviceId);
                         }
@@ -2375,6 +2958,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
                         enableDeviceButtons(monitor.deviceId);
+                        // ENHANCED: Mark operation as complete
                         if (deviceStatusUpdater) {
                             deviceStatusUpdater.markDeviceOperationInactive(monitor.deviceId);
                         }
@@ -2389,6 +2973,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
                         enableDeviceButtons(monitor.deviceId);
+                        // ENHANCED: Mark operation as complete
                         if (deviceStatusUpdater) {
                             deviceStatusUpdater.markDeviceOperationInactive(monitor.deviceId);
                         }
@@ -2403,6 +2988,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     setTimeout(() => {
                         monitor.btn.textContent = monitor.originalText;
                         enableDeviceButtons(monitor.deviceId);
+                        // ENHANCED: Mark operation as complete
                         if (deviceStatusUpdater) {
                             deviceStatusUpdater.markDeviceOperationInactive(monitor.deviceId);
                         }
@@ -2416,6 +3002,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     addUpdateStatusIcon(monitor.btn, 'warning', '⚠️', 'Update finished with unknown status');
                     monitor.btn.textContent = monitor.originalText;
                     enableDeviceButtons(monitor.deviceId);
+                    // ENHANCED: Mark operation as complete
                     if (deviceStatusUpdater) {
                         deviceStatusUpdater.markDeviceOperationInactive(monitor.deviceId);
                     }
