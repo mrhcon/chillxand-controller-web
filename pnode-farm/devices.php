@@ -3175,6 +3175,148 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             rows.forEach(row => tbody.appendChild(row));
         }
 
+        // Validation only when submit buttons are clicked
+        function validateAddForm() {
+            const nodeName = document.getElementById('add-pnode-name').value.trim();
+            const nodeIp = document.getElementById('add-pnode-ip').value.trim();
+            const owner = document.getElementById('add-owner-username').value.trim();
+            
+            let errors = [];
+            
+            // Clear any existing errors
+            clearModalErrors('addModal');
+            
+            // Validate fields
+            if (!nodeName) {
+                errors.push('Node name is required');
+            } else if (nodeName.length > 100) {
+                errors.push('Node name must be 100 characters or less');
+            }
+            
+            if (!nodeIp) {
+                errors.push('IP address is required');
+            } else if (!isValidIP(nodeIp)) {
+                errors.push('Please enter a valid IP address');
+            }
+            
+            if (!owner) {
+                errors.push('Please select a device owner');
+            }
+            
+            // Show errors if any
+            if (errors.length > 0) {
+                showModalErrors('addModal', errors);
+                return false;
+            }
+            
+            return true;
+        }
+
+        function validateEditForm() {
+            const nodeName = document.getElementById('edit-pnode-name').value.trim();
+            const nodeIp = document.getElementById('edit-pnode-ip').value.trim();
+            const owner = document.getElementById('edit-owner-username').value.trim();
+            
+            let errors = [];
+            
+            // Clear any existing errors
+            clearModalErrors('editModal');
+            
+            // Validate fields
+            if (!nodeName) {
+                errors.push('Node name is required');
+            } else if (nodeName.length > 100) {
+                errors.push('Node name must be 100 characters or less');
+            }
+            
+            if (!nodeIp) {
+                errors.push('IP address is required');
+            } else if (!isValidIP(nodeIp)) {
+                errors.push('Please enter a valid IP address');
+            }
+            
+            if (!owner) {
+                errors.push('Please select a device owner');
+            }
+            
+            // Show errors if any
+            if (errors.length > 0) {
+                showModalErrors('editModal', errors);
+                return false;
+            }
+            
+            return true;
+        }
+
+        function isValidIP(ip) {
+            const ipRegex = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+            return ipRegex.test(ip);
+        }
+
+        function showModalErrors(modalId, errors) {
+            const modal = document.getElementById(modalId);
+            if (!modal) return;
+            
+            // Remove any existing error display
+            const existingError = modal.querySelector('.modal-error');
+            if (existingError) {
+                existingError.remove();
+            }
+            
+            // Create error display
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'modal-error';
+            
+            const errorList = document.createElement('ul');
+            errorList.style.margin = '0';
+            errorList.style.paddingLeft = '20px';
+            errorList.style.color = '#721c24';
+            
+            errors.forEach(error => {
+                const li = document.createElement('li');
+                li.textContent = error;
+                li.style.marginBottom = '5px';
+                errorList.appendChild(li);
+            });
+            
+            errorDiv.appendChild(errorList);
+            
+            // Insert after modal header
+            const modalHeader = modal.querySelector('.modal-header');
+            modalHeader.insertAdjacentElement('afterend', errorDiv);
+            
+            // Add shake animation to draw attention
+            modal.querySelector('.modal-content').style.animation = 'shake 0.5s ease-in-out';
+            setTimeout(() => {
+                modal.querySelector('.modal-content').style.animation = '';
+            }, 500);
+        }
+
+        function clearModalErrors(modalId) {
+            const modal = document.getElementById(modalId);
+            if (!modal) return;
+            
+            const errorDiv = modal.querySelector('.modal-error');
+            if (errorDiv) {
+                errorDiv.remove();
+            }
+        }
+
+        // REPLACE your existing submitAdd and submitEdit functions with these:
+        function submitAdd() {
+            if (validateAddForm()) {
+                document.getElementById('addForm').submit();
+            }
+            // If validation fails, errors are shown in modal and form doesn't submit
+        }
+
+        function submitEdit() {
+            if (validateEditForm()) {
+                document.getElementById('editForm').submit();
+            }
+            // If validation fails, errors are shown in modal and form doesn't submit
+        }
+
         function compareIPs(ip1, ip2) {
             const parts1 = ip1.split('.').map(Number);
             const parts2 = ip2.split('.').map(Number);

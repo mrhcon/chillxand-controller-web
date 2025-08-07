@@ -1010,15 +1010,6 @@ details summary {
     border-color: #999;
 }
 
-/* Modal error styling */
-.modal-error {
-    margin-bottom: 15px;
-    padding: 10px;
-    background-color: #f8d7da;
-    border: 1px solid #f5c6cb;
-    border-radius: 4px;
-}
-
 .modal-error .error {
     color: #721c24;
     margin: 0;
@@ -1045,6 +1036,53 @@ details summary {
 
 .add-device-header-btn:focus {
     outline: none;
+    box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.25);
+}
+
+/* ADD this CSS to your style.css file */
+/* Modal validation styling and animations */
+
+.modal-error {
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+    padding: 12px;
+    margin-bottom: 15px;
+}
+
+.modal-error ul {
+    margin: 0;
+    padding-left: 20px;
+    color: #721c24;
+}
+
+.modal-error li {
+    margin-bottom: 5px;
+}
+
+/* Shake animation for validation errors */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+/* Shake animation for errors */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+/* Input validation states */
+.modal-form-group input.error,
+.modal-form-group select.error {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.25);
+}
+
+.modal-form-group input.valid,
+.modal-form-group select.valid {
+    border-color: #28a745;
     box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.25);
 }
 
