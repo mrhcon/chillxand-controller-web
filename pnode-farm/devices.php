@@ -976,12 +976,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
 
             markDeviceOperationActive(deviceId) {
                 this.activeOperations.add(deviceId);
-                console.log(`Marked device ${deviceId} as having active operation`);
+                console.log(`🔒 ACTIVE: Device ${deviceId} marked as active operation`);
+                console.log(`🔒 Total active operations: ${this.activeOperations.size}`);
+                console.log(`🔒 Active devices: [${Array.from(this.activeOperations).join(', ')}]`);
             }
 
             markDeviceOperationInactive(deviceId) {
+                const wasActive = this.activeOperations.has(deviceId);
                 this.activeOperations.delete(deviceId);
-                console.log(`Marked device ${deviceId} as operation complete`);
+                console.log(`🔓 INACTIVE: Device ${deviceId} marked inactive (was active: ${wasActive})`);
+                console.log(`🔓 Remaining active operations: ${this.activeOperations.size}`);
+                console.log(`🔓 Remaining devices: [${Array.from(this.activeOperations).join(', ')}]`);
             }
 
             isDeviceOperationActive(deviceId) {
@@ -1003,12 +1008,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             }
 
             async updateDevice(device) {
-                // Skip update if device has active operations
-                if (this.isDeviceOperationActive(device.id)) {
-                    console.log(`Skipping auto-update for device ${device.id} - operation in progress`);
+                const isActive = this.isDeviceOperationActive(device.id);
+                
+                if (isActive) {
+                    console.log(`🚫 SKIPPED: Auto-update for device ${device.id} - operation in progress`);
+                    console.log(`🚫 Active operations: [${Array.from(this.activeOperations).join(', ')}]`);
                     return;
                 }
-
+                
+                console.log(`✅ STARTING: Auto-update for device ${device.id} - no active operations`);
+                console.log(`✅ All active operations: [${Array.from(this.activeOperations).join(', ')}]`);
+    
                 try {
                     const response = await fetch(`ajax_device_status.php?device_id=${device.id}`);
                     
@@ -1025,6 +1035,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     const data = await response.json();
 
                     if (data.success) {
+                        console.log(`✅ COMPLETED: Auto-update for device ${device.id} successful`);
+
                         // Store old status and versions for comparison
                         const oldStatus = this.deviceStatuses.get(device.id);
                         const oldVersions = this.deviceVersions.get(device.id);
@@ -1076,7 +1088,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                             this.logged404Devices.add(device.id);
                         }
                     } else {
-                        console.error(`Failed to auto-update device ${device.id}:`, error);
+                        console.error(`❌ FAILED: Auto-update for device ${device.id}:`, error);
                     }
                 }
             }
@@ -1527,14 +1539,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 refreshBtn.disabled = false;
                 refreshBtn.textContent = '↻ Refresh Status';
 
-                // Mark device operation as complete to allow auto-updates
-                if (deviceStatusUpdater) {
-                    deviceStatusUpdater.markDeviceOperationInactive(deviceId);
-                }
+                // Mark device operation as complete after a small delay to ensure operation is truly done
+                setTimeout(() => {
+                    if (deviceStatusUpdater) {
+                        deviceStatusUpdater.markDeviceOperationInactive(deviceId);
+                    }
+                }, 2000); // 2 second delay to prevent race conditions
             });
         }
 
         function disableDeviceButtons(deviceId) {
+            console.log(`⏸️  BUTTONS DISABLED for device ${deviceId}`);
+
             // Disable refresh button
             const refreshBtn = document.querySelector(`#refresh-${deviceId}`);
             if (refreshBtn) refreshBtn.disabled = true;
@@ -1547,6 +1563,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         }
 
         function enableDeviceButtons(deviceId) {
+            console.log(`▶️  BUTTONS ENABLED for device ${deviceId}`);
+
             // Enable refresh button
             const refreshBtn = document.querySelector(`#refresh-${deviceId}`);
             if (refreshBtn) refreshBtn.disabled = false;
@@ -1905,6 +1923,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
 
         function startUpdateMonitoring(deviceId, deviceIp, deviceName, updateType, btn, originalText) {
             const monitorKey = `${deviceId}_${updateType}`;
+
+            // ENSURE device is marked as having active operation for monitoring
+            if (deviceStatusUpdater) {
+                deviceStatusUpdater.markDeviceOperationActive(deviceId);
+            }
 
             if (updateMonitors[monitorKey]) {
                 clearInterval(updateMonitors[monitorKey].interval);
@@ -2282,6 +2305,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             }
 
             delete updateMonitors[monitorKey];
+
+            // CRITICAL: Mark device operation as complete for auto-refresh coordination
+            if (deviceStatusUpdater) {
+                deviceStatusUpdater.markDeviceOperationInactive(monitor.deviceId);
+            }
 
             switch (reason) {
                 case 'completed':
