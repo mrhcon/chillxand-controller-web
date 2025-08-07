@@ -976,17 +976,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
 
             markDeviceOperationActive(deviceId) {
                 this.activeOperations.add(deviceId);
-                console.log(`🔒 ACTIVE: Device ${deviceId} marked as active operation`);
-                console.log(`🔒 Total active operations: ${this.activeOperations.size}`);
-                console.log(`🔒 Active devices: [${Array.from(this.activeOperations).join(', ')}]`);
+                console.log(`Marked device ${deviceId} as having active operation`);
             }
 
             markDeviceOperationInactive(deviceId) {
-                const wasActive = this.activeOperations.has(deviceId);
                 this.activeOperations.delete(deviceId);
-                console.log(`🔓 INACTIVE: Device ${deviceId} marked inactive (was active: ${wasActive})`);
-                console.log(`🔓 Remaining active operations: ${this.activeOperations.size}`);
-                console.log(`🔓 Remaining devices: [${Array.from(this.activeOperations).join(', ')}]`);
+                console.log(`Marked device ${deviceId} as operation complete`);
             }
 
             isDeviceOperationActive(deviceId) {
@@ -1008,17 +1003,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             }
 
             async updateDevice(device) {
-                const isActive = this.isDeviceOperationActive(device.id);
-                
-                if (isActive) {
-                    console.log(`🚫 SKIPPED: Auto-update for device ${device.id} - operation in progress`);
-                    console.log(`🚫 Active operations: [${Array.from(this.activeOperations).join(', ')}]`);
+                // Skip update if device has active operations
+                if (this.isDeviceOperationActive(device.id)) {
+                    console.log(`Skipping auto-update for device ${device.id} - operation in progress`);
                     return;
                 }
-                
-                console.log(`✅ STARTING: Auto-update for device ${device.id} - no active operations`);
-                console.log(`✅ All active operations: [${Array.from(this.activeOperations).join(', ')}]`);
-    
+
                 try {
                     const response = await fetch(`ajax_device_status.php?device_id=${device.id}`);
                     
@@ -1035,8 +1025,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     const data = await response.json();
 
                     if (data.success) {
-                        console.log(`✅ COMPLETED: Auto-update for device ${device.id} successful`);
-
                         // Store old status and versions for comparison
                         const oldStatus = this.deviceStatuses.get(device.id);
                         const oldVersions = this.deviceVersions.get(device.id);
@@ -1088,7 +1076,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                             this.logged404Devices.add(device.id);
                         }
                     } else {
-                        console.error(`❌ FAILED: Auto-update for device ${device.id}:`, error);
+                        console.error(`Failed to auto-update device ${device.id}:`, error);
                     }
                 }
             }
@@ -1549,8 +1537,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         }
 
         function disableDeviceButtons(deviceId) {
-            console.log(`⏸️  BUTTONS DISABLED for device ${deviceId}`);
-
             // Disable refresh button
             const refreshBtn = document.querySelector(`#refresh-${deviceId}`);
             if (refreshBtn) refreshBtn.disabled = true;
@@ -1563,8 +1549,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         }
 
         function enableDeviceButtons(deviceId) {
-            console.log(`▶️  BUTTONS ENABLED for device ${deviceId}`);
-
             // Enable refresh button
             const refreshBtn = document.querySelector(`#refresh-${deviceId}`);
             if (refreshBtn) refreshBtn.disabled = false;
