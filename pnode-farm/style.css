@@ -1335,9 +1335,9 @@ td .status-value.status-not-initialized {
     color: white;
     border: none;
     border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    font-size: 20px;
+    width: 30px;          /* Changed from 40px to 30px */
+    height: 30px;         /* Changed from 40px to 30px */
+    font-size: 15px;      /* Changed from 20px to 15px */
     font-weight: bold;
     cursor: pointer;
     display: flex;
