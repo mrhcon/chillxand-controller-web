@@ -1239,29 +1239,41 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
         function showModalLoading(modalId, loadingId) {
             document.getElementById(loadingId).style.display = 'flex';
 
-            // Disable all buttons and inputs in the modal
+            // Disable all buttons in the modal, but NOT the form inputs
             const modal = document.getElementById(modalId);
             const buttons = modal.querySelectorAll('button');
-            const inputs = modal.querySelectorAll('input[type="text"]');
             const closeBtn = modal.querySelector('.close');
 
             buttons.forEach(btn => btn.disabled = true);
-            inputs.forEach(input => input.disabled = true);
             if (closeBtn) closeBtn.style.pointerEvents = 'none';
+            
+            // Make form inputs readonly instead of disabled (so they still submit)
+            const inputs = modal.querySelectorAll('input[type="text"]');
+            inputs.forEach(input => {
+                input.readOnly = true;
+                input.style.backgroundColor = '#f8f9fa';
+                input.style.cursor = 'not-allowed';
+            });
         }
 
         function hideModalLoading(modalId, loadingId) {
             document.getElementById(loadingId).style.display = 'none';
 
-            // Re-enable all buttons and inputs
+            // Re-enable all buttons
             const modal = document.getElementById(modalId);
             const buttons = modal.querySelectorAll('button');
-            const inputs = modal.querySelectorAll('input[type="text"]');
             const closeBtn = modal.querySelector('.close');
 
             buttons.forEach(btn => btn.disabled = false);
-            inputs.forEach(input => input.disabled = false);
             if (closeBtn) closeBtn.style.pointerEvents = 'auto';
+            
+            // Remove readonly from inputs
+            const inputs = modal.querySelectorAll('input[type="text"]');
+            inputs.forEach(input => {
+                input.readOnly = false;
+                input.style.backgroundColor = '';
+                input.style.cursor = '';
+            });
         }
 
         // Add Modal
@@ -1373,24 +1385,9 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
             // Clear previous errors
             clearModalErrors();
 
-            // Get form references
-            const form = document.getElementById('addForm');
-            const nameField = document.getElementById('add-pnode-name');
-            const ipField = document.getElementById('add-pnode-ip');
-            
-            // Debug: Check if form elements exist
-            if (!form || !nameField || !ipField) {
-                console.error('Form elements not found:', { form, nameField, ipField });
-                showModalError('Form elements not found. Please refresh the page and try again.');
-                return;
-            }
-
             // Get form values
-            const nodeName = nameField.value.trim();
-            const ipAddress = ipField.value.trim();
-
-            // Debug log
-            console.log('Form validation:', { nodeName, ipAddress });
+            const nodeName = document.getElementById('add-pnode-name').value.trim();
+            const ipAddress = document.getElementById('add-pnode-ip').value.trim();
 
             let hasErrors = false;
 
@@ -1408,24 +1405,17 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                 hasErrors = true;
             }
 
-            // If no errors, show loading and submit the form
+            // If no errors, submit the form
             if (!hasErrors) {
                 // Update form values with trimmed versions
-                nameField.value = nodeName;
-                ipField.value = ipAddress;
+                document.getElementById('add-pnode-name').value = nodeName;
+                document.getElementById('add-pnode-ip').value = ipAddress;
 
-                // Debug: Log form data before submission
-                const formData = new FormData(form);
-                console.log('Form data being submitted:');
-                for (let [key, value] of formData.entries()) {
-                    console.log(key + ': ' + value);
-                }
-
-                // Show loading state
+                // Show loading state AFTER setting the values but BEFORE submit
                 showModalLoading('addModal', 'addModalLoading');
 
-                // Submit the form
-                form.submit();
+                // Submit the form immediately
+                document.getElementById('addForm').submit();
             }
         }
 
