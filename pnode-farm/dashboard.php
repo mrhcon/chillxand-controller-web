@@ -9,6 +9,84 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
+// TEMPORARY DEBUG CODE - Remove after testing
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    error_log("POST Request received on dashboard.php");
+    error_log("POST data: " . print_r($_POST, true));
+    
+    echo "<div style='background: #fff3cd; border: 1px solid #ffeaa7; padding: 10px; margin: 10px 0; position: relative; z-index: 9999;'>";
+    echo "<strong>🐛 DEBUG INFO (Remove this after testing):</strong><br>";
+    echo "POST Method: " . $_SERVER['REQUEST_METHOD'] . "<br>";
+    echo "POST Data: <pre>" . htmlspecialchars(print_r($_POST, true)) . "</pre>";
+    echo "Session User: " . htmlspecialchars($_SESSION['username'] ?? 'Not set') . "<br>";
+    echo "</div>";
+}
+// END DEBUG CODE
+
+// Handle add device
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['action'] == 'add') {
+    echo "<div style='background: #d4edda; border: 1px solid #c3e6cb; padding: 10px; margin: 10px 0;'>✅ ADD DEVICE HANDLER REACHED</div>";
+    
+    // Check if required POST variables exist
+    if (!isset($_POST['pnode_name']) || !isset($_POST['pnode_ip'])) {
+        $error = "Missing required form data.";
+        echo "<div style='background: #f8d7da; border: 1px solid #f5c6cb; padding: 10px; margin: 10px 0;'>❌ MISSING POST DATA</div>";
+        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Missing form data');
+    } else {
+        echo "<div style='background: #d1ecf1; border: 1px solid #bee5eb; padding: 10px; margin: 10px 0;'>✅ POST DATA EXISTS</div>";
+        
+        $pnode_name = trim($_POST['pnode_name']);
+        $pnode_ip = trim($_POST['pnode_ip']);
+
+        if (empty($pnode_name) || empty($pnode_ip)) {
+            $error = "Please fill in all fields.";
+            echo "<div style='background: #f8d7da; border: 1px solid #f5c6cb; padding: 10px; margin: 10px 0;'>❌ EMPTY FIELDS</div>";
+            logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Empty fields');
+        } elseif (strlen($pnode_name) > 100) {
+            $error = "Node name must be 100 characters or less.";
+            logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Invalid node name length');
+        } elseif (!filter_var($pnode_ip, FILTER_VALIDATE_IP)) {
+            $error = "Invalid IP address.";
+            echo "<div style='background: #f8d7da; border: 1px solid #f5c6cb; padding: 10px; margin: 10px 0;'>❌ INVALID IP: " . htmlspecialchars($pnode_ip) . "</div>";
+            logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Invalid IP address');
+        } else {
+            try {
+                echo "<div style='background: #d1ecf1; border: 1px solid #bee5eb; padding: 10px; margin: 10px 0;'>✅ VALIDATION PASSED - CHECKING DUPLICATES</div>";
+                
+                $stmt = $pdo->prepare("SELECT COUNT(*) FROM devices WHERE username = :username AND pnode_name = :pnode_name");
+                $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
+                $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
+                $stmt->execute();
+                if ($stmt->fetchColumn() > 0) {
+                    $error = "Device name already registered.";
+                    echo "<div style='background: #f8d7da; border: 1px solid #f5c6cb; padding: 10px; margin: 10px 0;'>❌ DUPLICATE NAME</div>";
+                    logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Duplicate device name');
+                } else {
+                    echo "<div style='background: #d4edda; border: 1px solid #c3e6cb; padding: 10px; margin: 10px 0;'>✅ INSERTING DEVICE</div>";
+                    
+                    // Add device
+                    $stmt = $pdo->prepare("INSERT INTO devices (username, pnode_name, pnode_ip, registration_date) VALUES (:username, :pnode_name, :pnode_ip, NOW())");
+                    $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
+                    $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
+                    $stmt->bindValue(':pnode_ip', $pnode_ip, PDO::PARAM_STR);
+                    $stmt->execute();
+
+                    echo "<div style='background: #d4edda; border: 1px solid #c3e6cb; padding: 10px; margin: 10px 0;'>✅ DEVICE INSERTED - REDIRECTING</div>";
+                    
+                    logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_success', "Device: $pnode_name, IP: $pnode_ip");
+                    header("Location: dashboard.php");
+                    exit();
+                }
+            } catch (PDOException $e) {
+                $error = "Error adding device: " . $e->getMessage();
+                echo "<div style='background: #f8d7da; border: 1px solid #f5c6cb; padding: 10px; margin: 10px 0;'>❌ DATABASE ERROR: " . htmlspecialchars($e->getMessage()) . "</div>";
+                error_log($error);
+                logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', $error);
+            }
+        }
+    }
+}
+
 // Handle edit device
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['action'] == 'edit') {
     // Check if required POST variables exist
@@ -106,55 +184,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             $error = "Error deleting device: " . $e->getMessage();
             error_log($error);
             logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_delete_failed', $error);
-        }
-    }
-}
-
-// Handle add device
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['action'] == 'add') {
-    // Check if required POST variables exist
-    if (!isset($_POST['pnode_name']) || !isset($_POST['pnode_ip'])) {
-        $error = "Missing required form data.";
-        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Missing form data');
-    } else {
-        $pnode_name = trim($_POST['pnode_name']);
-        $pnode_ip = trim($_POST['pnode_ip']);
-
-        if (empty($pnode_name) || empty($pnode_ip)) {
-            $error = "Please fill in all fields.";
-            logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Empty fields');
-        } elseif (strlen($pnode_name) > 100) {
-            $error = "Node name must be 100 characters or less.";
-            logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Invalid node name length');
-        } elseif (!filter_var($pnode_ip, FILTER_VALIDATE_IP)) {
-            $error = "Invalid IP address.";
-            logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Invalid IP address');
-        } else {
-            try {
-                $stmt = $pdo->prepare("SELECT COUNT(*) FROM devices WHERE username = :username AND pnode_name = :pnode_name");
-                $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
-                $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
-                $stmt->execute();
-                if ($stmt->fetchColumn() > 0) {
-                    $error = "Device name already registered.";
-                    logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Duplicate device name');
-                } else {
-                    // Add device
-                    $stmt = $pdo->prepare("INSERT INTO devices (username, pnode_name, pnode_ip, registration_date) VALUES (:username, :pnode_name, :pnode_ip, NOW())");
-                    $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
-                    $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
-                    $stmt->bindValue(':pnode_ip', $pnode_ip, PDO::PARAM_STR);
-                    $stmt->execute();
-
-                    logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_success', "Device: $pnode_name, IP: $pnode_ip");
-                    header("Location: dashboard.php");
-                    exit();
-                }
-            } catch (PDOException $e) {
-                $error = "Error adding device: " . $e->getMessage();
-                error_log($error);
-                logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', $error);
-            }
         }
     }
 }
