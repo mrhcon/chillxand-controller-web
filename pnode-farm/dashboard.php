@@ -9,20 +9,6 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-// TEMPORARY DEBUG CODE - Remove after testing
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    error_log("POST Request received on dashboard.php");
-    error_log("POST data: " . print_r($_POST, true));
-    
-    echo "<div style='background: #fff3cd; border: 1px solid #ffeaa7; padding: 10px; margin: 10px 0; position: relative; z-index: 9999;'>";
-    echo "<strong>🐛 DEBUG INFO (Remove this after testing):</strong><br>";
-    echo "POST Method: " . $_SERVER['REQUEST_METHOD'] . "<br>";
-    echo "POST Data: <pre>" . htmlspecialchars(print_r($_POST, true)) . "</pre>";
-    echo "Session User: " . htmlspecialchars($_SESSION['username'] ?? 'Not set') . "<br>";
-    echo "</div>";
-}
-// END DEBUG CODE
-
 // Handle add device
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['action'] == 'add') {
     echo "<div style='background: #d4edda; border: 1px solid #c3e6cb; padding: 10px; margin: 10px 0;'>✅ ADD DEVICE HANDLER REACHED</div>";
@@ -328,19 +314,31 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
             <!-- Right Panel -->
             <div class="info-panel">
                 <h2>Welcome, <?php echo htmlspecialchars($user['first_name'] . ' ' . $user['last_name']); ?>!</h2>
-                <p>Last Login: <?php echo $last_login_display; ?></p>
+                <p class="last-login-text">Last Login: <?php echo $last_login_display; ?></p>
 
                 <!-- User Details Section -->
                 <div style="margin-bottom: 30px;">
                     <h3>Your Details:</h3>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; background: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                    <div class="user-details-grid">
                         <div>
-                            <p><strong>Username:</strong> <?php echo htmlspecialchars($user['username']); ?></p>
-                            <p><strong>Email:</strong> <?php echo htmlspecialchars($user['email']); ?></p>
+                            <div class="user-details-item">
+                                <span class="user-details-label">Username:</span>
+                                <span class="user-details-value"><?php echo htmlspecialchars($user['username']); ?></span>
+                            </div>
+                            <div class="user-details-item">
+                                <span class="user-details-label">Email:</span>
+                                <span class="user-details-value"><?php echo htmlspecialchars($user['email']); ?></span>
+                            </div>
                         </div>
                         <div>
-                            <p><strong>Country:</strong> <?php echo htmlspecialchars($user['country']); ?></p>
-                            <p><strong>Account Type:</strong> <?php echo $user['admin'] ? 'Administrator' : 'Standard User'; ?></p>
+                            <div class="user-details-item">
+                                <span class="user-details-label">Country:</span>
+                                <span class="user-details-value"><?php echo htmlspecialchars($user['country']); ?></span>
+                            </div>
+                            <div class="user-details-item">
+                                <span class="user-details-label">Account Type:</span>
+                                <span class="user-details-value"><?php echo $user['admin'] ? 'Administrator' : 'Standard User'; ?></span>
+                            </div>
                         </div>
                     </div>
                 </div>

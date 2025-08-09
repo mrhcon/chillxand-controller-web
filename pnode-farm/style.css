@@ -931,6 +931,7 @@ details summary {
 }
 
 .modal-content {
+    position: relative;    
     background-color: #fefefe;
     margin: 15% auto;
     padding: 20px;
@@ -1598,11 +1599,6 @@ details summary {
     opacity: 0.7;
 }
 
-/* Modal content positioning for overlay */
-.modal-content {
-    position: relative;
-}
-
 /* Button loading state with spinner */
 .btn-loading {
     position: relative;
@@ -1621,4 +1617,53 @@ details summary {
     border-top: 2px solid #ffffff;
     border-radius: 50%;
     animation: spin 1s linear infinite;
+}
+
+/* Fix for Last Login - make the label bold */
+.info-panel p:has(+ .dashboard-summary),
+.info-panel > p:nth-of-type(1) {
+    font-weight: bold;
+}
+
+/* Alternative approach if the above doesn't work */
+.last-login-text {
+    font-weight: bold;
+}
+
+/* Fix for Your Details section - align values to the left */
+.user-details-grid {
+    display: grid; 
+    grid-template-columns: 1fr 1fr; 
+    gap: 20px; 
+    background: #f8f9fa; 
+    padding: 15px; 
+    border-radius: 5px; 
+    margin-bottom: 20px;
+}
+
+.user-details-grid p {
+    margin: 0 0 8px 0;
+}
+
+.user-details-grid strong {
+    display: inline-block;
+    min-width: 80px; /* Adjust this width as needed */
+    font-weight: bold;
+}
+
+/* Alternative approach with better alignment */
+.user-details-item {
+    display: flex;
+    margin-bottom: 8px;
+}
+
+.user-details-label {
+    font-weight: bold;
+    min-width: 100px; /* Adjust as needed */
+    flex-shrink: 0;
+}
+
+.user-details-value {
+    flex: 1;
+    text-align: left;
 }
