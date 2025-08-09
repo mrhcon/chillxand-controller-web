@@ -1630,7 +1630,7 @@ details summary {
     font-weight: normal; /* Reset the whole paragraph to normal */
 }
 
-.last-login-text .last-login-label {
+.last-login-label {
     font-weight: bold; /* Only the label part is bold */
 }
 
