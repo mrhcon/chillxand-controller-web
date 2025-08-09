@@ -1237,99 +1237,6 @@ details summary {
     margin: 0 -8px;
 }
 
-/* ========== NOT INITIALIZED STYLING IMPROVEMENTS ========== */
-/* Make all "Not Initialized" status displays consistent with larger, centered font */
-.status-not-initialized {
-    font-size: 1.1em !important;
-    font-weight: bold !important;
-    text-align: center !important;
-    display: block !important;
-    width: 100% !important;
-    padding: 8px 12px !important;
-    border-radius: 4px !important;
-    background-color: #6c757d !important;
-    color: white !important;
-    margin: 0 auto !important;
-}
-
-/* Ensure parent cells center the not initialized content */
-td:has(.status-not-initialized) {
-    text-align: center !important;
-    vertical-align: middle !important;
-}
-
-/* Alternative selector for better browser compatibility */
-td .status-btn.status-not-initialized,
-td .status-value.status-not-initialized {
-    font-size: 1.1em !important;
-    font-weight: bold !important;
-    text-align: center !important;
-    display: inline-block !important;
-    min-width: 120px !important;
-    padding: 8px 12px !important;
-    border-radius: 4px !important;
-    background-color: #6c757d !important;
-    color: white !important;
-    margin: 0 auto !important;
-}
-
-/* Ensure table cells containing not initialized status are centered */
-.device-table td {
-    vertical-align: middle;
-}
-
-.device-table td:has(.status-not-initialized),
-.device-table td:has(.status-btn.status-not-initialized),
-.device-table td:has(.status-value.status-not-initialized) {
-    text-align: center !important;
-}
-
-/* For cells that contain only not initialized status, center everything */
-.device-table td > .status-btn.status-not-initialized:only-child,
-.device-table td > .status-value.status-not-initialized:only-child {
-    display: block !important;
-    width: 100% !important;
-    text-align: center !important;
-    margin: 0 !important;
-}
-
-/* Specific styling for Health Status column (5th column) not initialized */
-.device-table td:nth-child(5) .status-btn.status-not-initialized {
-    font-size: 1.1em !important;
-    padding: 10px 15px !important;
-    min-width: 140px !important;
-    display: block !important;
-    margin: 0 auto !important;
-}
-
-/* Specific styling for Versions column (6th column) not initialized */
-.device-table td:nth-child(6) .status-btn.status-not-initialized,
-.device-table td:nth-child(6) .status-value.status-not-initialized {
-    font-size: 1.1em !important;
-    padding: 10px 15px !important;
-    min-width: 140px !important;
-    display: block !important;
-    margin: 0 auto !important;
-}
-
-/* Override any conflicting styles for not initialized in status-info divs */
-.device-table .status-info .status-btn.status-not-initialized,
-.device-table .status-info .status-value.status-not-initialized {
-    font-size: 1.1em !important;
-    font-weight: bold !important;
-    text-align: center !important;
-    padding: 8px 12px !important;
-    margin: 0 auto !important;
-    display: block !important;
-    width: 100% !important;
-}
-
-/* Ensure consistent spacing when not initialized spans entire cell */
-.device-table td:nth-child(5):has(.status-not-initialized:only-child),
-.device-table td:nth-child(6):has(.status-not-initialized:only-child) {
-    padding: 15px 8px !important;
-}
-
 .add-device-btn {
     background-color: #28a745;
     color: white;
@@ -1361,4 +1268,94 @@ td .status-value.status-not-initialized {
 .devices-title {
     margin: 0;
     font-size: 1.5em;
+}
+
+/* ========== UPDATED NOT INITIALIZED STYLING ========== */
+/* Make "Not Initialized" status match the size of online buttons and center them */
+
+/* Base not initialized styling - match online button size */
+.status-not-initialized {
+    font-size: 12px !important;      /* Match online button font size */
+    font-weight: bold !important;
+    text-align: center !important;
+    display: inline-block !important;
+    padding: 5px 10px !important;    /* Match online button padding */
+    border-radius: 4px !important;
+    background-color: #6c757d !important;
+    color: white !important;
+    margin: 0 auto !important;
+    min-width: 80px !important;      /* Match online button min-width */
+}
+
+/* Ensure parent cells center the not initialized content */
+.device-table td:has(.status-not-initialized),
+.device-table td:has(.status-btn.status-not-initialized),
+.device-table td:has(.status-value.status-not-initialized) {
+    text-align: center !important;
+    vertical-align: middle !important;
+}
+
+/* Connectivity column (4th column) - match existing online button styling exactly */
+.device-table td:nth-child(4) .status-btn.status-not-initialized {
+    font-size: 12px !important;
+    padding: 5px 10px !important;
+    min-width: 80px !important;
+    display: inline-block !important;
+    margin: 2px auto !important;
+    text-align: center !important;
+}
+
+/* Health Status column (5th column) - match other status buttons in this column */
+.device-table td:nth-child(5) .status-btn.status-not-initialized,
+.device-table td:nth-child(5) .status-value.status-not-initialized {
+    font-size: 12px !important;
+    padding: 5px 10px !important;
+    min-width: 80px !important;
+    display: block !important;
+    margin: 0 auto !important;
+    text-align: center !important;
+}
+
+/* Versions column (6th column) - match other status displays in this column */
+.device-table td:nth-child(6) .status-btn.status-not-initialized,
+.device-table td:nth-child(6) .status-value.status-not-initialized {
+    font-size: 12px !important;
+    padding: 5px 10px !important;
+    min-width: 80px !important;
+    display: block !important;
+    margin: 0 auto !important;
+    text-align: center !important;
+}
+
+/* Last Checked column (7th column) - if it appears there */
+.device-table td:nth-child(7) .status-btn.status-not-initialized,
+.device-table td:nth-child(7) .status-value.status-not-initialized {
+    font-size: 12px !important;
+    padding: 5px 10px !important;
+    min-width: 80px !important;
+    display: block !important;
+    margin: 0 auto !important;
+    text-align: center !important;
+}
+
+/* Override any conflicting styles for not initialized in status-info divs */
+.device-table .status-info .status-btn.status-not-initialized,
+.device-table .status-info .status-value.status-not-initialized {
+    font-size: 12px !important;
+    font-weight: bold !important;
+    text-align: center !important;
+    padding: 5px 10px !important;
+    margin: 0 auto !important;
+    display: block !important;
+    min-width: 80px !important;
+}
+
+/* Center the cells containing not initialized status */
+.device-table td:nth-child(4):has(.status-not-initialized:only-child),
+.device-table td:nth-child(5):has(.status-not-initialized:only-child),
+.device-table td:nth-child(6):has(.status-not-initialized:only-child),
+.device-table td:nth-child(7):has(.status-not-initialized:only-child) {
+    text-align: center !important;
+    vertical-align: middle !important;
+    padding: 8px !important;
 }
