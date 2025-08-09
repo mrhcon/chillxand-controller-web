@@ -5,7 +5,7 @@ require_once 'functions.php';
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php"); 
+    header("Location: login.php");
     exit();
 }
 
@@ -76,14 +76,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
         $stmt->execute();
         $device = $stmt->fetch(PDO::FETCH_ASSOC);
-        
+
         if ($device) {
             // Delete device (cascade will handle device_status_log)
             $stmt = $pdo->prepare("DELETE FROM devices WHERE id = :device_id AND username = :username");
             $stmt->bindValue(':device_id', $device_id, PDO::PARAM_INT);
             $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
             $stmt->execute();
-            
+
             logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_delete_success', "Device: {$device['pnode_name']}, IP: {$device['pnode_ip']}");
             header("Location: dashboard.php");
             exit();
@@ -364,7 +364,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                 </th>
                                 <th>Versions</th>
                                 <th>Last Checked</th>
-                                <th>Actions</th> 
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -468,7 +468,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                                 Delete
                                             </button>
                                         </div>
-                                    </td>                                    
+                                    </td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
@@ -893,17 +893,20 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
             return 0;
         }
 
-        // Edit Modal Functions
+        // Edit Device Functions
         function openEditModal(deviceId, currentName, currentIp) {
             document.getElementById('edit-device-id').value = deviceId;
             document.getElementById('edit-pnode-name').value = currentName;
             document.getElementById('edit-pnode-ip').value = currentIp;
-            
+
             // Clear any previous errors
             clearEditModalErrors();
-            
+
+            // Hide loading overlay
+            hideModalLoading('editModal', 'editModalLoading');
+
             document.getElementById('editModal').style.display = 'block';
-            
+
             // Focus on first field
             setTimeout(() => {
                 document.getElementById('edit-pnode-name').focus();
@@ -913,6 +916,45 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
         function closeEditModal() {
             document.getElementById('editModal').style.display = 'none';
             clearEditModalErrors();
+            hideModalLoading('editModal', 'editModalLoading');
+        }
+
+        function validateAndSubmitEdit() {
+            // Clear previous errors
+            clearEditModalErrors();
+
+            // Get form values
+            const nodeName = document.getElementById('edit-pnode-name').value.trim();
+            const ipAddress = document.getElementById('edit-pnode-ip').value.trim();
+
+            let hasErrors = false;
+
+            // Validate node name
+            const nameError = validateNodeName(nodeName);
+            if (nameError) {
+                showEditModalError(nameError, 'name');
+                hasErrors = true;
+            }
+
+            // Validate IP address
+            const ipError = validateIPAddress(ipAddress);
+            if (ipError) {
+                showEditModalError(ipError, 'ip');
+                hasErrors = true;
+            }
+
+            // If no errors, show loading and submit the form
+            if (!hasErrors) {
+                // Update form values with trimmed versions
+                document.getElementById('edit-pnode-name').value = nodeName;
+                document.getElementById('edit-pnode-ip').value = ipAddress;
+
+                // Show loading state
+                showModalLoading('editModal', 'editModalLoading');
+
+                // Submit the form
+                document.getElementById('editForm').submit();
+            }
         }
 
         function clearEditModalErrors() {
@@ -920,7 +962,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
             const errorDiv = document.getElementById('editModalError');
             errorDiv.style.display = 'none';
             errorDiv.innerHTML = '';
-            
+
             // Hide field-specific errors
             const nameError = document.getElementById('edit-name-error');
             const ipError = document.getElementById('edit-ip-error');
@@ -928,73 +970,51 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
             ipError.style.display = 'none';
             nameError.innerHTML = '';
             ipError.innerHTML = '';
-            
+
             // Remove error styling from inputs
             document.getElementById('edit-pnode-name').classList.remove('input-error');
             document.getElementById('edit-pnode-ip').classList.remove('input-error');
         }
 
-        function showEditModalError(message, fieldId = null) {
+        function showModalError(message, fieldId = null) {
             if (fieldId) {
                 // Show field-specific error
-                const errorDiv = document.getElementById('edit-' + fieldId + '-error');
+                const errorDiv = document.getElementById(fieldId + '-error');
                 errorDiv.innerHTML = message;
                 errorDiv.style.display = 'block';
-                
+
                 // Add error styling to input
-                document.getElementById('edit-pnode-' + fieldId).classList.add('input-error');
+                document.getElementById('add-pnode-' + fieldId).classList.add('input-error');
             } else {
                 // Show general error
-                const errorDiv = document.getElementById('editModalError');
+                const errorDiv = document.getElementById('addModalError');
                 errorDiv.innerHTML = '<strong>Error:</strong> ' + message;
                 errorDiv.style.display = 'block';
             }
         }
 
-        function validateAndSubmitEdit() {
-            // Clear previous errors
-            clearEditModalErrors();
-            
-            // Get form values
-            const nodeName = document.getElementById('edit-pnode-name').value.trim();
-            const ipAddress = document.getElementById('edit-pnode-ip').value.trim();
-            
-            let hasErrors = false;
-            
-            // Validate node name
-            const nameError = validateNodeName(nodeName);
-            if (nameError) {
-                showEditModalError(nameError, 'name');
-                hasErrors = true;
-            }
-            
-            // Validate IP address
-            const ipError = validateIPAddress(ipAddress);
-            if (ipError) {
-                showEditModalError(ipError, 'ip');
-                hasErrors = true;
-            }
-            
-            // If no errors, submit the form
-            if (!hasErrors) {
-                // Update form values with trimmed versions
-                document.getElementById('edit-pnode-name').value = nodeName;
-                document.getElementById('edit-pnode-ip').value = ipAddress;
-                
-                // Submit the form
-                document.getElementById('editForm').submit();
-            }
-        }
-
-        // Delete Modal Functions
+        // Delete Device Functions
         function openDeleteModal(deviceId, deviceName) {
             document.getElementById('delete-device-id').value = deviceId;
             document.getElementById('delete-device-name').textContent = deviceName;
+
+            // Hide loading overlay
+            hideModalLoading('deleteModal', 'deleteModalLoading');
+
             document.getElementById('deleteModal').style.display = 'block';
         }
 
         function closeDeleteModal() {
             document.getElementById('deleteModal').style.display = 'none';
+            hideModalLoading('deleteModal', 'deleteModalLoading');
+        }
+
+        function confirmDelete() {
+            // Show loading state immediately
+            showModalLoading('deleteModal', 'deleteModalLoading');
+
+            // Submit the form
+            document.getElementById('deleteForm').submit();
         }
 
         function submitDelete() {
@@ -1006,7 +1026,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
             const addModal = document.getElementById('addModal');
             const editModal = document.getElementById('editModal');
             const deleteModal = document.getElementById('deleteModal');
-            
+
             if (event.target == addModal) {
                 closeAddModal();
             }
@@ -1027,19 +1047,33 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
             }
         });
 
-        // Add real-time validation for edit form
+        function showEditModalError(message, fieldId = null) {
+            if (fieldId) {
+                // Show field-specific error
+                const errorDiv = document.getElementById('edit-' + fieldId + '-error');
+                errorDiv.innerHTML = message;
+                errorDiv.style.display = 'block';
+
+                // Add error styling to input
+                document.getElementById('edit-pnode-' + fieldId).classList.add('input-error');
+            } else {
+                // Show general error
+                const errorDiv = document.getElementById('editModalError');
+                errorDiv.innerHTML = '<strong>Error:</strong> ' + message;
+                errorDiv.style.display = 'block';
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
-            // Your existing add form validation code...
-            
-            // Add edit form validation
-            const editNameInput = document.getElementById('edit-pnode-name');
-            const editIpInput = document.getElementById('edit-pnode-ip');
-            
-            if (editNameInput) {
-                editNameInput.addEventListener('blur', function() {
+            // Add form validation
+            const nameInput = document.getElementById('add-pnode-name');
+            const ipInput = document.getElementById('add-pnode-ip');
+
+            if (nameInput) {
+                nameInput.addEventListener('blur', function() {
                     const nameError = validateNodeName(this.value.trim());
-                    const errorDiv = document.getElementById('edit-name-error');
-                    
+                    const errorDiv = document.getElementById('name-error');
+
                     if (nameError) {
                         errorDiv.innerHTML = nameError;
                         errorDiv.style.display = 'block';
@@ -1049,20 +1083,20 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                         this.classList.remove('input-error');
                     }
                 });
-                
-                editNameInput.addEventListener('input', function() {
+
+                nameInput.addEventListener('input', function() {
                     if (this.classList.contains('input-error')) {
-                        document.getElementById('edit-name-error').style.display = 'none';
+                        document.getElementById('name-error').style.display = 'none';
                         this.classList.remove('input-error');
                     }
                 });
             }
-            
-            if (editIpInput) {
-                editIpInput.addEventListener('blur', function() {
+
+            if (ipInput) {
+                ipInput.addEventListener('blur', function() {
                     const ipError = validateIPAddress(this.value.trim());
-                    const errorDiv = document.getElementById('edit-ip-error');
-                    
+                    const errorDiv = document.getElementById('ip-error');
+
                     if (ipError) {
                         errorDiv.innerHTML = ipError;
                         errorDiv.style.display = 'block';
@@ -1072,7 +1106,57 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                         this.classList.remove('input-error');
                     }
                 });
-                
+
+                ipInput.addEventListener('input', function() {
+                    if (this.classList.contains('input-error')) {
+                        document.getElementById('ip-error').style.display = 'none';
+                        this.classList.remove('input-error');
+                    }
+                });
+            }
+
+            // Edit form validation
+            const editNameInput = document.getElementById('edit-pnode-name');
+            const editIpInput = document.getElementById('edit-pnode-ip');
+
+            if (editNameInput) {
+                editNameInput.addEventListener('blur', function() {
+                    const nameError = validateNodeName(this.value.trim());
+                    const errorDiv = document.getElementById('edit-name-error');
+
+                    if (nameError) {
+                        errorDiv.innerHTML = nameError;
+                        errorDiv.style.display = 'block';
+                        this.classList.add('input-error');
+                    } else {
+                        errorDiv.style.display = 'none';
+                        this.classList.remove('input-error');
+                    }
+                });
+
+                editNameInput.addEventListener('input', function() {
+                    if (this.classList.contains('input-error')) {
+                        document.getElementById('edit-name-error').style.display = 'none';
+                        this.classList.remove('input-error');
+                    }
+                });
+            }
+
+            if (editIpInput) {
+                editIpInput.addEventListener('blur', function() {
+                    const ipError = validateIPAddress(this.value.trim());
+                    const errorDiv = document.getElementById('edit-ip-error');
+
+                    if (ipError) {
+                        errorDiv.innerHTML = ipError;
+                        errorDiv.style.display = 'block';
+                        this.classList.add('input-error');
+                    } else {
+                        errorDiv.style.display = 'none';
+                        this.classList.remove('input-error');
+                    }
+                });
+
                 editIpInput.addEventListener('input', function() {
                     if (this.classList.contains('input-error')) {
                         document.getElementById('edit-ip-error').style.display = 'none';
@@ -1082,18 +1166,50 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
             }
         });
 
+        // Loading state management
+        function showModalLoading(modalId, loadingId) {
+            document.getElementById(loadingId).style.display = 'flex';
+
+            // Disable all buttons and inputs in the modal
+            const modal = document.getElementById(modalId);
+            const buttons = modal.querySelectorAll('button');
+            const inputs = modal.querySelectorAll('input[type="text"]');
+            const closeBtn = modal.querySelector('.close');
+
+            buttons.forEach(btn => btn.disabled = true);
+            inputs.forEach(input => input.disabled = true);
+            if (closeBtn) closeBtn.style.pointerEvents = 'none';
+        }
+
+        function hideModalLoading(modalId, loadingId) {
+            document.getElementById(loadingId).style.display = 'none';
+
+            // Re-enable all buttons and inputs
+            const modal = document.getElementById(modalId);
+            const buttons = modal.querySelectorAll('button');
+            const inputs = modal.querySelectorAll('input[type="text"]');
+            const closeBtn = modal.querySelector('.close');
+
+            buttons.forEach(btn => btn.disabled = false);
+            inputs.forEach(input => input.disabled = false);
+            if (closeBtn) closeBtn.style.pointerEvents = 'auto';
+        }
+
         // Add Modal
         function openAddModal() {
             // Clear form fields
             document.getElementById('add-pnode-name').value = '';
             document.getElementById('add-pnode-ip').value = '';
-            
+
             // Clear any previous errors
             clearModalErrors();
-            
+
+            // Hide loading overlay
+            hideModalLoading('addModal', 'addModalLoading');
+
             // Show modal
             document.getElementById('addModal').style.display = 'block';
-            
+
             // Focus on first field
             setTimeout(() => {
                 document.getElementById('add-pnode-name').focus();
@@ -1103,6 +1219,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
         function closeAddModal() {
             document.getElementById('addModal').style.display = 'none';
             clearModalErrors();
+            hideModalLoading('addModal', 'addModalLoading');
         }
 
         function clearModalErrors() {
@@ -1110,7 +1227,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
             const errorDiv = document.getElementById('addModalError');
             errorDiv.style.display = 'none';
             errorDiv.innerHTML = '';
-            
+
             // Hide field-specific errors
             const nameError = document.getElementById('name-error');
             const ipError = document.getElementById('ip-error');
@@ -1118,7 +1235,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
             ipError.style.display = 'none';
             nameError.innerHTML = '';
             ipError.innerHTML = '';
-            
+
             // Remove error styling from inputs
             document.getElementById('add-pnode-name').classList.remove('input-error');
             document.getElementById('add-pnode-ip').classList.remove('input-error');
@@ -1130,7 +1247,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                 const errorDiv = document.getElementById(fieldId + '-error');
                 errorDiv.innerHTML = message;
                 errorDiv.style.display = 'block';
-                
+
                 // Add error styling to input
                 document.getElementById('add-pnode-' + fieldId).classList.add('input-error');
             } else {
@@ -1145,17 +1262,17 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
             if (!name || name.trim() === '') {
                 return 'Node name is required.';
             }
-            
+
             if (name.length > 100) {
                 return 'Node name must be 100 characters or less.';
             }
-            
+
             // Check for valid characters (letters, numbers, spaces, hyphens, underscores)
             const validPattern = /^[a-zA-Z0-9\s\-_]+$/;
             if (!validPattern.test(name)) {
                 return 'Node name can only contain letters, numbers, spaces, hyphens, and underscores.';
             }
-            
+
             return null; // Valid
         }
 
@@ -1163,15 +1280,15 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
             if (!ip || ip.trim() === '') {
                 return 'IP address is required.';
             }
-            
+
             // Basic IP address pattern
             const ipPattern = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
             const match = ip.match(ipPattern);
-            
+
             if (!match) {
                 return 'Please enter a valid IP address (e.g., 192.168.1.100).';
             }
-            
+
             // Check each octet is between 0-255
             for (let i = 1; i <= 4; i++) {
                 const octet = parseInt(match[i]);
@@ -1179,55 +1296,71 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                     return 'IP address octets must be between 0 and 255.';
                 }
             }
-            
+
             return null; // Valid
         }
 
         function validateAndSubmit() {
             // Clear previous errors
             clearModalErrors();
-            
+
             // Get form values
             const nodeName = document.getElementById('add-pnode-name').value.trim();
             const ipAddress = document.getElementById('add-pnode-ip').value.trim();
-            
+
             let hasErrors = false;
-            
+
             // Validate node name
             const nameError = validateNodeName(nodeName);
             if (nameError) {
                 showModalError(nameError, 'name');
                 hasErrors = true;
             }
-            
+
             // Validate IP address
             const ipError = validateIPAddress(ipAddress);
             if (ipError) {
                 showModalError(ipError, 'ip');
                 hasErrors = true;
             }
-            
-            // If no errors, submit the form
+
+            // If no errors, show loading and submit the form
             if (!hasErrors) {
                 // Update form values with trimmed versions
                 document.getElementById('add-pnode-name').value = nodeName;
                 document.getElementById('add-pnode-ip').value = ipAddress;
-                
+
+                // Show loading state
+                showModalLoading('addModal', 'addModalLoading');
+
                 // Submit the form
                 document.getElementById('addForm').submit();
             }
+        }
+
+        // Prevent multiple modal opens during loading
+        function preventModalCloseDuringLoading(event) {
+            const loadingOverlays = document.querySelectorAll('.modal-loading-overlay');
+            for (let overlay of loadingOverlays) {
+                if (overlay.style.display === 'flex') {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    return false;
+                }
+            }
+            return true;
         }
 
         // Add real-time validation on input
         document.addEventListener('DOMContentLoaded', function() {
             const nameInput = document.getElementById('add-pnode-name');
             const ipInput = document.getElementById('add-pnode-ip');
-            
+
             if (nameInput) {
                 nameInput.addEventListener('blur', function() {
                     const nameError = validateNodeName(this.value.trim());
                     const errorDiv = document.getElementById('name-error');
-                    
+
                     if (nameError) {
                         errorDiv.innerHTML = nameError;
                         errorDiv.style.display = 'block';
@@ -1237,7 +1370,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                         this.classList.remove('input-error');
                     }
                 });
-                
+
                 nameInput.addEventListener('input', function() {
                     // Clear error when user starts typing
                     if (this.classList.contains('input-error')) {
@@ -1246,12 +1379,12 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                     }
                 });
             }
-            
+
             if (ipInput) {
                 ipInput.addEventListener('blur', function() {
                     const ipError = validateIPAddress(this.value.trim());
                     const errorDiv = document.getElementById('ip-error');
-                    
+
                     if (ipError) {
                         errorDiv.innerHTML = ipError;
                         errorDiv.style.display = 'block';
@@ -1261,7 +1394,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                         this.classList.remove('input-error');
                     }
                 });
-                
+
                 ipInput.addEventListener('input', function() {
                     // Clear error when user starts typing
                     if (this.classList.contains('input-error')) {
@@ -1272,20 +1405,83 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
             }
         });
 
-        // Keep your existing modal close functions
+        // Updated modal close handlers
         window.onclick = function(event) {
+            if (!preventModalCloseDuringLoading(event)) return;
+
             const addModal = document.getElementById('addModal');
+            const editModal = document.getElementById('editModal');
+            const deleteModal = document.getElementById('deleteModal');
+
             if (event.target == addModal) {
                 closeAddModal();
+            }
+            if (event.target == editModal) {
+                closeEditModal();
+            }
+            if (event.target == deleteModal) {
+                closeDeleteModal();
             }
         }
 
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
+                if (!preventModalCloseDuringLoading(event)) return;
+
                 closeAddModal();
+                closeEditModal();
+                closeDeleteModal();
             }
         });
     </script>
+
+    <!-- Add Device Modal -->
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Device</h3>
+                <span class="close" onclick="closeAddModal()">&times;</span>
+            </div>
+
+            <!-- Error display area -->
+            <div id="addModalError" class="modal-error" style="display: none;"></div>
+
+            <form id="addForm" method="POST" action="">
+                <input type="hidden" name="action" value="add">
+                <div class="modal-form-group">
+                    <label for="add-pnode-name">Node Name: <span class="required">*</span></label>
+                    <input type="text"
+                        id="add-pnode-name"
+                        name="pnode_name"
+                        required
+                        maxlength="100"
+                        placeholder="Enter device name">
+                    <div class="field-error" id="name-error" style="display: none;"></div>
+                </div>
+                <div class="modal-form-group">
+                    <label for="add-pnode-ip">IP Address: <span class="required">*</span></label>
+                    <input type="text"
+                        id="add-pnode-ip"
+                        name="pnode_ip"
+                        required
+                        placeholder="e.g., 192.168.1.100">
+                    <div class="field-error" id="ip-error" style="display: none;"></div>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="modal-btn modal-btn-secondary" id="add-cancel-btn" onclick="closeAddModal()">Cancel</button>
+                    <button type="button" class="modal-btn modal-btn-primary" id="add-submit-btn" onclick="validateAndSubmit()">Add Device</button>
+                </div>
+            </form>
+
+            <!-- Loading overlay -->
+            <div class="modal-loading-overlay" id="addModalLoading">
+                <div class="modal-loading-content">
+                    <div class="modal-loading-spinner"></div>
+                    <div class="modal-loading-text">Adding device...</div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Edit Device Modal -->
     <div id="editModal" class="modal">
@@ -1294,35 +1490,43 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                 <h3>Edit Device</h3>
                 <span class="close" onclick="closeEditModal()">&times;</span>
             </div>
-            
+
             <!-- Error display area -->
             <div id="editModalError" class="modal-error" style="display: none;"></div>
-            
+
             <form id="editForm" method="POST" action="">
                 <input type="hidden" name="action" value="edit">
                 <input type="hidden" id="edit-device-id" name="device_id">
                 <div class="modal-form-group">
                     <label for="edit-pnode-name">Node Name: <span class="required">*</span></label>
-                    <input type="text" 
-                        id="edit-pnode-name" 
-                        name="pnode_name" 
+                    <input type="text"
+                        id="edit-pnode-name"
+                        name="pnode_name"
                         required
                         maxlength="100">
                     <div class="field-error" id="edit-name-error" style="display: none;"></div>
                 </div>
                 <div class="modal-form-group">
                     <label for="edit-pnode-ip">IP Address: <span class="required">*</span></label>
-                    <input type="text" 
-                        id="edit-pnode-ip" 
-                        name="pnode_ip" 
+                    <input type="text"
+                        id="edit-pnode-ip"
+                        name="pnode_ip"
                         required>
                     <div class="field-error" id="edit-ip-error" style="display: none;"></div>
                 </div>
                 <div class="modal-buttons">
-                    <button type="button" class="modal-btn modal-btn-secondary" onclick="closeEditModal()">Cancel</button>
-                    <button type="button" class="modal-btn modal-btn-primary" onclick="validateAndSubmitEdit()">Save Changes</button>
+                    <button type="button" class="modal-btn modal-btn-secondary" id="edit-cancel-btn" onclick="closeEditModal()">Cancel</button>
+                    <button type="button" class="modal-btn modal-btn-primary" id="edit-submit-btn" onclick="validateAndSubmitEdit()">Save Changes</button>
                 </div>
             </form>
+
+            <!-- Loading overlay -->
+            <div class="modal-loading-overlay" id="editModalLoading">
+                <div class="modal-loading-content">
+                    <div class="modal-loading-spinner"></div>
+                    <div class="modal-loading-text">Saving changes...</div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1340,50 +1544,18 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                 <p style="color: #dc3545; font-weight: bold;">⚠️ This action cannot be undone!</p>
                 <p>This will permanently remove the device and all its associated data from the system.</p>
                 <div class="modal-buttons">
-                    <button type="button" class="modal-btn modal-btn-secondary" onclick="closeDeleteModal()">Cancel</button>
-                    <button type="button" class="modal-btn modal-btn-danger" onclick="submitDelete()">Delete Device</button>
+                    <button type="button" class="modal-btn modal-btn-secondary" id="delete-cancel-btn" onclick="closeDeleteModal()">Cancel</button>
+                    <button type="button" class="modal-btn modal-btn-danger" id="delete-submit-btn" onclick="confirmDelete()">Delete Device</button>
                 </div>
             </form>
-        </div>
-    </div>
 
-    <!-- Add Device Modal -->
-    <div id="addModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Add New Device</h3>
-                <span class="close" onclick="closeAddModal()">&times;</span>
+            <!-- Loading overlay -->
+            <div class="modal-loading-overlay" id="deleteModalLoading">
+                <div class="modal-loading-content">
+                    <div class="modal-loading-spinner"></div>
+                    <div class="modal-loading-text">Deleting device...</div>
+                </div>
             </div>
-            
-            <!-- Error display area -->
-            <div id="addModalError" class="modal-error" style="display: none;"></div>
-            
-            <form id="addForm" method="POST" action="">
-                <input type="hidden" name="action" value="add">
-                <div class="modal-form-group">
-                    <label for="add-pnode-name">Node Name: <span class="required">*</span></label>
-                    <input type="text" 
-                        id="add-pnode-name" 
-                        name="pnode_name" 
-                        required
-                        maxlength="100"
-                        placeholder="Enter device name">
-                    <div class="field-error" id="name-error" style="display: none;"></div>
-                </div>
-                <div class="modal-form-group">
-                    <label for="add-pnode-ip">IP Address: <span class="required">*</span></label>
-                    <input type="text" 
-                        id="add-pnode-ip" 
-                        name="pnode_ip" 
-                        required
-                        placeholder="e.g., 192.168.1.100">
-                    <div class="field-error" id="ip-error" style="display: none;"></div>
-                </div>
-                <div class="modal-buttons">
-                    <button type="button" class="modal-btn modal-btn-secondary" onclick="closeAddModal()">Cancel</button>
-                    <button type="button" class="modal-btn modal-btn-primary" onclick="validateAndSubmit()">Add Device</button>
-                </div>
-            </form>
         </div>
     </div>
 </body>
