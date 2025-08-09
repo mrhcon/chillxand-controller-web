@@ -9,6 +9,49 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
+// Handle add device
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['action'] == 'add') {
+    $pnode_name = trim($_POST['pnode_name']);
+    $pnode_ip = trim($_POST['pnode_ip']);
+
+    if (empty($pnode_name) || empty($pnode_ip)) {
+        $error = "Please fill in all fields.";
+        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Empty fields');
+    } elseif (strlen($pnode_name) > 100) {
+        $error = "Node name must be 100 characters or less.";
+        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Invalid node name length');
+    } elseif (!filter_var($pnode_ip, FILTER_VALIDATE_IP)) {
+        $error = "Invalid IP address.";
+        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Invalid IP address');
+    } else {
+        try {
+            $stmt = $pdo->prepare("SELECT COUNT(*) FROM devices WHERE username = :username AND pnode_name = :pnode_name");
+            $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
+            $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
+            $stmt->execute();
+            if ($stmt->fetchColumn() > 0) {
+                $error = "Device name already registered.";
+                logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Duplicate device name');
+            } else {
+                // Add device
+                $stmt = $pdo->prepare("INSERT INTO devices (username, pnode_name, pnode_ip, registration_date) VALUES (:username, :pnode_name, :pnode_ip, NOW())");
+                $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
+                $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
+                $stmt->bindValue(':pnode_ip', $pnode_ip, PDO::PARAM_STR);
+                $stmt->execute();
+
+                logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_success', "Device: $pnode_name, IP: $pnode_ip");
+                header("Location: dashboard.php");
+                exit();
+            }
+        } catch (PDOException $e) {
+            $error = "Error adding device: " . $e->getMessage();
+            error_log($error);
+            logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', $error);
+        }
+    }
+}
+
 // Fetch user details
 try {
     $stmt = $pdo->prepare("SELECT username, email, first_name, last_name, country, admin FROM users WHERE id = ?");
@@ -116,6 +159,41 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
     <link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon-16x16.png">
     <link rel="stylesheet" href="style.css">
+
+    <style>
+        .add-device-btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s ease;
+            margin-left: 10px;
+        }
+        
+        .add-device-btn:hover {
+            background-color: #218838;
+        }
+        
+        .devices-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        .devices-title {
+            margin: 0;
+            font-size: 1.5em;
+        }
+    </style>    
 </head>
 <body>
     <div class="console-container">
@@ -203,9 +281,12 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                     </div>
                 <?php endif; ?>
 
-                <h3>Your Devices</h3>
+                <div class="devices-header">
+                    <h3 class="devices-title">Your Devices</h3>
+                    <button type="button" class="add-device-btn" onclick="openAddModal()" title="Add New Device">+</button>
+                </div>
                 <?php if (empty($devices)): ?>
-                    <p>No devices registered. <a href="devices.php">Add your first device</a> to get started!</p>
+                    <p>No devices registered.</p>
                 <?php else: ?>
                     <table class="device-table">
                         <thead>
@@ -744,6 +825,60 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
             }
             return 0;
         }
+
+        function openAddModal() {
+            document.getElementById('add-pnode-name').value = '';
+            document.getElementById('add-pnode-ip').value = '';
+            document.getElementById('addModal').style.display = 'block';
+        }
+
+        function closeAddModal() {
+            document.getElementById('addModal').style.display = 'none';
+        }
+
+        function submitAdd() {
+            document.getElementById('addForm').submit();
+        }
+
+        // Update your existing window.onclick function to include the addModal
+        window.onclick = function(event) {
+            const addModal = document.getElementById('addModal');
+            if (event.target == addModal) {
+                closeAddModal();
+            }
+        }
+
+        // Update your existing keydown event listener to include closeAddModal
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeAddModal();
+            }
+        });
     </script>
+
+    <!-- Add Device Modal -->
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Device</h3>
+                <span class="close" onclick="closeAddModal()">&times;</span>
+            </div>
+            <form id="addForm" method="POST" action="">
+                <input type="hidden" name="action" value="add">
+                <div class="modal-form-group">
+                    <label for="add-pnode-name">Node Name:</label>
+                    <input type="text" id="add-pnode-name" name="pnode_name" required>
+                </div>
+                <div class="modal-form-group">
+                    <label for="add-pnode-ip">IP Address:</label>
+                    <input type="text" id="add-pnode-ip" name="pnode_ip" required>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="modal-btn modal-btn-secondary" onclick="closeAddModal()">Cancel</button>
+                    <button type="button" class="modal-btn modal-btn-primary" onclick="submitAdd()">Add Device</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </body>
 </html>
