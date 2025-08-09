@@ -970,9 +970,24 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
             // Clear previous errors
             clearEditModalErrors();
 
+            // Get form references
+            const form = document.getElementById('editForm');
+            const nameField = document.getElementById('edit-pnode-name');
+            const ipField = document.getElementById('edit-pnode-ip');
+            
+            // Debug: Check if form elements exist
+            if (!form || !nameField || !ipField) {
+                console.error('Edit form elements not found:', { form, nameField, ipField });
+                showEditModalError('Form elements not found. Please refresh the page and try again.');
+                return;
+            }
+
             // Get form values
-            const nodeName = document.getElementById('edit-pnode-name').value.trim();
-            const ipAddress = document.getElementById('edit-pnode-ip').value.trim();
+            const nodeName = nameField.value.trim();
+            const ipAddress = ipField.value.trim();
+
+            // Debug log
+            console.log('Edit form validation:', { nodeName, ipAddress });
 
             let hasErrors = false;
 
@@ -993,14 +1008,21 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
             // If no errors, show loading and submit the form
             if (!hasErrors) {
                 // Update form values with trimmed versions
-                document.getElementById('edit-pnode-name').value = nodeName;
-                document.getElementById('edit-pnode-ip').value = ipAddress;
+                nameField.value = nodeName;
+                ipField.value = ipAddress;
+
+                // Debug: Log form data before submission
+                const formData = new FormData(form);
+                console.log('Edit form data being submitted:');
+                for (let [key, value] of formData.entries()) {
+                    console.log(key + ': ' + value);
+                }
 
                 // Show loading state
                 showModalLoading('editModal', 'editModalLoading');
 
                 // Submit the form
-                document.getElementById('editForm').submit();
+                form.submit();
             }
         }
 
@@ -1351,9 +1373,24 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
             // Clear previous errors
             clearModalErrors();
 
+            // Get form references
+            const form = document.getElementById('addForm');
+            const nameField = document.getElementById('add-pnode-name');
+            const ipField = document.getElementById('add-pnode-ip');
+            
+            // Debug: Check if form elements exist
+            if (!form || !nameField || !ipField) {
+                console.error('Form elements not found:', { form, nameField, ipField });
+                showModalError('Form elements not found. Please refresh the page and try again.');
+                return;
+            }
+
             // Get form values
-            const nodeName = document.getElementById('add-pnode-name').value.trim();
-            const ipAddress = document.getElementById('add-pnode-ip').value.trim();
+            const nodeName = nameField.value.trim();
+            const ipAddress = ipField.value.trim();
+
+            // Debug log
+            console.log('Form validation:', { nodeName, ipAddress });
 
             let hasErrors = false;
 
@@ -1374,14 +1411,21 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
             // If no errors, show loading and submit the form
             if (!hasErrors) {
                 // Update form values with trimmed versions
-                document.getElementById('add-pnode-name').value = nodeName;
-                document.getElementById('add-pnode-ip').value = ipAddress;
+                nameField.value = nodeName;
+                ipField.value = ipAddress;
+
+                // Debug: Log form data before submission
+                const formData = new FormData(form);
+                console.log('Form data being submitted:');
+                for (let [key, value] of formData.entries()) {
+                    console.log(key + ': ' + value);
+                }
 
                 // Show loading state
                 showModalLoading('addModal', 'addModalLoading');
 
                 // Submit the form
-                document.getElementById('addForm').submit();
+                form.submit();
             }
         }
 
