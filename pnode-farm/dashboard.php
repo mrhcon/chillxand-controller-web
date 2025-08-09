@@ -9,17 +9,6 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-<?php
-session_start();
-require_once 'db_connect.php';
-require_once 'functions.php';
-
-// Check if user is logged in
-if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
-    exit();
-}
-
 // Handle edit device
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['action'] == 'edit') {
     // Check if required POST variables exist
