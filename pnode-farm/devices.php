@@ -64,7 +64,7 @@ try {
         }
     }
     $_SESSION['admin'] = $user['admin'];
-    
+
     // ADMIN ACCESS REQUIRED - Redirect non-admins to dashboard
     if (!$_SESSION['admin']) {
         if (PHP_SAPI !== 'cli') {
@@ -75,7 +75,7 @@ try {
             exit(1);
         }
     }
-    
+
     error_log("Admin access confirmed for user {$_SESSION['username']}");
 } catch (PDOException $e) {
     $error = "Error fetching user details: " . $e->getMessage();
@@ -414,28 +414,28 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     // Only count online devices for version stats
                     if ($device['status'] === 'Online') {
                         $total_online_devices++;
-                        
+
                         // Count controller versions
                         $controller_version = $summaries[$device['id']]['chillxand_version'] ?? 'Unknown';
                         if (!isset($version_stats['controller'][$controller_version])) {
                             $version_stats['controller'][$controller_version] = 0;
                         }
                         $version_stats['controller'][$controller_version]++;
-                        
+
                         // Count pod versions
                         $pod_version = $summaries[$device['id']]['pod_version'] ?? 'Unknown';
                         if (!isset($version_stats['pod'][$pod_version])) {
                             $version_stats['pod'][$pod_version] = 0;
                         }
                         $version_stats['pod'][$pod_version]++;
-                        
+
                         // Count xandminer versions
                         $xandminer_version = $summaries[$device['id']]['xandminer_version'] ?? 'Unknown';
                         if (!isset($version_stats['xandminer'][$xandminer_version])) {
                             $version_stats['xandminer'][$xandminer_version] = 0;
                         }
                         $version_stats['xandminer'][$xandminer_version]++;
-                        
+
                         // Count xandminerd versions
                         $xandminerd_version = $summaries[$device['id']]['xandminerd_version'] ?? 'Unknown';
                         if (!isset($version_stats['xandminerd'][$xandminerd_version])) {
@@ -941,7 +941,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
 
                 return versions;
             }
-            
+
             getRowStatus(row) {
                 // Extract current status from a table row
                 const connectivityCell = row.cells[3];
@@ -1011,13 +1011,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
 
                 try {
                     const response = await fetch(`ajax_device_status.php?device_id=${device.id}`);
-                    
+
                     // Check if file exists
                     if (response.status === 404) {
                         console.warn(`ajax_device_status.php not found - auto-refresh disabled for device ${device.id}`);
                         return;
                     }
-                    
+
                     if (!response.ok) {
                         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                     }
@@ -1048,8 +1048,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         this.deviceVersions.set(device.id, newVersions);
 
                         // Update summary cards if status or versions changed
-                        const statusChanged = !oldStatus || 
-                            oldStatus.status !== newStatus.status || 
+                        const statusChanged = !oldStatus ||
+                            oldStatus.status !== newStatus.status ||
                             oldStatus.overallStatus !== newStatus.overallStatus;
 
                         const versionsChanged = !oldVersions ||
@@ -1063,7 +1063,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                             if (versionsChanged) {
                                 this.updateVersionCards();
                             }
-                        }                        
+                        }
                     } else {
                         console.error(`Error updating device ${device.id}:`, data.error);
                     }
@@ -1124,7 +1124,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         if (b === 'N/A') return -1;
                         return this.compareVersions(b, a); // Descending order
                     });
-                    
+
                     versions.forEach(version => {
                         sorted[version] = versionStats[service][version];
                     });
@@ -1139,7 +1139,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 // Simple version comparison - you may need to enhance this based on your version format
                 const aParts = a.split('.').map(n => parseInt(n) || 0);
                 const bParts = b.split('.').map(n => parseInt(n) || 0);
-                
+
                 for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
                     const aPart = aParts[i] || 0;
                     const bPart = bParts[i] || 0;
@@ -1153,26 +1153,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             updateVersionCardsDOM(versionStats, totalOnlineDevices) {
                 const versionCards = document.querySelectorAll('.version-card');
                 const serviceNames = ['controller', 'pod', 'xandminer', 'xandminerd'];
-                
+
                 versionCards.forEach((card, index) => {
                     if (index < serviceNames.length) {
                         const serviceName = serviceNames[index];
                         const versions = versionStats[serviceName];
-                        
+
                         // Update the total count
                         const totalSpan = card.querySelector('.version-total');
                         if (totalSpan) {
                             totalSpan.textContent = `${totalOnlineDevices} devices`;
                         }
-                        
+
                         // Update the version list
                         const versionList = card.querySelector('.version-list');
                         if (versionList && versions) {
                             versionList.innerHTML = '';
-                            
+
                             Object.entries(versions).forEach(([version, count]) => {
                                 const percentage = (count / totalOnlineDevices) * 100;
-                                
+
                                 const versionItem = document.createElement('div');
                                 versionItem.className = 'version-item';
                                 versionItem.innerHTML = `
@@ -1182,7 +1182,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                         <div class="version-bar-fill" style="width: ${percentage}%"></div>
                                     </div>
                                 `;
-                                
+
                                 versionList.appendChild(versionItem);
                             });
                         }
@@ -1502,12 +1502,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                             xandminer: data.version_data.xandminer_version || 'N/A',
                             xandminerd: data.version_data.xandminerd_version || 'N/A'
                         };
-                        
+
                         if (deviceStatusUpdater) {
                             deviceStatusUpdater.deviceVersions.set(deviceId, newVersions);
                             deviceStatusUpdater.updateVersionCards();
                         }
-                    }                    
+                    }
 
                     // Update timestamp
                     lastCheckElement.innerHTML = `
@@ -1658,7 +1658,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             btn.textContent = 'Starting...';
 
             // Remove any existing status icon from previous updates
-            removeUpdateStatusIcon(btn);            
+            removeUpdateStatusIcon(btn);
 
             fetch('device_update.php', {
                 method: 'POST',
@@ -1805,7 +1805,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             btn.textContent = 'Starting...';
 
             // Remove any existing status icon from previous updates
-            removeUpdateStatusIcon(btn);               
+            removeUpdateStatusIcon(btn);
 
             fetch('device_update.php', {
                 method: 'POST',
@@ -2281,7 +2281,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             buttonRow.appendChild(iconSpan);
 
             console.log('Added icon to button row:', buttonRow);
-        }        
+        }
 
         function finishUpdateMonitoring(monitorKey, monitor, reason) {
             if (monitor.interval) {
