@@ -1237,6 +1237,40 @@ details summary {
     margin: 0 -8px;
 }
 
+/* ========== ADD DEVICE BUTTON STYLES ========== */
+.add-device-btn {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s ease;
+    margin-left: 10px;
+}
+
+.add-device-btn:hover {
+    background-color: #218838;
+}
+
+.devices-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.devices-title {
+    margin: 0;
+    font-size: 1.5em;
+}
+
 /* ========== NOT INITIALIZED STYLING IMPROVEMENTS ========== */
 /* Make all "Not Initialized" status displays consistent with larger, centered font */
 .status-not-initialized {
@@ -1328,37 +1362,4 @@ td .status-value.status-not-initialized {
 .device-table td:nth-child(5):has(.status-not-initialized:only-child),
 .device-table td:nth-child(6):has(.status-not-initialized:only-child) {
     padding: 15px 8px !important;
-}
-
-.add-device-btn {
-    background-color: #28a745;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    font-size: 20px;
-    font-weight: bold;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background-color 0.3s ease;
-    margin-left: 10px;
-}
-
-.add-device-btn:hover {
-    background-color: #218838;
-}
-
-.devices-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 20px;
-}
-
-.devices-title {
-    margin: 0;
-    font-size: 1.5em;
 }
