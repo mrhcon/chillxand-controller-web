@@ -1625,9 +1625,13 @@ details summary {
     font-weight: bold;
 }
 
-/* Alternative approach if the above doesn't work */
+/* Fix for Last Login - make only the label bold, not the value */
 .last-login-text {
-    font-weight: bold;
+    font-weight: normal; /* Reset the whole paragraph to normal */
+}
+
+.last-login-text .last-login-label {
+    font-weight: bold; /* Only the label part is bold */
 }
 
 /* Fix for Your Details section - align values to the left */
@@ -1659,8 +1663,9 @@ details summary {
 
 .user-details-label {
     font-weight: bold;
-    min-width: 100px; /* Adjust as needed */
+    min-width: 120px; /* Increased from 100px to give more space */
     flex-shrink: 0;
+    margin-right: 10px; /* Add some extra margin for better spacing */
 }
 
 .user-details-value {

@@ -314,7 +314,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
             <!-- Right Panel -->
             <div class="info-panel">
                 <h2>Welcome, <?php echo htmlspecialchars($user['first_name'] . ' ' . $user['last_name']); ?>!</h2>
-                <p class="last-login-text">Last Login: <?php echo $last_login_display; ?></p>
+                <p class="last-login-text"><span class="last-login-label">Last Login:</span> <?php echo $last_login_display; ?></p>
 
                 <!-- User Details Section -->
                 <div style="margin-bottom: 30px;">
