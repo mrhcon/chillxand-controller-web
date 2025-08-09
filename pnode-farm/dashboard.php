@@ -791,21 +791,197 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
             return 0;
         }
 
+        // Add Modal
         function openAddModal() {
+            // Clear form fields
             document.getElementById('add-pnode-name').value = '';
             document.getElementById('add-pnode-ip').value = '';
+            
+            // Clear any previous errors
+            clearModalErrors();
+            
+            // Show modal
             document.getElementById('addModal').style.display = 'block';
+            
+            // Focus on first field
+            setTimeout(() => {
+                document.getElementById('add-pnode-name').focus();
+            }, 100);
         }
 
         function closeAddModal() {
             document.getElementById('addModal').style.display = 'none';
+            clearModalErrors();
         }
 
-        function submitAdd() {
-            document.getElementById('addForm').submit();
+        function clearModalErrors() {
+            // Hide main error area
+            const errorDiv = document.getElementById('addModalError');
+            errorDiv.style.display = 'none';
+            errorDiv.innerHTML = '';
+            
+            // Hide field-specific errors
+            const nameError = document.getElementById('name-error');
+            const ipError = document.getElementById('ip-error');
+            nameError.style.display = 'none';
+            ipError.style.display = 'none';
+            nameError.innerHTML = '';
+            ipError.innerHTML = '';
+            
+            // Remove error styling from inputs
+            document.getElementById('add-pnode-name').classList.remove('input-error');
+            document.getElementById('add-pnode-ip').classList.remove('input-error');
         }
 
-        // Update your existing window.onclick function to include the addModal
+        function showModalError(message, fieldId = null) {
+            if (fieldId) {
+                // Show field-specific error
+                const errorDiv = document.getElementById(fieldId + '-error');
+                errorDiv.innerHTML = message;
+                errorDiv.style.display = 'block';
+                
+                // Add error styling to input
+                document.getElementById('add-pnode-' + fieldId).classList.add('input-error');
+            } else {
+                // Show general error
+                const errorDiv = document.getElementById('addModalError');
+                errorDiv.innerHTML = '<strong>Error:</strong> ' + message;
+                errorDiv.style.display = 'block';
+            }
+        }
+
+        function validateNodeName(name) {
+            if (!name || name.trim() === '') {
+                return 'Node name is required.';
+            }
+            
+            if (name.length > 100) {
+                return 'Node name must be 100 characters or less.';
+            }
+            
+            // Check for valid characters (letters, numbers, spaces, hyphens, underscores)
+            const validPattern = /^[a-zA-Z0-9\s\-_]+$/;
+            if (!validPattern.test(name)) {
+                return 'Node name can only contain letters, numbers, spaces, hyphens, and underscores.';
+            }
+            
+            return null; // Valid
+        }
+
+        function validateIPAddress(ip) {
+            if (!ip || ip.trim() === '') {
+                return 'IP address is required.';
+            }
+            
+            // Basic IP address pattern
+            const ipPattern = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+            const match = ip.match(ipPattern);
+            
+            if (!match) {
+                return 'Please enter a valid IP address (e.g., 192.168.1.100).';
+            }
+            
+            // Check each octet is between 0-255
+            for (let i = 1; i <= 4; i++) {
+                const octet = parseInt(match[i]);
+                if (octet < 0 || octet > 255) {
+                    return 'IP address octets must be between 0 and 255.';
+                }
+            }
+            
+            return null; // Valid
+        }
+
+        function validateAndSubmit() {
+            // Clear previous errors
+            clearModalErrors();
+            
+            // Get form values
+            const nodeName = document.getElementById('add-pnode-name').value.trim();
+            const ipAddress = document.getElementById('add-pnode-ip').value.trim();
+            
+            let hasErrors = false;
+            
+            // Validate node name
+            const nameError = validateNodeName(nodeName);
+            if (nameError) {
+                showModalError(nameError, 'name');
+                hasErrors = true;
+            }
+            
+            // Validate IP address
+            const ipError = validateIPAddress(ipAddress);
+            if (ipError) {
+                showModalError(ipError, 'ip');
+                hasErrors = true;
+            }
+            
+            // If no errors, submit the form
+            if (!hasErrors) {
+                // Update form values with trimmed versions
+                document.getElementById('add-pnode-name').value = nodeName;
+                document.getElementById('add-pnode-ip').value = ipAddress;
+                
+                // Submit the form
+                document.getElementById('addForm').submit();
+            }
+        }
+
+        // Add real-time validation on input
+        document.addEventListener('DOMContentLoaded', function() {
+            const nameInput = document.getElementById('add-pnode-name');
+            const ipInput = document.getElementById('add-pnode-ip');
+            
+            if (nameInput) {
+                nameInput.addEventListener('blur', function() {
+                    const nameError = validateNodeName(this.value.trim());
+                    const errorDiv = document.getElementById('name-error');
+                    
+                    if (nameError) {
+                        errorDiv.innerHTML = nameError;
+                        errorDiv.style.display = 'block';
+                        this.classList.add('input-error');
+                    } else {
+                        errorDiv.style.display = 'none';
+                        this.classList.remove('input-error');
+                    }
+                });
+                
+                nameInput.addEventListener('input', function() {
+                    // Clear error when user starts typing
+                    if (this.classList.contains('input-error')) {
+                        document.getElementById('name-error').style.display = 'none';
+                        this.classList.remove('input-error');
+                    }
+                });
+            }
+            
+            if (ipInput) {
+                ipInput.addEventListener('blur', function() {
+                    const ipError = validateIPAddress(this.value.trim());
+                    const errorDiv = document.getElementById('ip-error');
+                    
+                    if (ipError) {
+                        errorDiv.innerHTML = ipError;
+                        errorDiv.style.display = 'block';
+                        this.classList.add('input-error');
+                    } else {
+                        errorDiv.style.display = 'none';
+                        this.classList.remove('input-error');
+                    }
+                });
+                
+                ipInput.addEventListener('input', function() {
+                    // Clear error when user starts typing
+                    if (this.classList.contains('input-error')) {
+                        document.getElementById('ip-error').style.display = 'none';
+                        this.classList.remove('input-error');
+                    }
+                });
+            }
+        });
+
+        // Keep your existing modal close functions
         window.onclick = function(event) {
             const addModal = document.getElementById('addModal');
             if (event.target == addModal) {
@@ -813,7 +989,6 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
             }
         }
 
-        // Update your existing keydown event listener to include closeAddModal
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 closeAddModal();
@@ -828,19 +1003,34 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                 <h3>Add New Device</h3>
                 <span class="close" onclick="closeAddModal()">&times;</span>
             </div>
+            
+            <!-- Error display area -->
+            <div id="addModalError" class="modal-error" style="display: none;"></div>
+            
             <form id="addForm" method="POST" action="">
                 <input type="hidden" name="action" value="add">
                 <div class="modal-form-group">
-                    <label for="add-pnode-name">Node Name:</label>
-                    <input type="text" id="add-pnode-name" name="pnode_name" required>
+                    <label for="add-pnode-name">Node Name: <span class="required">*</span></label>
+                    <input type="text" 
+                        id="add-pnode-name" 
+                        name="pnode_name" 
+                        required
+                        maxlength="100"
+                        placeholder="Enter device name">
+                    <div class="field-error" id="name-error" style="display: none;"></div>
                 </div>
                 <div class="modal-form-group">
-                    <label for="add-pnode-ip">IP Address:</label>
-                    <input type="text" id="add-pnode-ip" name="pnode_ip" required>
+                    <label for="add-pnode-ip">IP Address: <span class="required">*</span></label>
+                    <input type="text" 
+                        id="add-pnode-ip" 
+                        name="pnode_ip" 
+                        required
+                        placeholder="e.g., 192.168.1.100">
+                    <div class="field-error" id="ip-error" style="display: none;"></div>
                 </div>
                 <div class="modal-buttons">
                     <button type="button" class="modal-btn modal-btn-secondary" onclick="closeAddModal()">Cancel</button>
-                    <button type="button" class="modal-btn modal-btn-primary" onclick="submitAdd()">Add Device</button>
+                    <button type="button" class="modal-btn modal-btn-primary" onclick="validateAndSubmit()">Add Device</button>
                 </div>
             </form>
         </div>
