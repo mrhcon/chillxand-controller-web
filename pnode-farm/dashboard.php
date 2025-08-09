@@ -9,6 +9,95 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
+// Handle edit device
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['action'] == 'edit') {
+    $device_id = $_POST['device_id'];
+    $pnode_name = trim($_POST['pnode_name']);
+    $pnode_ip = trim($_POST['pnode_ip']);
+
+    if (empty($pnode_name) || empty($pnode_ip)) {
+        $error = "Please fill in all fields.";
+        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_edit_failed', 'Empty fields');
+    } elseif (strlen($pnode_name) > 100) {
+        $error = "Node name must be 100 characters or less.";
+        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_edit_failed', 'Invalid node name length');
+    } elseif (!filter_var($pnode_ip, FILTER_VALIDATE_IP)) {
+        $error = "Invalid IP address.";
+        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_edit_failed', 'Invalid IP address');
+    } else {
+        try {
+            // Check if device belongs to current user
+            $stmt = $pdo->prepare("SELECT COUNT(*) FROM devices WHERE id = :device_id AND username = :username");
+            $stmt->bindValue(':device_id', $device_id, PDO::PARAM_INT);
+            $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
+            $stmt->execute();
+            if ($stmt->fetchColumn() == 0) {
+                $error = "Device not found or not authorized.";
+                logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_edit_failed', 'Unauthorized device access');
+            } else {
+                // Check for duplicate name (excluding current device)
+                $stmt = $pdo->prepare("SELECT COUNT(*) FROM devices WHERE username = :username AND pnode_name = :pnode_name AND id != :device_id");
+                $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
+                $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
+                $stmt->bindValue(':device_id', $device_id, PDO::PARAM_INT);
+                $stmt->execute();
+                if ($stmt->fetchColumn() > 0) {
+                    $error = "Device name already registered.";
+                    logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_edit_failed', 'Duplicate device name');
+                } else {
+                    // Update device
+                    $stmt = $pdo->prepare("UPDATE devices SET pnode_name = :pnode_name, pnode_ip = :pnode_ip WHERE id = :device_id AND username = :username");
+                    $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
+                    $stmt->bindValue(':pnode_ip', $pnode_ip, PDO::PARAM_STR);
+                    $stmt->bindValue(':device_id', $device_id, PDO::PARAM_INT);
+                    $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
+                    $stmt->execute();
+
+                    logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_edit_success', "Device ID: $device_id, New Name: $pnode_name, New IP: $pnode_ip");
+                    header("Location: dashboard.php");
+                    exit();
+                }
+            }
+        } catch (PDOException $e) {
+            $error = "Error editing device: " . $e->getMessage();
+            error_log($error);
+            logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_edit_failed', $error);
+        }
+    }
+}
+
+// Handle delete device
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['action'] == 'delete') {
+    $device_id = $_POST['device_id'];
+    try {
+        // Get device details and verify ownership
+        $stmt = $pdo->prepare("SELECT pnode_name, pnode_ip FROM devices WHERE id = :device_id AND username = :username");
+        $stmt->bindValue(':device_id', $device_id, PDO::PARAM_INT);
+        $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
+        $stmt->execute();
+        $device = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($device) {
+            // Delete device (cascade will handle device_status_log)
+            $stmt = $pdo->prepare("DELETE FROM devices WHERE id = :device_id AND username = :username");
+            $stmt->bindValue(':device_id', $device_id, PDO::PARAM_INT);
+            $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
+            $stmt->execute();
+            
+            logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_delete_success', "Device: {$device['pnode_name']}, IP: {$device['pnode_ip']}");
+            header("Location: dashboard.php");
+            exit();
+        } else {
+            $error = "Device not found or not authorized.";
+            logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_delete_failed', 'Device not found or unauthorized');
+        }
+    } catch (PDOException $e) {
+        $error = "Error deleting device: " . $e->getMessage();
+        error_log($error);
+        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_delete_failed', $error);
+    }
+}
+
 // Handle add device
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['action'] == 'add') {
     $pnode_name = trim($_POST['pnode_name']);
@@ -275,6 +364,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                 </th>
                                 <th>Versions</th>
                                 <th>Last Checked</th>
+                                <th>Actions</th> 
                             </tr>
                         </thead>
                         <tbody>
@@ -367,6 +457,18 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                             <div class="never-checked">Never checked</div>
                                         <?php endif; ?>
                                     </td>
+                                    <td class="actions-column">
+                                        <div class="dashboard-actions">
+                                            <button type="button" class="action-button edit"
+                                                    onclick="openEditModal(<?php echo $device['id']; ?>, '<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>', '<?php echo htmlspecialchars($device['pnode_ip']); ?>')">
+                                                Edit
+                                            </button>
+                                            <button type="button" class="action-button delete"
+                                                    onclick="openDeleteModal(<?php echo $device['id']; ?>, '<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>')">
+                                                Delete
+                                            </button>
+                                        </div>
+                                    </td>                                    
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
@@ -791,6 +893,195 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
             return 0;
         }
 
+        // Edit Modal Functions
+        function openEditModal(deviceId, currentName, currentIp) {
+            document.getElementById('edit-device-id').value = deviceId;
+            document.getElementById('edit-pnode-name').value = currentName;
+            document.getElementById('edit-pnode-ip').value = currentIp;
+            
+            // Clear any previous errors
+            clearEditModalErrors();
+            
+            document.getElementById('editModal').style.display = 'block';
+            
+            // Focus on first field
+            setTimeout(() => {
+                document.getElementById('edit-pnode-name').focus();
+            }, 100);
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+            clearEditModalErrors();
+        }
+
+        function clearEditModalErrors() {
+            // Hide main error area
+            const errorDiv = document.getElementById('editModalError');
+            errorDiv.style.display = 'none';
+            errorDiv.innerHTML = '';
+            
+            // Hide field-specific errors
+            const nameError = document.getElementById('edit-name-error');
+            const ipError = document.getElementById('edit-ip-error');
+            nameError.style.display = 'none';
+            ipError.style.display = 'none';
+            nameError.innerHTML = '';
+            ipError.innerHTML = '';
+            
+            // Remove error styling from inputs
+            document.getElementById('edit-pnode-name').classList.remove('input-error');
+            document.getElementById('edit-pnode-ip').classList.remove('input-error');
+        }
+
+        function showEditModalError(message, fieldId = null) {
+            if (fieldId) {
+                // Show field-specific error
+                const errorDiv = document.getElementById('edit-' + fieldId + '-error');
+                errorDiv.innerHTML = message;
+                errorDiv.style.display = 'block';
+                
+                // Add error styling to input
+                document.getElementById('edit-pnode-' + fieldId).classList.add('input-error');
+            } else {
+                // Show general error
+                const errorDiv = document.getElementById('editModalError');
+                errorDiv.innerHTML = '<strong>Error:</strong> ' + message;
+                errorDiv.style.display = 'block';
+            }
+        }
+
+        function validateAndSubmitEdit() {
+            // Clear previous errors
+            clearEditModalErrors();
+            
+            // Get form values
+            const nodeName = document.getElementById('edit-pnode-name').value.trim();
+            const ipAddress = document.getElementById('edit-pnode-ip').value.trim();
+            
+            let hasErrors = false;
+            
+            // Validate node name
+            const nameError = validateNodeName(nodeName);
+            if (nameError) {
+                showEditModalError(nameError, 'name');
+                hasErrors = true;
+            }
+            
+            // Validate IP address
+            const ipError = validateIPAddress(ipAddress);
+            if (ipError) {
+                showEditModalError(ipError, 'ip');
+                hasErrors = true;
+            }
+            
+            // If no errors, submit the form
+            if (!hasErrors) {
+                // Update form values with trimmed versions
+                document.getElementById('edit-pnode-name').value = nodeName;
+                document.getElementById('edit-pnode-ip').value = ipAddress;
+                
+                // Submit the form
+                document.getElementById('editForm').submit();
+            }
+        }
+
+        // Delete Modal Functions
+        function openDeleteModal(deviceId, deviceName) {
+            document.getElementById('delete-device-id').value = deviceId;
+            document.getElementById('delete-device-name').textContent = deviceName;
+            document.getElementById('deleteModal').style.display = 'block';
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').style.display = 'none';
+        }
+
+        function submitDelete() {
+            document.getElementById('deleteForm').submit();
+        }
+
+        // UPDATE your existing window.onclick function to include the new modals
+        window.onclick = function(event) {
+            const addModal = document.getElementById('addModal');
+            const editModal = document.getElementById('editModal');
+            const deleteModal = document.getElementById('deleteModal');
+            
+            if (event.target == addModal) {
+                closeAddModal();
+            }
+            if (event.target == editModal) {
+                closeEditModal();
+            }
+            if (event.target == deleteModal) {
+                closeDeleteModal();
+            }
+        }
+
+        // UPDATE your existing keydown event listener to include the new modals
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeAddModal();
+                closeEditModal();
+                closeDeleteModal();
+            }
+        });
+
+        // Add real-time validation for edit form
+        document.addEventListener('DOMContentLoaded', function() {
+            // Your existing add form validation code...
+            
+            // Add edit form validation
+            const editNameInput = document.getElementById('edit-pnode-name');
+            const editIpInput = document.getElementById('edit-pnode-ip');
+            
+            if (editNameInput) {
+                editNameInput.addEventListener('blur', function() {
+                    const nameError = validateNodeName(this.value.trim());
+                    const errorDiv = document.getElementById('edit-name-error');
+                    
+                    if (nameError) {
+                        errorDiv.innerHTML = nameError;
+                        errorDiv.style.display = 'block';
+                        this.classList.add('input-error');
+                    } else {
+                        errorDiv.style.display = 'none';
+                        this.classList.remove('input-error');
+                    }
+                });
+                
+                editNameInput.addEventListener('input', function() {
+                    if (this.classList.contains('input-error')) {
+                        document.getElementById('edit-name-error').style.display = 'none';
+                        this.classList.remove('input-error');
+                    }
+                });
+            }
+            
+            if (editIpInput) {
+                editIpInput.addEventListener('blur', function() {
+                    const ipError = validateIPAddress(this.value.trim());
+                    const errorDiv = document.getElementById('edit-ip-error');
+                    
+                    if (ipError) {
+                        errorDiv.innerHTML = ipError;
+                        errorDiv.style.display = 'block';
+                        this.classList.add('input-error');
+                    } else {
+                        errorDiv.style.display = 'none';
+                        this.classList.remove('input-error');
+                    }
+                });
+                
+                editIpInput.addEventListener('input', function() {
+                    if (this.classList.contains('input-error')) {
+                        document.getElementById('edit-ip-error').style.display = 'none';
+                        this.classList.remove('input-error');
+                    }
+                });
+            }
+        });
+
         // Add Modal
         function openAddModal() {
             // Clear form fields
@@ -995,6 +1286,66 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
             }
         });
     </script>
+
+    <!-- Edit Device Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Device</h3>
+                <span class="close" onclick="closeEditModal()">&times;</span>
+            </div>
+            
+            <!-- Error display area -->
+            <div id="editModalError" class="modal-error" style="display: none;"></div>
+            
+            <form id="editForm" method="POST" action="">
+                <input type="hidden" name="action" value="edit">
+                <input type="hidden" id="edit-device-id" name="device_id">
+                <div class="modal-form-group">
+                    <label for="edit-pnode-name">Node Name: <span class="required">*</span></label>
+                    <input type="text" 
+                        id="edit-pnode-name" 
+                        name="pnode_name" 
+                        required
+                        maxlength="100">
+                    <div class="field-error" id="edit-name-error" style="display: none;"></div>
+                </div>
+                <div class="modal-form-group">
+                    <label for="edit-pnode-ip">IP Address: <span class="required">*</span></label>
+                    <input type="text" 
+                        id="edit-pnode-ip" 
+                        name="pnode_ip" 
+                        required>
+                    <div class="field-error" id="edit-ip-error" style="display: none;"></div>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="modal-btn modal-btn-secondary" onclick="closeEditModal()">Cancel</button>
+                    <button type="button" class="modal-btn modal-btn-primary" onclick="validateAndSubmitEdit()">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Device Modal -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Delete Device</h3>
+                <span class="close" onclick="closeDeleteModal()">&times;</span>
+            </div>
+            <form id="deleteForm" method="POST" action="">
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" id="delete-device-id" name="device_id">
+                <p><strong>Are you sure you want to delete the device "<span id="delete-device-name"></span>"?</strong></p>
+                <p style="color: #dc3545; font-weight: bold;">⚠️ This action cannot be undone!</p>
+                <p>This will permanently remove the device and all its associated data from the system.</p>
+                <div class="modal-buttons">
+                    <button type="button" class="modal-btn modal-btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+                    <button type="button" class="modal-btn modal-btn-danger" onclick="submitDelete()">Delete Device</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- Add Device Modal -->
     <div id="addModal" class="modal">

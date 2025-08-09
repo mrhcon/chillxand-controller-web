@@ -1450,3 +1450,69 @@ details summary {
     border-color: #28a745 !important;
     box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25) !important;
 }
+
+/* ========== DASHBOARD ACTIONS COLUMN ========== */
+/* Add this to your style.css file */
+
+/* Actions column styling */
+.actions-column {
+    width: 120px;
+    max-width: 120px;
+    padding: 8px;
+    vertical-align: middle;
+    text-align: center;
+}
+
+.dashboard-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    align-items: center;
+}
+
+/* Action buttons for dashboard - smaller than devices.php */
+.dashboard-actions .action-button {
+    width: 100px;
+    padding: 4px 8px;
+    margin: 0;
+    cursor: pointer;
+    display: inline-block;
+    text-align: center;
+    font-size: 11px;
+    border: none;
+    border-radius: 3px;
+    box-sizing: border-box;
+    color: white;
+    transition: background-color 0.2s ease;
+}
+
+.dashboard-actions .action-button.edit {
+    background-color: #17a2b8;
+}
+
+.dashboard-actions .action-button.edit:hover {
+    background-color: #138496;
+}
+
+.dashboard-actions .action-button.delete {
+    background-color: #dc3545;
+}
+
+.dashboard-actions .action-button.delete:hover {
+    background-color: #c82333;
+}
+
+/* Ensure actions column header is properly sized */
+.device-table th:last-child {
+    width: 120px;
+    max-width: 120px;
+    text-align: center;
+}
+
+/* Override any conflicting styles for the last column */
+.device-table td:last-child {
+    width: 120px !important;
+    max-width: 120px !important;
+    padding: 8px !important;
+    vertical-align: middle !important;
+}
