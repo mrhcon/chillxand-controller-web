@@ -1270,13 +1270,13 @@ details summary {
     font-size: 1.5em;
 }
 
-/* ========== UPDATED NOT INITIALIZED STYLING ========== */
-/* Make "Not Initialized" status match the size of online buttons and center them */
+/* ========== CONSISTENT STATUS BUTTON SIZING ========== */
+/* Make all status buttons (online, offline, not initialized, health, versions) consistent size */
 
-/* Base not initialized styling - match online button size */
+/* Base not initialized styling - match online button size but not bold */
 .status-not-initialized {
     font-size: 12px !important;      /* Match online button font size */
-    font-weight: bold !important;
+    font-weight: normal !important;  /* Changed from bold to normal */
     text-align: center !important;
     display: inline-block !important;
     padding: 5px 10px !important;    /* Match online button padding */
@@ -1298,6 +1298,7 @@ details summary {
 /* Connectivity column (4th column) - match existing online button styling exactly */
 .device-table td:nth-child(4) .status-btn.status-not-initialized {
     font-size: 12px !important;
+    font-weight: normal !important;
     padding: 5px 10px !important;
     min-width: 80px !important;
     display: inline-block !important;
@@ -1305,32 +1306,48 @@ details summary {
     text-align: center !important;
 }
 
-/* Health Status column (5th column) - match other status buttons in this column */
+/* Health Status column (5th column) - make ALL status buttons consistent size */
+.device-table td:nth-child(5) .status-btn,
+.device-table td:nth-child(5) .status-btn.status-value,
+.device-table td:nth-child(5) .status-value.status-online,
+.device-table td:nth-child(5) .status-value.status-offline,
 .device-table td:nth-child(5) .status-btn.status-not-initialized,
 .device-table td:nth-child(5) .status-value.status-not-initialized {
     font-size: 12px !important;
+    font-weight: normal !important;
     padding: 5px 10px !important;
     min-width: 80px !important;
-    display: block !important;
-    margin: 0 auto !important;
+    display: inline-block !important;
+    margin: 1px auto !important;
     text-align: center !important;
+    border-radius: 4px !important;
 }
 
-/* Versions column (6th column) - match other status displays in this column */
+/* Versions column (6th column) - make ALL status displays consistent size */
+.device-table td:nth-child(6) .status-btn,
+.device-table td:nth-child(6) .status-btn.status-value,
+.device-table td:nth-child(6) .status-value.status-online,
+.device-table td:nth-child(6) .status-value.status-offline,
 .device-table td:nth-child(6) .status-btn.status-not-initialized,
-.device-table td:nth-child(6) .status-value.status-not-initialized {
+.device-table td:nth-child(6) .status-value.status-not-initialized,
+.device-table td:nth-child(6) .version-value {
     font-size: 12px !important;
-    padding: 5px 10px !important;
-    min-width: 80px !important;
-    display: block !important;
-    margin: 0 auto !important;
+    font-weight: normal !important;
     text-align: center !important;
 }
 
-/* Last Checked column (7th column) - if it appears there */
+/* Special handling for version values that are not status buttons */
+.device-table td:nth-child(6) .version-value {
+    padding: 2px 4px !important;
+    margin: 1px 0 !important;
+    display: inline-block !important;
+}
+
+/* Last Checked column (7th column) - if status appears there */
 .device-table td:nth-child(7) .status-btn.status-not-initialized,
 .device-table td:nth-child(7) .status-value.status-not-initialized {
     font-size: 12px !important;
+    font-weight: normal !important;
     padding: 5px 10px !important;
     min-width: 80px !important;
     display: block !important;
@@ -1342,12 +1359,24 @@ details summary {
 .device-table .status-info .status-btn.status-not-initialized,
 .device-table .status-info .status-value.status-not-initialized {
     font-size: 12px !important;
-    font-weight: bold !important;
+    font-weight: normal !important;  /* Changed from bold to normal */
     text-align: center !important;
     padding: 5px 10px !important;
-    margin: 0 auto !important;
-    display: block !important;
+    margin: 1px auto !important;
+    display: inline-block !important;
     min-width: 80px !important;
+}
+
+/* Ensure all health and version status buttons are consistently sized */
+.device-table .status-info .status-btn.status-value {
+    font-size: 12px !important;
+    font-weight: normal !important;
+    padding: 5px 10px !important;
+    min-width: 80px !important;
+    margin: 1px auto !important;
+    display: inline-block !important;
+    text-align: center !important;
+    border-radius: 4px !important;
 }
 
 /* Center the cells containing not initialized status */
@@ -1358,4 +1387,13 @@ details summary {
     text-align: center !important;
     vertical-align: middle !important;
     padding: 8px !important;
+}
+
+/* Make sure health status info divs are properly spaced */
+.device-table td:nth-child(5) .status-info > div,
+.device-table td:nth-child(6) .status-info > div {
+    margin-bottom: 1px !important;
+    min-height: 20px !important;
+    display: flex !important;
+    align-items: center !important;
 }
