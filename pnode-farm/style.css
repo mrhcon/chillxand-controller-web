@@ -1619,12 +1619,6 @@ details summary {
     animation: spin 1s linear infinite;
 }
 
-/* Fix for Last Login - make the label bold */
-.info-panel p:has(+ .dashboard-summary),
-.info-panel > p:nth-of-type(1) {
-    font-weight: bold;
-}
-
 /* Fix for Last Login - make only the label bold, not the value */
 .last-login-text {
     font-weight: normal; /* Reset the whole paragraph to normal */
