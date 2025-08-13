@@ -167,17 +167,17 @@ try {
         $stmt->execute();
         $device['total_logs'] = $stmt->fetchColumn();
 
-        // Add the stats section
-        $device['pnode_stats'] = null;
-        if ($cached_status['status'] === 'Online' && $cached_status['cpu_load_avg'] !== null) {
-            $device['pnode_stats'] = [
-                'cpu_percent' => $cached_status['cpu_load_avg'],
-                'memory_percent' => $cached_status['memory_percent'],
-                'total_bytes_transferred' => $cached_status['total_bytes_transferred'] ?? 0,
-                'packets_received' => $cached_status['packets_received'] ?? 0,
-                'packets_sent' => $cached_status['packets_sent'] ?? 0
-            ];
-        }
+        // // Add the stats section
+        // $device['pnode_stats'] = null;
+        // if ($cached_status['status'] === 'Online' && $cached_status['cpu_load_avg'] !== null) {
+        //     $device['pnode_stats'] = [
+        //         'cpu_percent' => $cached_status['cpu_load_avg'],
+        //         'memory_percent' => $cached_status['memory_percent'],
+        //         'total_bytes_transferred' => $cached_status['total_bytes_transferred'] ?? 0,
+        //         'packets_received' => $cached_status['packets_received'] ?? 0,
+        //         'packets_sent' => $cached_status['packets_sent'] ?? 0
+        //     ];
+        // }
 
         $updated_devices[] = $device;
     }
