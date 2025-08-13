@@ -807,23 +807,23 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                             </span>
                         </div>
 
-                        <div><strong>Total Bytes:</strong>
-                            <span class="stat-value">
-                                ${formatBytes(stats.total_bytes_transferred)}
-                            </span>
-                        </div>
+                        // <div><strong>Total Bytes:</strong>
+                        //     <span class="stat-value">
+                        //         ${formatBytes(stats.total_bytes_transferred)}
+                        //     </span>
+                        // </div>
 
-                        <div><strong>Packets RX:</strong>
-                            <span class="stat-value">
-                                ${Number(stats.packets_received).toLocaleString()}
-                            </span>
-                        </div>
+                        // <div><strong>Packets RX:</strong>
+                        //     <span class="stat-value">
+                        //         ${Number(stats.packets_received).toLocaleString()}
+                        //     </span>
+                        // </div>
 
-                        <div><strong>Packets TX:</strong>
-                            <span class="stat-value">
-                                ${Number(stats.packets_sent).toLocaleString()}
-                            </span>
-                        </div>
+                        // <div><strong>Packets TX:</strong>
+                        //     <span class="stat-value">
+                        //         ${Number(stats.packets_sent).toLocaleString()}
+                        //     </span>
+                        // </div>
                     </div>
                 `;
             }
