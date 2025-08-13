@@ -146,7 +146,9 @@ function getLatestDeviceStatuses($pdo, $device_ids) {
             ) ranked
             WHERE rn = 1
         ");
+        error_log("getLatestDeviceStatuses: Query prepared, about to execute");
         $stmt->execute($device_ids);
+        error_log("getLatestDeviceStatuses: Query executed, about to fetch results");
         $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         // Index by device_id and calculate staleness
