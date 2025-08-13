@@ -12,7 +12,7 @@ if (!isset($_SESSION['user_id'])) {
 // Handle add device
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['action'] == 'add') {
     echo "<div style='background: #d4edda; border: 1px solid #c3e6cb; padding: 10px; margin: 10px 0;'>✅ ADD DEVICE HANDLER REACHED</div>";
-    
+
     // Check if required POST variables exist
     if (!isset($_POST['pnode_name']) || !isset($_POST['pnode_ip'])) {
         $error = "Missing required form data.";
@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Missing form data');
     } else {
         echo "<div style='background: #d1ecf1; border: 1px solid #bee5eb; padding: 10px; margin: 10px 0;'>✅ POST DATA EXISTS</div>";
-        
+
         $pnode_name = trim($_POST['pnode_name']);
         $pnode_ip = trim($_POST['pnode_ip']);
 
@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         } else {
             try {
                 echo "<div style='background: #d1ecf1; border: 1px solid #bee5eb; padding: 10px; margin: 10px 0;'>✅ VALIDATION PASSED - CHECKING DUPLICATES</div>";
-                
+
                 $stmt = $pdo->prepare("SELECT COUNT(*) FROM devices WHERE username = :username AND pnode_name = :pnode_name");
                 $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
                 $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Duplicate device name');
                 } else {
                     echo "<div style='background: #d4edda; border: 1px solid #c3e6cb; padding: 10px; margin: 10px 0;'>✅ INSERTING DEVICE</div>";
-                    
+
                     // Add device
                     $stmt = $pdo->prepare("INSERT INTO devices (username, pnode_name, pnode_ip, registration_date) VALUES (:username, :pnode_name, :pnode_ip, NOW())");
                     $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
@@ -58,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     $stmt->execute();
 
                     echo "<div style='background: #d4edda; border: 1px solid #c3e6cb; padding: 10px; margin: 10px 0;'>✅ DEVICE INSERTED - REDIRECTING</div>";
-                    
+
                     logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_success', "Device: $pnode_name, IP: $pnode_ip");
                     header("Location: dashboard.php");
                     exit();
@@ -513,25 +513,25 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                                         <?php echo number_format($stats['cpu_percent'], 1); ?>%
                                                     </span>
                                                 </div>
-                                                
+
                                                 <div><strong>RAM:</strong>
                                                     <span class="stat-value stat-memory" data-value="<?php echo $stats['memory_percent']; ?>">
                                                         <?php echo number_format($stats['memory_percent'], 1); ?>%
                                                     </span>
                                                 </div>
-                                                
+
                                                 <div><strong>Total Bytes:</strong>
                                                     <span class="stat-value">
                                                         <?php echo formatBytesForDisplay($stats['total_bytes_transferred']); ?>
                                                     </span>
                                                 </div>
-                                                
+
                                                 <div><strong>Packets RX:</strong>
                                                     <span class="stat-value">
                                                         <?php echo number_format($stats['packets_received']); ?>
                                                     </span>
                                                 </div>
-                                                
+
                                                 <div><strong>Packets TX:</strong>
                                                     <span class="stat-value">
                                                         <?php echo number_format($stats['packets_sent']); ?>
@@ -539,7 +539,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                                 </div>
                                             </div>
                                         <?php endif; ?>
-                                    </td>                                  
+                                    </td>
                                     <td class="last-check-col" id="lastcheck-<?php echo $device['id']; ?>">
                                         <?php if ($device['last_check']): ?>
                                             <div class="<?php echo $device['status_stale'] ? 'status-stale' : 'status-fresh'; ?>">
@@ -587,8 +587,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
         class DeviceStatusUpdater {
             constructor() {
                 this.devices = [];
-                this.updateInterval = 30000; // 30 seconds per device
-                this.staggerDelay = 2000; // 2 seconds between device updates
+                this.updateInterval = 60000; // 60 seconds per device
                 this.deviceStatuses = new Map(); // Track current status of each device
                 this.init();
             }
@@ -617,6 +616,9 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                 });
 
                 if (this.devices.length > 0) {
+                    // Calculate dynamic stagger delay: spread updates evenly across the 30-second window
+                    this.staggerDelay = this.updateInterval / this.devices.length;
+
                     // Start staggered updates
                     this.startStaggeredUpdates();
                 }
@@ -764,7 +766,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                 // Update pNode stats (7th column) - NEW
                 const statsCell = row.cells[6];
                 this.updateStatsCell(statsCell, data);
-                
+
                 // Update last checked (8th column)
                 const lastCheckedCell = row.cells[7];
                 this.updateLastCheckedCell(lastCheckedCell, data);
@@ -783,7 +785,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
 
                 // Check if we have stats data in the cached status
                 const stats = data.pnode_stats;
-                
+
                 if (!stats || stats.cpu_percent === null) {
                     cell.innerHTML = '<span class="stats-no-data">No stats data</span>';
                     return;
@@ -792,12 +794,12 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                 // Format bytes using the same function as PHP
                 const formatBytes = (bytes) => {
                     if (!bytes || bytes < 0) return '0 B';
-                    
+
                     const units = ['B', 'KiB', 'MiB', 'GiB', 'TiB'];
                     let size = Math.max(bytes, 0);
                     const pow = Math.floor(Math.log(size) / Math.log(1024));
                     const finalPow = Math.min(pow, units.length - 1);
-                    
+
                     size /= Math.pow(1024, finalPow);
                     return Math.round(size * 10) / 10 + ' ' + units[finalPow];
                 };
@@ -810,25 +812,25 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                 ${Number(stats.cpu_percent).toFixed(1)}%
                             </span>
                         </div>
-                        
+
                         <div><strong>RAM:</strong>
                             <span class="stat-value stat-memory" data-value="${stats.memory_percent}">
                                 ${Number(stats.memory_percent).toFixed(1)}%
                             </span>
                         </div>
-                        
+
                         <div><strong>Total Bytes:</strong>
                             <span class="stat-value">
                                 ${formatBytes(stats.total_bytes_transferred)}
                             </span>
                         </div>
-                        
+
                         <div><strong>Packets RX:</strong>
                             <span class="stat-value">
                                 ${Number(stats.packets_received).toLocaleString()}
                             </span>
                         </div>
-                        
+
                         <div><strong>Packets TX:</strong>
                             <span class="stat-value">
                                 ${Number(stats.packets_sent).toLocaleString()}
@@ -837,7 +839,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                     </div>
                 `;
             }
-            
+
             updateConnectivityCell(cell, data) {
                 const statusClass = `status-${data.status.toLowerCase().replace(' ', '-')}`;
 
@@ -1092,7 +1094,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
             const form = document.getElementById('editForm');
             const nameField = document.getElementById('edit-pnode-name');
             const ipField = document.getElementById('edit-pnode-ip');
-            
+
             // Debug: Check if form elements exist
             if (!form || !nameField || !ipField) {
                 console.error('Edit form elements not found:', { form, nameField, ipField });
@@ -1364,7 +1366,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
 
             buttons.forEach(btn => btn.disabled = true);
             if (closeBtn) closeBtn.style.pointerEvents = 'none';
-            
+
             // Make form inputs readonly instead of disabled (so they still submit)
             const inputs = modal.querySelectorAll('input[type="text"]');
             inputs.forEach(input => {
@@ -1384,7 +1386,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
 
             buttons.forEach(btn => btn.disabled = false);
             if (closeBtn) closeBtn.style.pointerEvents = 'auto';
-            
+
             // Remove readonly from inputs
             const inputs = modal.querySelectorAll('input[type="text"]');
             inputs.forEach(input => {
