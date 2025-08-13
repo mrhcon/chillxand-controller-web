@@ -791,7 +791,7 @@ button:disabled {
     max-width: 200px;
     text-align: center;
     padding: 8px;
-    font-size: 12px;
+    /* font-size: 12px; */
 }
 
 /* Last Checked Column */
