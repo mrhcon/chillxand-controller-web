@@ -845,6 +845,30 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                     return Math.round(size * 10) / 10 + ' ' + units[finalPow];
                 };
 
+                // Format uptime for display
+                const formatUptime = (seconds) => {
+                    if (!seconds || seconds <= 0) return '0m';
+                    
+                    const days = Math.floor(seconds / 86400);
+                    const hours = Math.floor((seconds % 86400) / 3600);
+                    const minutes = Math.floor((seconds % 3600) / 60);
+                    
+                    if (days > 0) {
+                        return `${days}d ${hours}h`;
+                    } else if (hours > 0) {
+                        return `${hours}h ${minutes}m`;
+                    } else {
+                        return `${minutes}m`;
+                    }
+                };
+
+                // Calculate total pages from file size (1MB page size)
+                const formatTotalPages = (fileSize) => {
+                    if (!fileSize || fileSize <= 0) return '0';
+                    const totalPages = Math.ceil(fileSize / (1024 * 1024)); // 1MB page size
+                    return Number(totalPages).toLocaleString();
+                };                
+
                 // Build the stats HTML with the same structure as PHP
                 cell.innerHTML = `
                     <div class="stats-info">
