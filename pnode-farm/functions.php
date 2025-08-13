@@ -123,29 +123,6 @@ function getLatestDeviceStatuses($pdo, $device_ids) {
 
     try {
         $placeholders = str_repeat('?,', count($device_ids) - 1) . '?';
-
-        // Get latest status for each device using a window function
-        // $stmt = $pdo->prepare("
-        //     SELECT device_id, status, check_time, response_time, consecutive_failures,
-        //            health_status, atlas_registered, pod_status, xandminer_status, xandminerd_status,
-        //            cpu_load_avg, memory_percent, memory_total_bytes, memory_used_bytes,
-        //            server_ip, server_hostname, chillxand_version,
-        //            pod_version, xandminer_version, xandminerd_version,
-        //            error_message, check_method, health_json,
-        //            TIMESTAMPDIFF(MINUTE, check_time, NOW()) as age_minutes
-        //     FROM (
-        //         SELECT device_id, status, check_time, response_time, consecutive_failures,
-        //                health_status, atlas_registered, pod_status, xandminer_status, xandminerd_status,
-        //                cpu_load_avg, memory_percent, memory_total_bytes, memory_used_bytes,
-        //                server_ip, server_hostname, chillxand_version,
-        //                pod_version, xandminer_version, xandminerd_version,
-        //                error_message, check_method, health_json,
-        //                ROW_NUMBER() OVER (PARTITION BY device_id ORDER BY check_time DESC) as rn
-        //         FROM device_status_log
-        //         WHERE device_id IN ($placeholders)
-        //     ) ranked
-        //     WHERE rn = 1
-        // ");
         $stmt = $pdo->prepare("
             SELECT dsl.device_id, dsl.status, dsl.check_time, dsl.response_time, dsl.consecutive_failures,
                 dsl.health_status, dsl.atlas_registered, dsl.pod_status, dsl.xandminer_status, dsl.xandminerd_status,
@@ -161,7 +138,7 @@ function getLatestDeviceStatuses($pdo, $device_ids) {
                 WHERE device_id IN ($placeholders)
                 GROUP BY device_id
             ) latest ON dsl.device_id = latest.device_id AND dsl.check_time = latest.max_check_time
-        ");        
+        ");
         error_log("getLatestDeviceStatuses: Query prepared, about to execute");
         $stmt->execute($device_ids);
         error_log("getLatestDeviceStatuses: Query executed, about to fetch results");

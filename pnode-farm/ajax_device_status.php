@@ -48,13 +48,13 @@ try {
     $stmt = $pdo->prepare("SELECT id, pnode_name, pnode_ip, username FROM devices WHERE id = ?");
     $stmt->execute([$device_id]);
     $device = $stmt->fetch(PDO::FETCH_ASSOC);
-    
+
     if (!$device) {
         http_response_code(404);
         echo json_encode(['error' => 'Device not found']);
         exit();
     }
-    
+
     // Get latest status for this device
     $cached_statuses = getLatestDeviceStatuses($pdo, [$device_id]);
     $cached_status = $cached_statuses[$device_id] ?? [
@@ -62,10 +62,10 @@ try {
         'is_stale' => true,
         'error_message' => 'Device has not been checked yet'
     ];
-    
+
     // Parse health data
     $summary = parseCachedDeviceHealth($cached_status);
-    
+
     // Determine overall status (must match the logic from dashboard.php and devices.php)
     $overall_status = 'Unknown';
     if ($cached_status['status'] === 'Online') {
@@ -81,7 +81,7 @@ try {
     } else {
         $overall_status = $cached_status['status'];
     }
-    
+
     // Build pNode stats from cached data (no additional DB queries!)
     $pnode_stats = null;
     if ($cached_status['status'] === 'Online' && $cached_status['cpu_load_avg'] !== null) {
@@ -92,7 +92,7 @@ try {
             'packets_received' => $cached_status['packets_received'] ?? 0,
             'packets_sent' => $cached_status['packets_sent'] ?? 0
         ];
-    }     
+    }
 
     // Return JSON response
     echo json_encode([
@@ -107,10 +107,10 @@ try {
         'consecutive_failures' => $cached_status['consecutive_failures'],
         'health_status' => $cached_status['health_status'],
         'summary' => $summary,
-        'pnode_stats' => $pnode_stats, 
+        'pnode_stats' => $pnode_stats,
         'timestamp' => date('M j, H:i', time())
     ]);
-    
+
 } catch (PDOException $e) {
     http_response_code(500);
     echo json_encode(['error' => 'Database error: ' . $e->getMessage()]);

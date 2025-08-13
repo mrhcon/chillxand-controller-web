@@ -96,10 +96,8 @@ try {
 
     // Get latest statuses for all devices at once (super efficient!)
     $device_ids = array_column($devices, 'id');
-    error_log("About to call getLatestDeviceStatuses with " . count($device_ids) . " device IDs");
     $cached_statuses = getLatestDeviceStatuses($pdo, $device_ids);
-    error_log("getLatestDeviceStatuses completed, got " . count($cached_statuses) . " statuses");
-    
+
     // Add cached status and health data to each device
     $updated_devices = [];
     $summaries = [];
@@ -169,17 +167,17 @@ try {
         $stmt->execute();
         $device['total_logs'] = $stmt->fetchColumn();
 
-        // // Add the stats section
+        // Add the stats section
         $device['pnode_stats'] = null;
-        // if ($cached_status['status'] === 'Online' && $cached_status['cpu_load_avg'] !== null) {
-        //     $device['pnode_stats'] = [
-        //         'cpu_percent' => $cached_status['cpu_load_avg'],
-        //         'memory_percent' => $cached_status['memory_percent'],
-        //         'total_bytes_transferred' => $cached_status['total_bytes_transferred'] ?? 0,
-        //         'packets_received' => $cached_status['packets_received'] ?? 0,
-        //         'packets_sent' => $cached_status['packets_sent'] ?? 0
-        //     ];
-        // }
+        if ($cached_status['status'] === 'Online' && $cached_status['cpu_load_avg'] !== null) {
+            $device['pnode_stats'] = [
+                'cpu_percent' => $cached_status['cpu_load_avg'],
+                'memory_percent' => $cached_status['memory_percent'],
+                'total_bytes_transferred' => $cached_status['total_bytes_transferred'] ?? 0,
+                'packets_received' => $cached_status['packets_received'] ?? 0,
+                'packets_sent' => $cached_status['packets_sent'] ?? 0
+            ];
+        }
 
         $updated_devices[] = $device;
     }
@@ -701,7 +699,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                             </div>
                                         <?php endif; ?>
                                     </td>
-                                    <td class="last-check-col" id="lastcheck-<?php echo $device['id']; ?>">                                   
+                                    <td class="last-check-col" id="lastcheck-<?php echo $device['id']; ?>">
                                    <td class="last-check-col" id="lastcheck-<?php echo $device['id']; ?>">
                                        <?php if ($device['last_check']): ?>
                                            <div class="<?php echo $device['status_stale'] ? 'status-stale' : 'status-fresh'; ?>">
@@ -1617,7 +1615,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         `;
                     }
 
-                    // Update stats if available  
+                    // Update stats if available
                     const statsElement = versionsElement ? versionsElement.nextElementSibling : null;
                     if (data.pnode_stats && statsElement) {
                         const stats = data.pnode_stats;
