@@ -240,10 +240,10 @@ try {
 
         // Add the stats section
         $device['pnode_stats'] = null;
-        if ($cached_status['status'] === 'Online' && $cached_status['cpu_load_avg'] !== null) {
+        if ($cached_status['status'] === 'Online' && $cached_status['stats_cpu_percent'] !== null) {
             $device['pnode_stats'] = [
-                'cpu_percent' => $cached_status['cpu_load_avg'],
-                'memory_percent' => $cached_status['memory_percent'],
+                'cpu_percent' => $cached_status['stats_cpu_percent'],
+                'memory_percent' => (($cached_status['stats_ram_used'] ?? 0) / max($cached_status['stats_ram_total'] ?? 1, 1)) * 100,
                 'total_bytes_transferred' => $cached_status['stats_total_bytes'] ?? 0,
                 'total_pages' => $cached_status['stats_total_pages'] ?? 0
             ];
