@@ -245,7 +245,15 @@ try {
                 'cpu_percent' => $cached_status['stats_cpu_percent'],
                 'memory_percent' => (($cached_status['stats_ram_used'] ?? 0) / max($cached_status['stats_ram_total'] ?? 1, 1)) * 100,
                 'total_bytes_transferred' => $cached_status['stats_total_bytes'] ?? 0,
-                'total_pages' => $cached_status['stats_total_pages'] ?? 0
+                'total_pages' => $cached_status['stats_total_pages'] ?? 0,
+                'current_index' => $cached_status['stats_current_index'] ?? 0,
+                'ram_used' => $cached_status['stats_ram_used'] ?? 0,
+                'ram_total' => $cached_status['stats_ram_total'] ?? 0,
+                'uptime' => $cached_status['stats_uptime'] ?? 0,
+                'active_streams' => $cached_status['stats_active_streams'] ?? 0,
+                'file_size' => $cached_status['stats_file_size'] ?? 0,
+                'packets_received' => $cached_status['stats_packets_received'] ?? 0,
+                'packets_sent' => $cached_status['stats_packets_sent'] ?? 0
             ];
         }
 
