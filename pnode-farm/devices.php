@@ -167,6 +167,18 @@ try {
         $stmt->execute();
         $device['total_logs'] = $stmt->fetchColumn();
 
+        // Add the stats section
+        $device['pnode_stats'] = null;
+        if ($cached_status['status'] === 'Online' && $cached_status['cpu_load_avg'] !== null) {
+            $device['pnode_stats'] = [
+                'cpu_percent' => $cached_status['cpu_load_avg'],
+                'memory_percent' => $cached_status['memory_percent'],
+                'total_bytes_transferred' => $cached_status['total_bytes_transferred'] ?? 0,
+                'packets_received' => $cached_status['packets_received'] ?? 0,
+                'packets_sent' => $cached_status['packets_sent'] ?? 0
+            ];
+        }
+
         $updated_devices[] = $device;
     }
     $devices = $updated_devices;
@@ -564,6 +576,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                     <span class="sort-indicator"></span>
                                 </th>
                                 <th>Versions</th>
+                                <th>pNode Stats</th>
                                 <th>Last Checked</th>
                                 <th>Actions</th>
                             </tr>
@@ -645,7 +658,48 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                                </div>
                                            </div>
                                        <?php endif; ?>
-                                   </td>
+                                    </td>
+                                    <td class="stats-column" id="stats-<?php echo $device['id']; ?>">
+                                        <?php if ($device['status'] !== 'Online'): ?>
+                                            <span class="stats-unavailable">Stats unavailable</span>
+                                        <?php elseif ($device['pnode_stats'] === null): ?>
+                                            <span class="stats-no-data">No stats data</span>
+                                        <?php else: ?>
+                                            <?php $stats = $device['pnode_stats']; ?>
+                                            <div class="stats-info">
+                                                <div><strong>CPU:</strong>
+                                                    <span class="stat-value stat-cpu" data-value="<?php echo $stats['cpu_percent']; ?>">
+                                                        <?php echo number_format($stats['cpu_percent'], 1); ?>%
+                                                    </span>
+                                                </div>
+
+                                                <div><strong>RAM:</strong>
+                                                    <span class="stat-value stat-memory" data-value="<?php echo $stats['memory_percent']; ?>">
+                                                        <?php echo number_format($stats['memory_percent'], 1); ?>%
+                                                    </span>
+                                                </div>
+
+                                                <div><strong>Total Bytes:</strong>
+                                                    <span class="stat-value">
+                                                        <?php echo formatBytesForDisplay($stats['total_bytes_transferred']); ?>
+                                                    </span>
+                                                </div>
+
+                                                <div><strong>Packets RX:</strong>
+                                                    <span class="stat-value">
+                                                        <?php echo number_format($stats['packets_received']); ?>
+                                                    </span>
+                                                </div>
+
+                                                <div><strong>Packets TX:</strong>
+                                                    <span class="stat-value">
+                                                        <?php echo number_format($stats['packets_sent']); ?>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="last-check-col" id="lastcheck-<?php echo $device['id']; ?>">                                   
                                    <td class="last-check-col" id="lastcheck-<?php echo $device['id']; ?>">
                                        <?php if ($device['last_check']): ?>
                                            <div class="<?php echo $device['status_stale'] ? 'status-stale' : 'status-fresh'; ?>">
@@ -1250,8 +1304,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 const versionsCell = row.cells[5];
                 this.updateVersionsCell(versionsCell, data);
 
-                // Update last checked (7th column)
-                const lastCheckedCell = row.cells[6];
+                // Update pNode stats (7th column) - NEW
+                const statsCell = row.cells[6];
+                this.updateStatsCell(statsCell, data);
+
+                // Update last checked (8th column)
+                const lastCheckedCell = row.cells[7];
                 this.updateLastCheckedCell(lastCheckedCell, data);
 
                 // Remove highlight after 2 seconds
@@ -1268,6 +1326,69 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         ${data.status}
                     </span>
                     ${data.consecutive_failures > 0 ? `<div class="device-details" style="color: #dc3545;">Failures: ${data.consecutive_failures}</div>` : ''}
+                `;
+            }
+
+            updateStatsCell(cell, data) {
+                if (data.status !== 'Online') {
+                    cell.innerHTML = '<span class="stats-unavailable">Stats unavailable</span>';
+                    return;
+                }
+
+                // Check if we have stats data in the cached status
+                const stats = data.pnode_stats;
+
+                if (!stats || stats.cpu_percent === null) {
+                    cell.innerHTML = '<span class="stats-no-data">No stats data</span>';
+                    return;
+                }
+
+                // Format bytes using the same function as PHP
+                const formatBytes = (bytes) => {
+                    if (!bytes || bytes < 0) return '0 B';
+
+                    const units = ['B', 'KiB', 'MiB', 'GiB', 'TiB'];
+                    let size = Math.max(bytes, 0);
+                    const pow = Math.floor(Math.log(size) / Math.log(1024));
+                    const finalPow = Math.min(pow, units.length - 1);
+
+                    size /= Math.pow(1024, finalPow);
+                    return Math.round(size * 10) / 10 + ' ' + units[finalPow];
+                };
+
+                // Build the stats HTML with the same structure as PHP
+                cell.innerHTML = `
+                    <div class="stats-info">
+                        <div><strong>CPU:</strong>
+                            <span class="stat-value stat-cpu" data-value="${stats.cpu_percent}">
+                                ${Number(stats.cpu_percent).toFixed(1)}%
+                            </span>
+                        </div>
+
+                        <div><strong>RAM:</strong>
+                            <span class="stat-value stat-memory" data-value="${stats.memory_percent}">
+                                ${Number(stats.memory_percent).toFixed(1)}%
+                            </span>
+                        </div>
+
+                        <div><strong>Total Bytes:</strong>
+                            <span class="stat-value">
+                                ${formatBytes(stats.total_bytes_transferred)}
+                            </span>
+                        </div>
+
+                        <div><strong>Packets RX:</strong>
+                            <span class="stat-value">
+                                ${Number(stats.packets_received).toLocaleString()}
+                            </span>
+                        </div>
+
+                        <div><strong>Packets TX:</strong>
+                            <span class="stat-value">
+                                ${Number(stats.packets_sent).toLocaleString()}
+                            </span>
+                        </div>
+                    </div>
                 `;
             }
 
@@ -1492,6 +1613,55 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                 </div>
                             </div>
                         `;
+                    }
+
+                    // Update stats if available  
+                    const statsElement = versionsElement ? versionsElement.nextElementSibling : null;
+                    if (data.pnode_stats && statsElement) {
+                        const stats = data.pnode_stats;
+                        if (data.status === 'Online' && stats.cpu_percent !== null) {
+                            const formatBytes = (bytes) => {
+                                if (!bytes || bytes < 0) return '0 B';
+                                const units = ['B', 'KiB', 'MiB', 'GiB', 'TiB'];
+                                let size = Math.max(bytes, 0);
+                                const pow = Math.floor(Math.log(size) / Math.log(1024));
+                                const finalPow = Math.min(pow, units.length - 1);
+                                size /= Math.pow(1024, finalPow);
+                                return Math.round(size * 10) / 10 + ' ' + units[finalPow];
+                            };
+
+                            statsElement.innerHTML = `
+                                <div class="stats-info">
+                                    <div><strong>CPU:</strong>
+                                        <span class="stat-value stat-cpu" data-value="${stats.cpu_percent}">
+                                            ${Number(stats.cpu_percent).toFixed(1)}%
+                                        </span>
+                                    </div>
+                                    <div><strong>RAM:</strong>
+                                        <span class="stat-value stat-memory" data-value="${stats.memory_percent}">
+                                            ${Number(stats.memory_percent).toFixed(1)}%
+                                        </span>
+                                    </div>
+                                    <div><strong>Total Bytes:</strong>
+                                        <span class="stat-value">
+                                            ${formatBytes(stats.total_bytes_transferred)}
+                                        </span>
+                                    </div>
+                                    <div><strong>Packets RX:</strong>
+                                        <span class="stat-value">
+                                            ${Number(stats.packets_received).toLocaleString()}
+                                        </span>
+                                    </div>
+                                    <div><strong>Packets TX:</strong>
+                                        <span class="stat-value">
+                                            ${Number(stats.packets_sent).toLocaleString()}
+                                        </span>
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            statsElement.innerHTML = '<span class="stats-unavailable">Stats unavailable</span>';
+                        }
                     }
 
                     // After updating the versions element, also update our tracked versions
