@@ -67,7 +67,7 @@ try {
     $stats_packets_sent = null;
     $stats_packets_received = null;
     $stats_active_streams = null;
-    $stats_file_size = null;    
+    $stats_file_size = null;
 
     // Test connectivity
     $ip = $device['pnode_ip'];
@@ -151,7 +151,7 @@ try {
             ':stats_packets_sent' => null,
             ':stats_packets_received' => null,
             ':stats_active_streams' => null,
-            ':stats_file_size' => null            
+            ':stats_file_size' => null
         ]);
 
         // Get cached data to return
@@ -439,6 +439,23 @@ try {
         }
     }
 
+    // Parse stats data from health response
+    if (isset($health_data['stats']) && is_array($health_data['stats'])) {
+        $stats = $health_data['stats'];
+        $stats_current_index = $stats['current_index'] ?? null;
+        $stats_total_pages = $stats['total_pages'] ?? null;
+        $stats_last_updated = $stats['last_updated'] ?? null;
+        $stats_total_bytes = $stats['total_bytes'] ?? null;
+        $stats_cpu_percent = $stats['cpu_percent'] ?? null;
+        $stats_ram_used = $stats['ram_used'] ?? null;
+        $stats_ram_total = $stats['ram_total'] ?? null;
+        $stats_uptime = $stats['uptime'] ?? null;
+        $stats_packets_sent = $stats['packets_sent'] ?? null;
+        $stats_packets_received = $stats['packets_received'] ?? null;
+        $stats_active_streams = $stats['active_streams'] ?? null;
+        $stats_file_size = $stats['file_size'] ?? null;
+    }
+
     // Insert the complete record
     $stmt = $pdo->prepare("
         INSERT INTO device_status_log (
@@ -486,7 +503,19 @@ try {
         ':xandminer_version' => $xandminer_version,
         ':xandminerd_version' => $xandminerd_version,
         ':health_json' => json_encode($health_data),
-        ':consecutive_failures' => 0
+        ':consecutive_failures' => 0,
+        ':stats_current_index' => $stats_current_index,
+        ':stats_total_pages' => $stats_total_pages,
+        ':stats_last_updated' => $stats_last_updated,
+        ':stats_total_bytes' => $stats_total_bytes,
+        ':stats_cpu_percent' => $stats_cpu_percent,
+        ':stats_ram_used' => $stats_ram_used,
+        ':stats_ram_total' => $stats_ram_total,
+        ':stats_uptime' => $stats_uptime,
+        ':stats_packets_sent' => $stats_packets_sent,
+        ':stats_packets_received' => $stats_packets_received,
+        ':stats_active_streams' => $stats_active_streams,
+        ':stats_file_size' => $stats_file_size
     ]);
 
     // Get the cached status data to return the same info as the main page
@@ -554,7 +583,7 @@ try {
             'packets_received' => $stats['packets_received'] ?? 0,
             'packets_sent' => $stats['packets_sent'] ?? 0
         ];
-        
+
         // Calculate memory percentage
         if ($stats['ram_used'] && $stats['ram_total'] && $stats['ram_total'] > 0) {
             $pnode_stats['memory_percent'] = ($stats['ram_used'] / $stats['ram_total']) * 100;
