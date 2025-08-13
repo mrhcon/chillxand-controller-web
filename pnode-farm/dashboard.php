@@ -794,8 +794,8 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                 const versionsCell = row.cells[5];
                 this.updateVersionsCell(versionsCell, data);
 
-                // Update last checked (7th column)
-                const lastCheckedCell = row.cells[6];
+                // Update last checked (8th column)
+                const lastCheckedCell = row.cells[7];
                 this.updateLastCheckedCell(lastCheckedCell, data);
 
                 // Remove highlight after 2 seconds

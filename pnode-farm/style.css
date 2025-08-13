@@ -1798,13 +1798,25 @@ details summary {
     color: #007bff;
 }
 
-/* Table header adjustment */
+/* Table header adjustments for new column positions */
 .device-table th:nth-child(7) {
     width: 160px;
     max-width: 160px;
     text-align: center;
     padding: 8px;
     font-size: 12px;
+}
+
+/* Last Checked column is now 8th column */
+.device-table th:nth-child(8) {
+    text-align: center;
+    padding: 8px;
+}
+
+/* Actions column is now 9th column */
+.device-table th:nth-child(9) {
+    text-align: center;
+    padding: 8px;
 }
 
 /* Ensure table accommodates new column */
