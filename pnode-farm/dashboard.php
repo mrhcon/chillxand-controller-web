@@ -542,37 +542,38 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                         <?php else: ?>
                                             <?php $stats = $device['pnode_stats']; ?>
                                             <div class="stats-info">
-                                                <div class="stat-row">
-                                                    <span class="stat-label">CPU:</span>
+                                                <div><strong>CPU:</strong>
                                                     <span class="stat-value stat-cpu" data-value="<?php echo $stats['cpu_percent']; ?>">
                                                         <?php echo number_format($stats['cpu_percent'], 1); ?>%
                                                     </span>
                                                 </div>
                                                 
-                                                <div class="stat-row">
-                                                    <span class="stat-label">RAM:</span>
+                                                <div><strong>RAM:</strong>
                                                     <span class="stat-value stat-memory" data-value="<?php echo $stats['memory_percent']; ?>">
                                                         <?php echo number_format($stats['memory_percent'], 1); ?>%
                                                     </span>
                                                 </div>
                                                 
-                                                <div class="stat-row">
-                                                    <span class="stat-label">Total Bytes:</span>
-                                                    <span class="stat-value"><?php echo formatBytesForDisplay($stats['total_bytes_transferred']); ?></span>
+                                                <div><strong>Total Bytes:</strong>
+                                                    <span class="stat-value">
+                                                        <?php echo formatBytesForDisplay($stats['total_bytes_transferred']); ?>
+                                                    </span>
                                                 </div>
                                                 
-                                                <div class="stat-row">
-                                                    <span class="stat-label">Packets RX:</span>
-                                                    <span class="stat-value"><?php echo number_format($stats['packets_received']); ?></span>
+                                                <div><strong>Packets RX:</strong>
+                                                    <span class="stat-value">
+                                                        <?php echo number_format($stats['packets_received']); ?>
+                                                    </span>
                                                 </div>
                                                 
-                                                <div class="stat-row">
-                                                    <span class="stat-label">Packets TX:</span>
-                                                    <span class="stat-value"><?php echo number_format($stats['packets_sent']); ?></span>
+                                                <div><strong>Packets TX:</strong>
+                                                    <span class="stat-value">
+                                                        <?php echo number_format($stats['packets_sent']); ?>
+                                                    </span>
                                                 </div>
                                             </div>
                                         <?php endif; ?>
-                                    </td>                                    
+                                    </td>                                  
                                     <td class="last-check-col" id="lastcheck-<?php echo $device['id']; ?>">
                                         <?php if ($device['last_check']): ?>
                                             <div class="<?php echo $device['status_stale'] ? 'status-stale' : 'status-fresh'; ?>">
