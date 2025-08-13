@@ -537,7 +537,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                                     <span class="stat-value">
                                                         <?php echo number_format($stats['active_streams'] ?? 0); ?>
                                                     </span>
-                                                </div>                                                
+                                                </div>
 
                                                 <div><strong>Pages Used:</strong>
                                                     <span class="stat-value">
@@ -547,17 +547,17 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
 
                                                 <div><strong>Total Pages:</strong>
                                                     <span class="stat-value">
-                                                        <?php 
+                                                        <?php
                                                         $fileSize = $stats['file_size'] ?? 0;
                                                         $totalPages = $fileSize > 0 ? ceil($fileSize / (1024 * 1024)) : 0; // 1MB page size
                                                         echo number_format($totalPages);
                                                         ?>
                                                     </span>
-                                                </div>       
-                                                
+                                                </div>
+
                                                 <div><strong>Uptime:</strong>
                                                     <span class="stat-value">
-                                                        <?php 
+                                                        <?php
                                                         $uptime = $stats['uptime'] ?? 0;
                                                         if ($uptime > 0) {
                                                             $days = floor($uptime / 86400);
@@ -575,7 +575,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                                         }
                                                         ?>
                                                     </span>
-                                                </div>                                                
+                                                </div>
                                             </div>
                                         <?php endif; ?>
                                     </td>
@@ -812,7 +812,6 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
 
                 // Remove highlight after 2 seconds
                 setTimeout(() => {
-                    console.log(`Removing highlight for device ${device.id}`);
                     row.style.backgroundColor = '';
                     row.style.transition = '';
                 }, 2000);
@@ -848,11 +847,11 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                 // Format uptime for display
                 const formatUptime = (seconds) => {
                     if (!seconds || seconds <= 0) return '0m';
-                    
+
                     const days = Math.floor(seconds / 86400);
                     const hours = Math.floor((seconds % 86400) / 3600);
                     const minutes = Math.floor((seconds % 3600) / 60);
-                    
+
                     if (days > 0) {
                         return `${days}d ${hours}h`;
                     } else if (hours > 0) {
@@ -867,7 +866,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                     if (!fileSize || fileSize <= 0) return '0';
                     const totalPages = Math.ceil(fileSize / (1024 * 1024)); // 1MB page size
                     return Number(totalPages).toLocaleString();
-                };                
+                };
 
                 // Build the stats HTML with the same structure as PHP
                 cell.innerHTML = `
@@ -906,13 +905,13 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                             <span class="stat-value">
                                 ${formatTotalPages(stats.file_size || 0)}
                             </span>
-                        </div>                           
+                        </div>
 
                         <div><strong>Uptime:</strong>
                             <span class="stat-value">
                                 ${formatUptime(stats.uptime || 0)}
                             </span>
-                        </div>                     
+                        </div>
                     </div>
                 `;
             }
