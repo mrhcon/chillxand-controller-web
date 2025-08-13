@@ -245,8 +245,7 @@ try {
                 'cpu_percent' => $cached_status['cpu_load_avg'],
                 'memory_percent' => $cached_status['memory_percent'],
                 'total_bytes_transferred' => $cached_status['total_bytes_transferred'] ?? 0,
-                'packets_received' => $cached_status['packets_received'] ?? 0,
-                'packets_sent' => $cached_status['packets_sent'] ?? 0
+                'stats_total_pages' => $cached_status['stats_total_pages'] ?? 0
             ];
         }
 
@@ -520,11 +519,17 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                                     </span>
                                                 </div>
 
-                                                <!-- <div><strong>Total Bytes:</strong> -->
-                                                    <!-- <span class="stat-value"> -->
-                                                        <!-- <?php echo formatBytesForDisplay($stats['total_bytes_transferred']); ?> -->
-                                                    <!-- </span> -->
-                                                <!-- </div> -->
+                                                <div><strong>Total Bytes:</strong>
+                                                    <span class="stat-value">
+                                                        <?php echo formatBytesForDisplay($stats['total_bytes_transferred']); ?>
+                                                    </span>
+                                                </div>
+
+                                                <div><strong>Pages Used:</strong>
+                                                    <span class="stat-value">
+                                                        <?php echo formatBytesForDisplay($stats['stats_total_pages']); ?>
+                                                    </span>
+                                                </div>
                                             </div>
                                         <?php endif; ?>
                                     </td>
@@ -807,23 +812,17 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                             </span>
                         </div>
 
-                        // <div><strong>Total Bytes:</strong>
-                        //     <span class="stat-value">
-                        //         ${formatBytes(stats.total_bytes_transferred)}
-                        //     </span>
-                        // </div>
+                        <div><strong>Total Bytes:</strong>
+                            <span class="stat-value">
+                                ${formatBytes(stats.total_bytes_transferred)}
+                            </span>
+                        </div>
 
-                        // <div><strong>Packets RX:</strong>
-                        //     <span class="stat-value">
-                        //         ${Number(stats.packets_received).toLocaleString()}
-                        //     </span>
-                        // </div>
-
-                        // <div><strong>Packets TX:</strong>
-                        //     <span class="stat-value">
-                        //         ${Number(stats.packets_sent).toLocaleString()}
-                        //     </span>
-                        // </div>
+                        <div><strong>Pages Used:</strong>
+                            <span class="stat-value">
+                                ${formatBytes(stats.stats_total_pages)}
+                            </span>
+                        </div>
                     </div>
                 `;
             }
