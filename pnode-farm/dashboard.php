@@ -238,6 +238,52 @@ try {
         $device['consecutive_failures'] = $cached_status['consecutive_failures'];
         $device['health_status'] = $cached_status['health_status'];
 
+        // ADD THIS NEW SECTION - Fetch latest pNode stats from database
+        $device['pnode_stats'] = null;
+        try {
+            $stmt = $pdo->prepare("
+                SELECT 
+                    cpu_load_avg,
+                    memory_percent,
+                    health_json
+                FROM device_status_log 
+                WHERE device_id = :device_id 
+                AND health_json IS NOT NULL
+                ORDER BY check_time DESC 
+                LIMIT 1
+            ");
+            $stmt->bindValue(':device_id', $device_id, PDO::PARAM_INT);
+            $stmt->execute();
+            $latest_stats = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($latest_stats) {
+                // Parse network data from health_json
+                $total_bytes_transferred = 0;
+                $packets_received = 0;
+                $packets_sent = 0;
+                
+                if ($latest_stats['health_json']) {
+                    $health_json = json_decode($latest_stats['health_json'], true);
+                    if ($health_json && isset($health_json['checks']['system:network'])) {
+                        $network_data = $health_json['checks']['system:network'];
+                        $total_bytes_transferred = $network_data['total_bytes_transferred'] ?? 0;
+                        $packets_received = $network_data['total_packets_received'] ?? 0;
+                        $packets_sent = $network_data['total_packets_transmitted'] ?? 0;
+                    }
+                }
+                
+                $device['pnode_stats'] = [
+                    'cpu_percent' => $latest_stats['cpu_load_avg'],
+                    'memory_percent' => $latest_stats['memory_percent'],
+                    'total_bytes_transferred' => $total_bytes_transferred,
+                    'packets_received' => $packets_received,
+                    'packets_sent' => $packets_sent
+                ];
+            }
+        } catch (PDOException $e) {
+            error_log("Error fetching pNode stats for device {$device_id}: " . $e->getMessage());
+        }
+
         // Determine overall status (connectivity + health)
         $overall_status = 'Unknown';
         if ($device['status'] === 'Online') {
@@ -408,6 +454,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                     <span class="sort-indicator"></span>
                                 </th>
                                 <th>Versions</th>
+                                <th>pNode Stats</th>
                                 <th>Last Checked</th>
                                 <th>Actions</th>
                             </tr>
@@ -487,6 +534,45 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                             </div>
                                         <?php endif; ?>
                                     </td>
+                                    <td class="stats-column" id="stats-<?php echo $device['id']; ?>">
+                                        <?php if ($device['status'] !== 'Online'): ?>
+                                            <span class="stats-unavailable">Stats unavailable</span>
+                                        <?php elseif ($device['pnode_stats'] === null): ?>
+                                            <span class="stats-no-data">No stats data</span>
+                                        <?php else: ?>
+                                            <?php $stats = $device['pnode_stats']; ?>
+                                            <div class="stats-info">
+                                                <div class="stat-row">
+                                                    <span class="stat-label">CPU:</span>
+                                                    <span class="stat-value stat-cpu" data-value="<?php echo $stats['cpu_percent']; ?>">
+                                                        <?php echo number_format($stats['cpu_percent'], 1); ?>%
+                                                    </span>
+                                                </div>
+                                                
+                                                <div class="stat-row">
+                                                    <span class="stat-label">RAM:</span>
+                                                    <span class="stat-value stat-memory" data-value="<?php echo $stats['memory_percent']; ?>">
+                                                        <?php echo number_format($stats['memory_percent'], 1); ?>%
+                                                    </span>
+                                                </div>
+                                                
+                                                <div class="stat-row">
+                                                    <span class="stat-label">Total Bytes:</span>
+                                                    <span class="stat-value"><?php echo formatBytesForDisplay($stats['total_bytes_transferred']); ?></span>
+                                                </div>
+                                                
+                                                <div class="stat-row">
+                                                    <span class="stat-label">Packets RX:</span>
+                                                    <span class="stat-value"><?php echo number_format($stats['packets_received']); ?></span>
+                                                </div>
+                                                
+                                                <div class="stat-row">
+                                                    <span class="stat-label">Packets TX:</span>
+                                                    <span class="stat-value"><?php echo number_format($stats['packets_sent']); ?></span>
+                                                </div>
+                                            </div>
+                                        <?php endif; ?>
+                                    </td>                                    
                                     <td class="last-check-col" id="lastcheck-<?php echo $device['id']; ?>">
                                         <?php if ($device['last_check']): ?>
                                             <div class="<?php echo $device['status_stale'] ? 'status-stale' : 'status-fresh'; ?>">

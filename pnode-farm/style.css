@@ -1666,3 +1666,195 @@ details summary {
     flex: 1;
     text-align: left;
 }
+
+/* ========== PNODE STATS COLUMN STYLING ========== */
+
+/* Stats column basic styling */
+.device-table .stats-column {
+    width: 160px;
+    max-width: 160px;
+    padding: 8px;
+    vertical-align: middle;
+    font-size: 11px;
+    line-height: 1.2;
+}
+
+.stats-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 14px;
+    padding: 1px 0;
+}
+
+.stat-label {
+    font-weight: bold;
+    color: #333;
+    font-size: 9px;
+    min-width: 45px;
+    flex-shrink: 0;
+}
+
+.stat-value {
+    color: #666;
+    font-size: 9px;
+    text-align: right;
+    flex: 1;
+    margin-left: 5px;
+}
+
+/* Color coding for CPU percentage */
+.stat-cpu[data-value] {
+    font-weight: bold;
+}
+
+/* CPU: Green ≤50%, Yellow 50-80%, Red >80% */
+.stat-cpu[data-value^="0"],
+.stat-cpu[data-value^="1"],
+.stat-cpu[data-value^="2"],
+.stat-cpu[data-value^="3"],
+.stat-cpu[data-value^="4"],
+.stat-cpu[data-value="50.0"],
+.stat-cpu[data-value="50"] {
+    color: #28a745;
+}
+
+.stat-cpu[data-value^="5"]:not([data-value="50"]):not([data-value="5"]),
+.stat-cpu[data-value^="6"],
+.stat-cpu[data-value^="7"],
+.stat-cpu[data-value="80.0"],
+.stat-cpu[data-value="80"] {
+    color: #ffc107;
+}
+
+.stat-cpu[data-value^="8"]:not([data-value="80"]):not([data-value="8"]),
+.stat-cpu[data-value^="9"],
+.stat-cpu[data-value="100.0"],
+.stat-cpu[data-value="100"] {
+    color: #dc3545;
+}
+
+/* Color coding for memory percentage */
+.stat-memory[data-value] {
+    font-weight: bold;
+}
+
+/* Memory: Green ≤70%, Yellow 70-85%, Red >85% */
+.stat-memory[data-value^="0"],
+.stat-memory[data-value^="1"],
+.stat-memory[data-value^="2"],
+.stat-memory[data-value^="3"],
+.stat-memory[data-value^="4"],
+.stat-memory[data-value^="5"],
+.stat-memory[data-value^="6"],
+.stat-memory[data-value="70.0"],
+.stat-memory[data-value="70"] {
+    color: #28a745;
+}
+
+.stat-memory[data-value^="7"]:not([data-value="70"]):not([data-value="7"]),
+.stat-memory[data-value^="8"]:not([data-value^="9"]):not([data-value="85"]):not([data-value="8"]) {
+    color: #ffc107;
+}
+
+.stat-memory[data-value^="8"]:not([data-value^="8."]),
+.stat-memory[data-value^="9"],
+.stat-memory[data-value="100.0"],
+.stat-memory[data-value="100"] {
+    color: #dc3545;
+}
+
+/* Stats unavailable/error states */
+.stats-unavailable,
+.stats-no-data {
+    color: #6c757d;
+    font-style: italic;
+    text-align: center;
+    font-size: 10px;
+    padding: 15px 5px;
+    display: block;
+}
+
+.stats-no-data {
+    color: #856404;
+}
+
+/* Hover effects */
+.stats-column:hover .stats-info {
+    background-color: rgba(0, 123, 255, 0.05);
+    border-radius: 3px;
+    padding: 3px;
+    margin: -3px;
+    transition: background-color 0.2s ease;
+}
+
+.stats-column:hover .stat-label {
+    color: #007bff;
+}
+
+/* Table header adjustment */
+.device-table th:nth-child(7) {
+    width: 160px;
+    max-width: 160px;
+    text-align: center;
+    padding: 8px;
+    font-size: 12px;
+}
+
+/* Ensure table accommodates new column */
+.device-table {
+    min-width: 1350px;
+}
+
+/* Add horizontal scroll for smaller screens */
+.info-panel {
+    overflow-x: auto;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1400px) {
+    .device-table .stats-column {
+        width: 140px;
+        max-width: 140px;
+    }
+    
+    .stat-label {
+        min-width: 35px;
+        font-size: 8px;
+    }
+    
+    .stat-value {
+        font-size: 8px;
+    }
+}
+
+@media (max-width: 1200px) {
+    .device-table .stats-column {
+        width: 120px;
+        max-width: 120px;
+    }
+    
+    .stat-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1px;
+        min-height: 12px;
+    }
+    
+    .stat-label {
+        min-width: auto;
+        font-size: 8px;
+    }
+    
+    .stat-value {
+        text-align: left;
+        margin-left: 0;
+        font-size: 8px;
+    }
+}
