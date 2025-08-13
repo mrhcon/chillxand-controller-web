@@ -187,7 +187,7 @@ function getLatestDeviceStatuses($pdo, $device_ids) {
                 'memory_used_bytes' => $result['memory_used_bytes'],
                 'total_bytes_transferred' => $total_bytes_transferred,
                 'packets_received' => $packets_received,
-                'packets_sent' => $packets_sent                
+                'packets_sent' => $packets_sent,                
                 'server_ip' => $result['server_ip'],
                 'server_hostname' => $result['server_hostname'],
                 'chillxand_version' => $result['chillxand_version'],
