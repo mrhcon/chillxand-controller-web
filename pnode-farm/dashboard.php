@@ -520,7 +520,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                                     </span>
                                                 </div>
 
-                                                <div><strong>Total Bytes:</strong>
+                                                <!-- <div><strong>Total Bytes:</strong>
                                                     <span class="stat-value">
                                                         <?php echo formatBytesForDisplay($stats['total_bytes_transferred']); ?>
                                                     </span>
@@ -536,7 +536,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                                     <span class="stat-value">
                                                         <?php echo number_format($stats['packets_sent']); ?>
                                                     </span>
-                                                </div>
+                                                </div> -->
                                             </div>
                                         <?php endif; ?>
                                     </td>

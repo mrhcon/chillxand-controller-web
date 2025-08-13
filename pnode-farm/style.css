@@ -1059,10 +1059,10 @@ button:disabled {
 /* Stats Error States */
 .stats-unavailable,
 .stats-no-data {
-    color: #6c757d;
+    /* color: #6c757d; */
     font-style: italic;
     text-align: center;
-    font-size: 12px;
+    font-size: 14px;
     padding: 20px 5px;
     display: block;
 }
