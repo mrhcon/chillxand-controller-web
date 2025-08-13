@@ -924,9 +924,9 @@ button:disabled {
     margin: 2px 0;
 }
 
-.device-table td:nth-child(7) {
+/* .device-table td:nth-child(7) {
     text-align: center;
-}
+} */
 
 /* Status Buttons in Tables */
 .device-table td:nth-child(4) {
