@@ -168,7 +168,7 @@ try {
         $device['total_logs'] = $stmt->fetchColumn();
 
         // // Add the stats section
-        // $device['pnode_stats'] = null;
+        $device['pnode_stats'] = null;
         // if ($cached_status['status'] === 'Online' && $cached_status['cpu_load_avg'] !== null) {
         //     $device['pnode_stats'] = [
         //         'cpu_percent' => $cached_status['cpu_load_avg'],
