@@ -23,20 +23,23 @@ function logInteraction($pdo, $user_id, $username, $action, $details = null) {
 function getLatestDeviceStatus($pdo, $device_id) {
     try {
         $stmt = $pdo->prepare("
-            SELECT dsl.status, dsl.check_time, dsl.response_time, dsl.consecutive_failures,
-                   dsl.health_status, dsl.atlas_registered, dsl.pod_status,
-                   dsl.xandminer_status, dsl.xandminerd_status, dsl.cpu_load_avg,
-                   dsl.memory_percent, dsl.memory_total_bytes, dsl.memory_used_bytes,
-                   dsl.server_ip, dsl.server_hostname, dsl.chillxand_version,
-                   dsl.pod_version, dsl.xandminer_version, dsl.xandminerd_version,
-                   dsl.error_message, dsl.check_method,
-                   d.pnode_name, d.pnode_ip,
-                   TIMESTAMPDIFF(MINUTE, dsl.check_time, NOW()) as age_minutes
+            SELECT dsl.device_id, dsl.status, dsl.check_time, dsl.response_time, dsl.consecutive_failures,
+                dsl.health_status, dsl.atlas_registered, dsl.pod_status, dsl.xandminer_status, dsl.xandminerd_status,
+                dsl.cpu_load_avg, dsl.memory_percent, dsl.memory_total_bytes, dsl.memory_used_bytes,
+                dsl.server_ip, dsl.server_hostname, dsl.chillxand_version,
+                dsl.pod_version, dsl.xandminer_version, dsl.xandminerd_version,
+                dsl.error_message, dsl.check_method, dsl.health_json,
+                dsl.stats_current_index, dsl.stats_total_pages, dsl.stats_last_updated, dsl.stats_total_bytes,
+                dsl.stats_cpu_percent, dsl.stats_ram_used, dsl.stats_ram_total, dsl.stats_uptime,
+                dsl.stats_packets_sent, dsl.stats_packets_received, dsl.stats_active_streams, dsl.stats_file_size,
+                TIMESTAMPDIFF(MINUTE, dsl.check_time, NOW()) as age_minutes
             FROM device_status_log dsl
-            JOIN devices d ON dsl.device_id = d.id
-            WHERE dsl.device_id = ?
-            ORDER BY dsl.check_time DESC
-            LIMIT 1
+            INNER JOIN (
+                SELECT device_id, MAX(check_time) as max_check_time
+                FROM device_status_log
+                WHERE device_id IN ($placeholders)
+                GROUP BY device_id
+            ) latest ON dsl.device_id = latest.device_id AND dsl.check_time = latest.max_check_time
         ");
         $stmt->execute([$device_id]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -149,21 +152,6 @@ function getLatestDeviceStatuses($pdo, $device_ids) {
         foreach ($results as $result) {
             $is_stale = ($result['age_minutes'] > 15);
 
-            // Parse network stats from health_json
-            $total_bytes_transferred = null;
-            $packets_received = null;
-            $packets_sent = null;
-
-            if ($result['health_json']) {
-                $health_json = json_decode($result['health_json'], true);
-                if ($health_json && isset($health_json['checks']['system:network'])) {
-                    $network_data = $health_json['checks']['system:network'];
-                    $total_bytes_transferred = $network_data['total_bytes_transferred'] ?? null;
-                    $packets_received = $network_data['total_packets_received'] ?? null;
-                    $packets_sent = $network_data['total_packets_transmitted'] ?? null;
-                }
-            }
-
             $statuses[$result['device_id']] = [
                 'status' => $result['status'],
                 'check_time' => $result['check_time'],
@@ -180,9 +168,6 @@ function getLatestDeviceStatuses($pdo, $device_ids) {
                 'memory_percent' => $result['memory_percent'],
                 'memory_total_bytes' => $result['memory_total_bytes'],
                 'memory_used_bytes' => $result['memory_used_bytes'],
-                'total_bytes_transferred' => $total_bytes_transferred,
-                'packets_received' => $packets_received,
-                'packets_sent' => $packets_sent,
                 'server_ip' => $result['server_ip'],
                 'server_hostname' => $result['server_hostname'],
                 'chillxand_version' => $result['chillxand_version'],
@@ -190,7 +175,19 @@ function getLatestDeviceStatuses($pdo, $device_ids) {
                 'xandminer_version' => $result['xandminer_version'],
                 'xandminerd_version' => $result['xandminerd_version'],
                 'error_message' => $result['error_message'],
-                'check_method' => $result['check_method']
+                'check_method' => $result['check_method'],
+                'stats_current_index' => $result['stats_current_index'],
+                'stats_total_pages' => $result['stats_total_pages'],
+                'stats_last_updated' => $result['stats_last_updated'],
+                'stats_total_bytes' => $result['stats_total_bytes'],
+                'stats_cpu_percent' => $result['stats_cpu_percent'],
+                'stats_ram_used' => $result['stats_ram_used'],
+                'stats_ram_total' => $result['stats_ram_total'],
+                'stats_uptime' => $result['stats_uptime'],
+                'stats_packets_sent' => $result['stats_packets_sent'],
+                'stats_packets_received' => $result['stats_packets_received'],
+                'stats_active_streams' => $result['stats_active_streams'],
+                'stats_file_size' => $result['stats_file_size']
             ];
         }
 
@@ -211,15 +208,24 @@ function getLatestDeviceStatuses($pdo, $device_ids) {
                     'xandminer_status' => null,
                     'xandminerd_status' => null,
                     'cpu_load_avg' => null,
-                    'memory_percent' => null,
-                    'memory_total_bytes' => null,
-                    'memory_used_bytes' => null,
                     'server_ip' => null,
                     'server_hostname' => null,
                     'chillxand_version' => null,
                     'pod_version' => null,
                     'xandminer_version' => null,
-                    'xandminerd_version' => null
+                    'xandminerd_version' => null,
+                    'stats_current_index' => null,
+                    'stats_total_pages' => null,
+                    'stats_last_updated' => null,
+                    'stats_total_bytes' => null,
+                    'stats_cpu_percent' => null,
+                    'stats_ram_used' => null,
+                    'stats_ram_total' => null,
+                    'stats_uptime' => null,
+                    'stats_packets_sent' => null,
+                    'stats_packets_received' => null,
+                    'stats_active_streams' => null,
+                    'stats_file_size' => null
                 ];
             }
         }

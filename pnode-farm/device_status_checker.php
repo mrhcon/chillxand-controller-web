@@ -24,6 +24,25 @@ if (!isset($pdo) || $pdo === null) {
 
 echo "[" . date('Y-m-d H:i:s') . "] Device Status Checker started\n";
 
+
+/**
+ * Format bytes for display
+ */
+function formatBytes($bytes) {
+    if (!is_numeric($bytes) || $bytes < 0) {
+        return '0 B';
+    }
+    
+    $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    $bytes = max($bytes, 0);
+    $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
+    $pow = min($pow, count($units) - 1);
+    
+    $bytes /= pow(1024, $pow);
+    
+    return round($bytes, 1) . ' ' . $units[$pow];
+}
+
 /**
  * Enhanced ping function for background checking
  */
@@ -286,6 +305,18 @@ try {
         $xandminer_version = null;
         $xandminerd_version = null;
         $health_json = null;
+        $stats_current_index = null;
+        $stats_total_pages = null;
+        $stats_last_updated = null;
+        $stats_total_bytes = null;
+        $stats_cpu_percent = null;
+        $stats_ram_used = null;
+        $stats_ram_total = null;
+        $stats_uptime = null;
+        $stats_packets_sent = null;
+        $stats_packets_received = null;
+        $stats_active_streams = null;
+        $stats_file_size = null;        
         
         // If online, try to get health data
         if ($status['status'] === 'Online') {
@@ -314,12 +345,26 @@ try {
                 $pod_version = $parsed_health['pod_version'];
                 $xandminer_version = $parsed_health['xandminer_version'];
                 $xandminerd_version = $parsed_health['xandminerd_version'];
-                
-                echo " [V: {$chillxand_version}/{$pod_version}/{$xandminerd_version}]";
+
+                // Parse stats data (safely handle missing stats section)
+                if (isset($health_response['stats']) && is_array($health_response['stats'])) {
+                    $stats = $health_response['stats'];
+                    $stats_current_index = $stats['current_index'] ?? null;
+                    $stats_total_pages = $stats['total_pages'] ?? null;
+                    $stats_last_updated = $stats['last_updated'] ?? null;
+                    $stats_total_bytes = $stats['total_bytes'] ?? null;
+                    $stats_cpu_percent = $stats['cpu_percent'] ?? null;
+                    $stats_ram_used = $stats['ram_used'] ?? null;
+                    $stats_ram_total = $stats['ram_total'] ?? null;
+                    $stats_uptime = $stats['uptime'] ?? null;
+                    $stats_packets_sent = $stats['packets_sent'] ?? null;
+                    $stats_packets_received = $stats['packets_received'] ?? null;
+                    $stats_active_streams = $stats['active_streams'] ?? null;
+                    $stats_file_size = $stats['file_size'] ?? null;
+                }
             }
         }
         
-        // Insert new status log entry with ALL columns
         $stmt = $pdo->prepare("
             INSERT INTO device_status_log (
                 device_id, status, check_time, response_time, check_method, 
@@ -327,14 +372,20 @@ try {
                 xandminer_status, xandminerd_status, cpu_load_avg, memory_percent, 
                 memory_total_bytes, memory_used_bytes, server_ip, server_hostname, 
                 chillxand_version, pod_version, xandminer_version, xandminerd_version, 
-                health_json, consecutive_failures
+                health_json, consecutive_failures,
+                stats_current_index, stats_total_pages, stats_last_updated, stats_total_bytes,
+                stats_cpu_percent, stats_ram_used, stats_ram_total, stats_uptime,
+                stats_packets_sent, stats_packets_received, stats_active_streams, stats_file_size
             ) VALUES (
                 :device_id, :status, NOW(), :response_time, :check_method, 
                 :error_message, :health_status, :atlas_registered, :pod_status, 
                 :xandminer_status, :xandminerd_status, :cpu_load_avg, :memory_percent, 
                 :memory_total_bytes, :memory_used_bytes, :server_ip, :server_hostname, 
                 :chillxand_version, :pod_version, :xandminer_version, :xandminerd_version, 
-                :health_json, :consecutive_failures
+                :health_json, :consecutive_failures,
+                :stats_current_index, :stats_total_pages, :stats_last_updated, :stats_total_bytes,
+                :stats_cpu_percent, :stats_ram_used, :stats_ram_total, :stats_uptime,
+                :stats_packets_sent, :stats_packets_received, :stats_active_streams, :stats_file_size
             )
         ");
         
@@ -360,7 +411,19 @@ try {
             ':xandminer_version' => $xandminer_version,
             ':xandminerd_version' => $xandminerd_version,
             ':health_json' => $health_json,
-            ':consecutive_failures' => $consecutive_failures
+            ':consecutive_failures' => $consecutive_failures,
+            ':stats_current_index' => $stats_current_index,
+            ':stats_total_pages' => $stats_total_pages,
+            ':stats_last_updated' => $stats_last_updated,
+            ':stats_total_bytes' => $stats_total_bytes,
+            ':stats_cpu_percent' => $stats_cpu_percent,
+            ':stats_ram_used' => $stats_ram_used,
+            ':stats_ram_total' => $stats_ram_total,
+            ':stats_uptime' => $stats_uptime,
+            ':stats_packets_sent' => $stats_packets_sent,
+            ':stats_packets_received' => $stats_packets_received,
+            ':stats_active_streams' => $stats_active_streams,
+            ':stats_file_size' => $stats_file_size
         ]);
         
         if ($success) {
