@@ -56,6 +56,18 @@ try {
     $pod_version = null;
     $xandminer_version = null;
     $xandminerd_version = null;
+    $stats_current_index = null;
+    $stats_total_pages = null;
+    $stats_last_updated = null;
+    $stats_total_bytes = null;
+    $stats_cpu_percent = null;
+    $stats_ram_used = null;
+    $stats_ram_total = null;
+    $stats_uptime = null;
+    $stats_packets_sent = null;
+    $stats_packets_received = null;
+    $stats_active_streams = null;
+    $stats_file_size = null;    
 
     // Test connectivity
     $ip = $device['pnode_ip'];
@@ -88,14 +100,20 @@ try {
                 xandminerd_status, cpu_load_avg, memory_percent, memory_total_bytes,
                 memory_used_bytes, server_ip, server_hostname, chillxand_version,
                 pod_version, xandminer_version, xandminerd_version, health_json,
-                consecutive_failures
+                consecutive_failures, stats_current_index, stats_total_pages, stats_last_updated,
+                stats_total_bytes, stats_cpu_percent, stats_ram_used, stats_ram_total,
+                stats_uptime, stats_packets_sent, stats_packets_received, stats_active_streams,
+                stats_file_size
             ) VALUES (
                 :device_id, :status, NOW(), :response_time, :check_method, :error_message,
                 :health_status, :atlas_registered, :pod_status, :xandminer_status,
                 :xandminerd_status, :cpu_load_avg, :memory_percent, :memory_total_bytes,
                 :memory_used_bytes, :server_ip, :server_hostname, :chillxand_version,
                 :pod_version, :xandminer_version, :xandminerd_version, :health_json,
-                :consecutive_failures
+                :consecutive_failures, :stats_current_index, :stats_total_pages, :stats_last_updated,
+                :stats_total_bytes, :stats_cpu_percent, :stats_ram_used, :stats_ram_total,
+                :stats_uptime, :stats_packets_sent, :stats_packets_received, :stats_active_streams,
+                :stats_file_size
             )
         ");
 
@@ -121,7 +139,19 @@ try {
             ':xandminer_version' => null,
             ':xandminerd_version' => null,
             ':health_json' => null,
-            ':consecutive_failures' => 0
+            ':consecutive_failures' => 0,
+            ':stats_current_index' => null,
+            ':stats_total_pages' => null,
+            ':stats_last_updated' => null,
+            ':stats_total_bytes' => null,
+            ':stats_cpu_percent' => null,
+            ':stats_ram_used' => null,
+            ':stats_ram_total' => null,
+            ':stats_uptime' => null,
+            ':stats_packets_sent' => null,
+            ':stats_packets_received' => null,
+            ':stats_active_streams' => null,
+            ':stats_file_size' => null            
         ]);
 
         // Get cached data to return
@@ -179,14 +209,20 @@ try {
                 xandminerd_status, cpu_load_avg, memory_percent, memory_total_bytes,
                 memory_used_bytes, server_ip, server_hostname, chillxand_version,
                 pod_version, xandminer_version, xandminerd_version, health_json,
-                consecutive_failures
+                consecutive_failures, stats_current_index, stats_total_pages, stats_last_updated,
+                stats_total_bytes, stats_cpu_percent, stats_ram_used, stats_ram_total,
+                stats_uptime, stats_packets_sent, stats_packets_received, stats_active_streams,
+                stats_file_size
             ) VALUES (
                 :device_id, :status, NOW(), :response_time, :check_method, :error_message,
                 :health_status, :atlas_registered, :pod_status, :xandminer_status,
                 :xandminerd_status, :cpu_load_avg, :memory_percent, :memory_total_bytes,
                 :memory_used_bytes, :server_ip, :server_hostname, :chillxand_version,
                 :pod_version, :xandminer_version, :xandminerd_version, :health_json,
-                :consecutive_failures
+                :consecutive_failures, :stats_current_index, :stats_total_pages, :stats_last_updated,
+                :stats_total_bytes, :stats_cpu_percent, :stats_ram_used, :stats_ram_total,
+                :stats_uptime, :stats_packets_sent, :stats_packets_received, :stats_active_streams,
+                :stats_file_size
             )
         ");
 
@@ -212,7 +248,19 @@ try {
             ':xandminer_version' => null,
             ':xandminerd_version' => null,
             ':health_json' => null,
-            ':consecutive_failures' => 0
+            ':consecutive_failures' => 0,
+            ':stats_current_index' => null,
+            ':stats_total_pages' => null,
+            ':stats_last_updated' => null,
+            ':stats_total_bytes' => null,
+            ':stats_cpu_percent' => null,
+            ':stats_ram_used' => null,
+            ':stats_ram_total' => null,
+            ':stats_uptime' => null,
+            ':stats_packets_sent' => null,
+            ':stats_packets_received' => null,
+            ':stats_active_streams' => null,
+            ':stats_file_size' => null
         ]);
 
         // Get cached data for error response
@@ -251,14 +299,20 @@ try {
                 xandminerd_status, cpu_load_avg, memory_percent, memory_total_bytes,
                 memory_used_bytes, server_ip, server_hostname, chillxand_version,
                 pod_version, xandminer_version, xandminerd_version, health_json,
-                consecutive_failures
+                consecutive_failures, stats_current_index, stats_total_pages, stats_last_updated,
+                stats_total_bytes, stats_cpu_percent, stats_ram_used, stats_ram_total,
+                stats_uptime, stats_packets_sent, stats_packets_received, stats_active_streams,
+                stats_file_size
             ) VALUES (
                 :device_id, :status, NOW(), :response_time, :check_method, :error_message,
                 :health_status, :atlas_registered, :pod_status, :xandminer_status,
                 :xandminerd_status, :cpu_load_avg, :memory_percent, :memory_total_bytes,
                 :memory_used_bytes, :server_ip, :server_hostname, :chillxand_version,
                 :pod_version, :xandminer_version, :xandminerd_version, :health_json,
-                :consecutive_failures
+                :consecutive_failures, :stats_current_index, :stats_total_pages, :stats_last_updated,
+                :stats_total_bytes, :stats_cpu_percent, :stats_ram_used, :stats_ram_total,
+                :stats_uptime, :stats_packets_sent, :stats_packets_received, :stats_active_streams,
+                :stats_file_size
             )
         ");
 
@@ -284,7 +338,19 @@ try {
             ':xandminer_version' => null,
             ':xandminerd_version' => null,
             ':health_json' => null,
-            ':consecutive_failures' => 0
+            ':consecutive_failures' => 0,
+            ':stats_current_index' => null,
+            ':stats_total_pages' => null,
+            ':stats_last_updated' => null,
+            ':stats_total_bytes' => null,
+            ':stats_cpu_percent' => null,
+            ':stats_ram_used' => null,
+            ':stats_ram_total' => null,
+            ':stats_uptime' => null,
+            ':stats_packets_sent' => null,
+            ':stats_packets_received' => null,
+            ':stats_active_streams' => null,
+            ':stats_file_size' => null
         ]);
 
         // Get cached data for JSON parse error
@@ -381,14 +447,20 @@ try {
             xandminerd_status, cpu_load_avg, memory_percent, memory_total_bytes,
             memory_used_bytes, server_ip, server_hostname, chillxand_version,
             pod_version, xandminer_version, xandminerd_version, health_json,
-            consecutive_failures
+            consecutive_failures, stats_current_index, stats_total_pages, stats_last_updated,
+            stats_total_bytes, stats_cpu_percent, stats_ram_used, stats_ram_total,
+            stats_uptime, stats_packets_sent, stats_packets_received, stats_active_streams,
+            stats_file_size
         ) VALUES (
             :device_id, :status, NOW(), :response_time, :check_method, :error_message,
             :health_status, :atlas_registered, :pod_status, :xandminer_status,
             :xandminerd_status, :cpu_load_avg, :memory_percent, :memory_total_bytes,
             :memory_used_bytes, :server_ip, :server_hostname, :chillxand_version,
             :pod_version, :xandminer_version, :xandminerd_version, :health_json,
-            :consecutive_failures
+            :consecutive_failures, :stats_current_index, :stats_total_pages, :stats_last_updated,
+            :stats_total_bytes, :stats_cpu_percent, :stats_ram_used, :stats_ram_total,
+            :stats_uptime, :stats_packets_sent, :stats_packets_received, :stats_active_streams,
+            :stats_file_size
         )
     ");
 
@@ -463,6 +535,34 @@ try {
             'xandminerd_version' => $xandminerd_version ?: 'N/A'
         ]
     ];
+
+    // Extract pNode stats data from health response
+    $pnode_stats = null;
+    if (isset($health_data['stats']) && is_array($health_data['stats'])) {
+        $stats = $health_data['stats'];
+        $pnode_stats = [
+            'cpu_percent' => $stats['cpu_percent'] ?? null,
+            'memory_percent' => null, // Calculate from ram_used/ram_total
+            'total_bytes_transferred' => $stats['total_bytes'] ?? 0,
+            'total_pages' => $stats['total_pages'] ?? 0,
+            'current_index' => $stats['current_index'] ?? 0,
+            'ram_used' => $stats['ram_used'] ?? 0,
+            'ram_total' => $stats['ram_total'] ?? 0,
+            'uptime' => $stats['uptime'] ?? 0,
+            'active_streams' => $stats['active_streams'] ?? 0,
+            'file_size' => $stats['file_size'] ?? 0,
+            'packets_received' => $stats['packets_received'] ?? 0,
+            'packets_sent' => $stats['packets_sent'] ?? 0
+        ];
+        
+        // Calculate memory percentage
+        if ($stats['ram_used'] && $stats['ram_total'] && $stats['ram_total'] > 0) {
+            $pnode_stats['memory_percent'] = ($stats['ram_used'] / $stats['ram_total']) * 100;
+        }
+    }
+
+    // Add pnode_stats to the response
+    $response_data['pnode_stats'] = $pnode_stats;
 
     error_log("DEBUG: Final JSON response: " . json_encode($response_data));
 
