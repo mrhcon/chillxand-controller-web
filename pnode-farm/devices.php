@@ -679,7 +679,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                                     </span>
                                                 </div>
 
-                                                <div><strong>Total Bytes:</strong>
+                                                <!-- <div><strong>Total Bytes:</strong>
                                                     <span class="stat-value">
                                                         <?php echo formatBytesForDisplay($stats['total_bytes_transferred']); ?>
                                                     </span>
@@ -695,7 +695,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                                     <span class="stat-value">
                                                         <?php echo number_format($stats['packets_sent']); ?>
                                                     </span>
-                                                </div>
+                                                </div> -->
                                             </div>
                                         <?php endif; ?>
                                     </td>
