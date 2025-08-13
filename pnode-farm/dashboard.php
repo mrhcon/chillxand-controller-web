@@ -813,6 +813,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                 // Remove highlight after 2 seconds
                 setTimeout(() => {
                     row.style.backgroundColor = '';
+                    row.style.transition = '';
                 }, 2000);
             }
 
