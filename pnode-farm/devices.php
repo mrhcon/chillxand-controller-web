@@ -670,7 +670,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                         <?php if ($device['status'] !== 'Online'): ?>
                                             <span class="stats-unavailable">Statistics Unavailable</span>
                                         <?php elseif ($device['pnode_stats'] === null): ?>
-                                            <span class="stats-no-data">Statistics Unavailable data</span>
+                                            <span class="stats-no-data">Statistics Unavailable</span>
                                         <?php else: ?>
                                             <?php $stats = $device['pnode_stats']; ?>
                                             <div class="stats-info">
@@ -1378,7 +1378,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 const stats = data.pnode_stats;
 
                 if (!stats || stats.cpu_percent === null) {
-                    cell.innerHTML = '<span class="stats-no-data">Statistics Unavailable data</span>';
+                    cell.innerHTML = '<span class="stats-no-data">Statistics Unavailable</span>';
                     return;
                 }
 

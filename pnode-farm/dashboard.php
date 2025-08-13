@@ -511,7 +511,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                         <?php if ($device['status'] !== 'Online'): ?>
                                             <span class="stats-unavailable">Statistics Unavailable</span>
                                         <?php elseif ($device['pnode_stats'] === null): ?>
-                                            <span class="stats-no-data">Statistics Unavailable data</span>
+                                            <span class="stats-no-data">Statistics Unavailable</span>
                                         <?php else: ?>
                                             <?php $stats = $device['pnode_stats']; ?>
                                             <div class="stats-info">
@@ -827,7 +827,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                 const stats = data.pnode_stats;
 
                 if (!stats || stats.cpu_percent === null) {
-                    cell.innerHTML = '<span class="stats-no-data">Statistics Unavailable data</span>';
+                    cell.innerHTML = '<span class="stats-no-data">Statistics Unavailable</span>';
                     return;
                 }
 
