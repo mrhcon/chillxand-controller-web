@@ -533,11 +533,49 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                                     </span>
                                                 </div>
 
+                                                <div><strong>Active Streams:</strong>
+                                                    <span class="stat-value">
+                                                        <?php echo number_format($stats['active_streams'] ?? 0); ?>
+                                                    </span>
+                                                </div>                                                
+
                                                 <div><strong>Pages Used:</strong>
                                                     <span class="stat-value">
                                                         <?php echo number_format($stats['total_pages']); ?>
                                                     </span>
                                                 </div>
+
+                                                <div><strong>Total Pages:</strong>
+                                                    <span class="stat-value">
+                                                        <?php 
+                                                        $fileSize = $stats['file_size'] ?? 0;
+                                                        $totalPages = $fileSize > 0 ? ceil($fileSize / (1024 * 1024)) : 0; // 1MB page size
+                                                        echo number_format($totalPages);
+                                                        ?>
+                                                    </span>
+                                                </div>       
+                                                
+                                                <div><strong>Uptime:</strong>
+                                                    <span class="stat-value">
+                                                        <?php 
+                                                        $uptime = $stats['uptime'] ?? 0;
+                                                        if ($uptime > 0) {
+                                                            $days = floor($uptime / 86400);
+                                                            $hours = floor(($uptime % 86400) / 3600);
+                                                            $minutes = floor(($uptime % 3600) / 60);
+                                                            if ($days > 0) {
+                                                                echo $days . 'd ' . $hours . 'h';
+                                                            } elseif ($hours > 0) {
+                                                                echo $hours . 'h ' . $minutes . 'm';
+                                                            } else {
+                                                                echo $minutes . 'm';
+                                                            }
+                                                        } else {
+                                                            echo '0m';
+                                                        }
+                                                        ?>
+                                                    </span>
+                                                </div>                                                
                                             </div>
                                         <?php endif; ?>
                                     </td>
@@ -826,11 +864,29 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                             </span>
                         </div>
 
+                        <div><strong>Active Streams:</strong>
+                            <span class="stat-value">
+                                ${Number(stats.active_streams || 0).toLocaleString()}
+                            </span>
+                        </div>
+
                         <div><strong>Pages Used:</strong>
                             <span class="stat-value">
                                 ${Number(stats.total_pages || 0).toLocaleString()}
                             </span>
                         </div>
+
+                        <div><strong>Total Pages:</strong>
+                            <span class="stat-value">
+                                ${formatTotalPages(stats.file_size || 0)}
+                            </span>
+                        </div>                           
+
+                        <div><strong>Uptime:</strong>
+                            <span class="stat-value">
+                                ${formatUptime(stats.uptime || 0)}
+                            </span>
+                        </div>                     
                     </div>
                 `;
             }
