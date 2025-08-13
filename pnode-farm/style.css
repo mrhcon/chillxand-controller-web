@@ -981,7 +981,7 @@ button:disabled {
 .stats-info strong {
     font-weight: bold;
     color: #333;
-    width: 150px;
+    width: 125px;
     flex-shrink: 0;
     margin-right: 10px;
     font-size: 14px;
@@ -1764,7 +1764,7 @@ details summary {
     }
 
     .stats-info strong {
-        width: 150px;
+        width: 125px;
         font-size: 13px;
     }
 
