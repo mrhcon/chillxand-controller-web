@@ -244,8 +244,8 @@ try {
             $device['pnode_stats'] = [
                 'cpu_percent' => $cached_status['cpu_load_avg'],
                 'memory_percent' => $cached_status['memory_percent'],
-                'total_bytes_transferred' => $cached_status['total_bytes_transferred'] ?? 0,
-                'stats_total_pages' => $cached_status['stats_total_pages'] ?? 0
+                'total_bytes_transferred' => $cached_status['stats_total_bytes'] ?? 0,
+                'total_pages' => $cached_status['stats_total_pages'] ?? 0
             ];
         }
 
@@ -527,7 +527,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
 
                                                 <div><strong>Pages Used:</strong>
                                                     <span class="stat-value">
-                                                        <?php echo formatBytesForDisplay($stats['stats_total_pages']); ?>
+                                                        <?php echo number_format($stats['total_pages']); ?>
                                                     </span>
                                                 </div>
                                             </div>
@@ -820,7 +820,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
 
                         <div><strong>Pages Used:</strong>
                             <span class="stat-value">
-                                ${formatBytes(stats.stats_total_pages)}
+                                ${Number(stats.total_pages || 0).toLocaleString()}
                             </span>
                         </div>
                     </div>

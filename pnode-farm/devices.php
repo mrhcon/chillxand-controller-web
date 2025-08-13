@@ -1352,23 +1352,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                             </span>
                         </div>
 
-                        // <div><strong>Total Bytes:</strong>
-                        //     <span class="stat-value">
-                        //         ${formatBytes(stats.total_bytes_transferred)}
-                        //     </span>
-                        // </div>
-
-                        // <div><strong>Packets RX:</strong>
-                        //     <span class="stat-value">
-                        //         ${Number(stats.packets_received).toLocaleString()}
-                        //     </span>
-                        // </div>
-
-                        // <div><strong>Packets TX:</strong>
-                        //     <span class="stat-value">
-                        //         ${Number(stats.packets_sent).toLocaleString()}
-                        //     </span>
-                        // </div>
+                        <div><strong>Total Bytes:</strong>
+                            <span class="stat-value">
+                                ${formatBytes(stats.total_bytes_transferred)}
+                            </span>
+                        </div>
                     </div>
                 `;
             }
@@ -1630,7 +1618,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                     </div>
                                     <div><strong>Pages Used:</strong>
                                         <span class="stat-value">
-                                             ${formatBytes(stats.stats_total_pages)}
+                                             ${formatBytes(stats.total_pages)}
                                         </span>
                                     </div>
                                 </div>

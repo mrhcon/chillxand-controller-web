@@ -3,6 +3,26 @@ session_start();
 require_once 'db_connect.php';
 require_once 'functions.php';
 
+/**
+ * Format uptime seconds into human readable format
+ */
+function formatUptime($seconds) {
+    if (!$seconds || $seconds < 0) return '0s';
+    
+    $days = floor($seconds / 86400);
+    $hours = floor(($seconds % 86400) / 3600);
+    $minutes = floor(($seconds % 3600) / 60);
+    $secs = $seconds % 60;
+    
+    $parts = [];
+    if ($days > 0) $parts[] = $days . 'd';
+    if ($hours > 0) $parts[] = $hours . 'h';
+    if ($minutes > 0) $parts[] = $minutes . 'm';
+    if ($secs > 0 || empty($parts)) $parts[] = $secs . 's';
+    
+    return implode(' ', $parts);
+}
+
 // Set content type to JSON
 header('Content-Type: application/json');
 
@@ -89,8 +109,20 @@ try {
             'cpu_percent' => $cached_status['cpu_load_avg'],
             'memory_percent' => $cached_status['memory_percent'],
             'total_bytes_transferred' => $cached_status['total_bytes_transferred'] ?? 0,
-            'packets_received' => $cached_status['packets_received'] ?? 0,
-            'packets_sent' => $cached_status['packets_sent'] ?? 0
+            'ram_used' => $cached_status['stats_ram_used'] ?? 0,
+            'ram_total' => $cached_status['stats_ram_total'] ?? 0,
+            'uptime' => $cached_status['stats_uptime'] ?? 0,
+            'active_streams' => $cached_status['stats_active_streams'] ?? 0,
+            'file_size' => $cached_status['stats_file_size'] ?? 0,
+            'current_index' => $cached_status['stats_current_index'] ?? 0,
+            'total_pages' => $cached_status['stats_total_pages'] ?? 0,
+            'last_updated' => $cached_status['stats_last_updated'] ?? 0,
+            'uptime_formatted' => formatUptime($cached_status['stats_uptime'] ?? 0),
+            'file_size_formatted' => formatBytesForDisplay($cached_status['stats_file_size'] ?? 0),
+            'ram_used_formatted' => formatBytesForDisplay($cached_status['stats_ram_used'] ?? 0),
+            'ram_total_formatted' => formatBytesForDisplay($cached_status['stats_ram_total'] ?? 0),
+            'total_bytes_formatted' => formatBytesForDisplay($cached_status['stats_total_bytes'] ?? 0)
+
         ];
     }
 
