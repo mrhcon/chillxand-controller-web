@@ -1669,10 +1669,34 @@ details summary {
 
 /* ========== PNODE STATS COLUMN STYLING ========== */
 
-/* Stats column basic styling - match the versions column layout */
+/* Shrink other columns to make room for pNode Stats */
+.device-table th:nth-child(2), /* IP Address */
+.device-table td:nth-child(2) {
+    width: 120px;
+    max-width: 120px;
+    padding: 6px;
+}
+
+.device-table th:nth-child(3), /* Registration Date */
+.device-table td:nth-child(3) {
+    width: 140px;
+    max-width: 140px;
+    padding: 6px;
+    font-size: 13px;
+}
+
+.device-table th:nth-child(4), /* Connectivity */
+.device-table td:nth-child(4) {
+    width: 100px;
+    max-width: 100px;
+    padding: 6px;
+    text-align: center;
+}
+
+/* Make pNode Stats column wider */
 .device-table .stats-column {
-    width: 160px;
-    max-width: 160px;
+    width: 200px;
+    max-width: 200px;
     padding: 8px;
     vertical-align: middle;
     text-align: left;
@@ -1693,10 +1717,10 @@ details summary {
 .stats-info strong {
     font-weight: bold;
     color: #333;
-    width: 80px;
+    width: 90px;
     flex-shrink: 0;
     margin-right: 10px;
-    font-size: 16px;
+    font-size: 14px;
 }
 
 .stat-value {
@@ -1704,7 +1728,7 @@ details summary {
     font-weight: normal;
     text-align: left;
     flex: 1;
-    font-size: 16px;
+    font-size: 14px;
 }
 
 /* Color coding for CPU percentage */
@@ -1812,8 +1836,8 @@ details summary {
 
 /* Table header adjustments for new column positions */
 .device-table th:nth-child(7) {
-    width: 160px;
-    max-width: 160px;
+    width: 200px;
+    max-width: 200px;
     text-align: center;
     padding: 8px;
     font-size: 12px;
@@ -1838,9 +1862,9 @@ details summary {
     padding: 8px;
 }
 
-/* Ensure table accommodates new column */
+/* Ensure table accommodates new column layout */
 .device-table {
-    min-width: 1350px;
+    min-width: 1400px;
 }
 
 /* Add horizontal scroll for smaller screens */
@@ -1851,24 +1875,42 @@ details summary {
 /* Responsive adjustments */
 @media (max-width: 1400px) {
     .device-table .stats-column {
-        width: 140px;
-        max-width: 140px;
+        width: 180px;
+        max-width: 180px;
     }
     
     .stats-info strong {
-        width: 70px;
-        font-size: 14px;
+        width: 75px;
+        font-size: 13px;
     }
     
     .stat-value {
-        font-size: 14px;
+        font-size: 13px;
+    }
+    
+    .device-table th:nth-child(2),
+    .device-table td:nth-child(2) {
+        width: 100px;
+        max-width: 100px;
+    }
+    
+    .device-table th:nth-child(3),
+    .device-table td:nth-child(3) {
+        width: 120px;
+        max-width: 120px;
+    }
+    
+    .device-table th:nth-child(4),
+    .device-table td:nth-child(4) {
+        width: 90px;
+        max-width: 90px;
     }
 }
 
 @media (max-width: 1200px) {
     .device-table .stats-column {
-        width: 120px;
-        max-width: 120px;
+        width: 160px;
+        max-width: 160px;
     }
     
     .stats-info > div {
@@ -1887,5 +1929,26 @@ details summary {
         text-align: left;
         margin-left: 0;
         font-size: 12px;
+    }
+    
+    .device-table th:nth-child(2),
+    .device-table td:nth-child(2) {
+        width: 90px;
+        max-width: 90px;
+        font-size: 11px;
+    }
+    
+    .device-table th:nth-child(3),
+    .device-table td:nth-child(3) {
+        width: 100px;
+        max-width: 100px;
+        font-size: 11px;
+    }
+    
+    .device-table th:nth-child(4),
+    .device-table td:nth-child(4) {
+        width: 80px;
+        max-width: 80px;
+        font-size: 11px;
     }
 }
