@@ -678,24 +678,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                                         <?php echo number_format($stats['memory_percent'], 1); ?>%
                                                     </span>
                                                 </div>
-
-                                                <!-- <div><strong>Total Bytes:</strong>
-                                                    <span class="stat-value">
-                                                        <?php echo formatBytesForDisplay($stats['total_bytes_transferred']); ?>
-                                                    </span>
-                                                </div>
-
-                                                <div><strong>Packets RX:</strong>
-                                                    <span class="stat-value">
-                                                        <?php echo number_format($stats['packets_received']); ?>
-                                                    </span>
-                                                </div>
-
-                                                <div><strong>Packets TX:</strong>
-                                                    <span class="stat-value">
-                                                        <?php echo number_format($stats['packets_sent']); ?>
-                                                    </span>
-                                                </div> -->
                                             </div>
                                         <?php endif; ?>
                                     </td>
