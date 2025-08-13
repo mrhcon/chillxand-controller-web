@@ -736,7 +736,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                                     </span>
                                                 </div>
                                             </div>
-                                            </div>
                                         <?php endif; ?>
                                     </td>
                                     <td class="last-check-col" id="lastcheck-<?php echo $device['id']; ?>">
@@ -935,9 +934,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             console.log('DOM loaded, initializing handlers...');
 
             // Initialize device status updater
-            // if (document.querySelector('.device-table tbody tr')) {
-            //     deviceStatusUpdater = new DeviceStatusUpdater();
-            // }
+            if (document.querySelector('.device-table tbody tr')) {
+                deviceStatusUpdater = new DeviceStatusUpdater();
+            }
 
             // Initialize table sorting
             const table = document.querySelector('.device-table');
@@ -1068,16 +1067,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             }
 
             markDeviceOperationActive(deviceId) {
+                if (!this.activeOperations) {
+                    this.activeOperations = new Set();
+                }
                 this.activeOperations.add(deviceId);
                 console.log(`Marked device ${deviceId} as having active operation`);
             }
 
             markDeviceOperationInactive(deviceId) {
+                if (!this.activeOperations) {
+                    this.activeOperations = new Set();
+                }
                 this.activeOperations.delete(deviceId);
                 console.log(`Marked device ${deviceId} as operation complete`);
             }
 
             isDeviceOperationActive(deviceId) {
+                if (!this.activeOperations) {
+                    this.activeOperations = new Set();
+                }
                 return this.activeOperations.has(deviceId);
             }
 
@@ -1691,7 +1699,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     }
 
                     // Update stats if available
-                    const statsElement = versionsElement ? versionsElement.nextElementSibling : null;
+                    const row = statusElement.closest('tr');
+                    const statsElement = row.cells[6];
                     if (data.pnode_stats && statsElement) {
                         const stats = data.pnode_stats;
                         if (data.status === 'Online' && stats.cpu_percent !== null) {
