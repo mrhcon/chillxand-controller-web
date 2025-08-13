@@ -812,6 +812,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
 
                 // Remove highlight after 2 seconds
                 setTimeout(() => {
+                    console.log(`Removing highlight for device ${device.id}`);
                     row.style.backgroundColor = '';
                     row.style.transition = '';
                 }, 2000);
