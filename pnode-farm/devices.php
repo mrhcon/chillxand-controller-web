@@ -96,8 +96,10 @@ try {
 
     // Get latest statuses for all devices at once (super efficient!)
     $device_ids = array_column($devices, 'id');
+    error_log("About to call getLatestDeviceStatuses with " . count($device_ids) . " device IDs");
     $cached_statuses = getLatestDeviceStatuses($pdo, $device_ids);
-
+    error_log("getLatestDeviceStatuses completed, got " . count($cached_statuses) . " statuses");
+    
     // Add cached status and health data to each device
     $updated_devices = [];
     $summaries = [];

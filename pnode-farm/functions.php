@@ -159,15 +159,15 @@ function getLatestDeviceStatuses($pdo, $device_ids) {
             $packets_received = null;
             $packets_sent = null;
 
-            // if ($result['health_json']) {
-            //     $health_json = json_decode($result['health_json'], true);
-            //     if ($health_json && isset($health_json['checks']['system:network'])) {
-            //         $network_data = $health_json['checks']['system:network'];
-            //         $total_bytes_transferred = $network_data['total_bytes_transferred'] ?? null;
-            //         $packets_received = $network_data['total_packets_received'] ?? null;
-            //         $packets_sent = $network_data['total_packets_transmitted'] ?? null;
-            //     }
-            // }
+            if ($result['health_json']) {
+                $health_json = json_decode($result['health_json'], true);
+                if ($health_json && isset($health_json['checks']['system:network'])) {
+                    $network_data = $health_json['checks']['system:network'];
+                    $total_bytes_transferred = $network_data['total_bytes_transferred'] ?? null;
+                    $packets_received = $network_data['total_packets_received'] ?? null;
+                    $packets_sent = $network_data['total_packets_transmitted'] ?? null;
+                }
+            }
 
             $statuses[$result['device_id']] = [
                 'status' => $result['status'],
