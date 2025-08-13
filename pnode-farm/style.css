@@ -1,15 +1,20 @@
-﻿﻿body {
+﻿﻿/* ========== BASE STYLES ========== */
+body {
     font-family: Arial, sans-serif;
     margin: 0;
     background-color: #f0f0f0;
 }
 
+/* ========== LAYOUT COMPONENTS ========== */
+
+/* Console Container */
 .console-container {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
 }
 
+/* Top Bar */
 .top-bar {
     background-color: #007bff;
     color: white;
@@ -30,11 +35,30 @@
     gap: 10px;
 }
 
+/* Main Content Layout */
 .main-content {
     display: flex;
     flex: 1;
 }
 
+.info-panel {
+    flex: 1;
+    padding: 20px;
+    background: white;
+    overflow-x: auto;
+}
+
+.info-panel p {
+    margin: 10px 0;
+    text-align: left;
+}
+
+.info-panel h3 {
+    margin-top: 20px;
+    font-size: 18px;
+}
+
+/* ========== NAVIGATION MENU ========== */
 .menu-column {
     width: 200px;
     background-color: #f8f9fa;
@@ -69,6 +93,7 @@
     padding-left: 20px;
 }
 
+/* Menu Buttons */
 .menu-button {
     background-color: #e9ecef;
     border: 1px solid #007bff;
@@ -109,12 +134,9 @@
     font-weight: bold;
 }
 
-.info-panel {
-    flex: 1;
-    padding: 20px;
-    background: white;
-}
+/* ========== FORMS ========== */
 
+/* Form Groups */
 .form-group {
     margin-bottom: 15px;
 }
@@ -138,6 +160,48 @@
     box-sizing: border-box;
 }
 
+/* Form Validation */
+.field-error {
+    color: #dc3545;
+    font-size: 12px;
+    margin-top: 5px;
+    padding: 2px 0;
+    min-height: 16px;
+}
+
+.input-error {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+.input-success {
+    border-color: #28a745;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+.required {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+/* Form Focus States */
+.form-group input:focus,
+.modal-form-group input:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.modal-form-group input:disabled {
+    background-color: #f8f9fa;
+    color: #6c757d;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* ========== BUTTONS ========== */
+
+/* Base Button */
 button {
     width: 100%;
     padding: 10px;
@@ -152,17 +216,16 @@ button:hover {
     background-color: #0056b3;
 }
 
-.error {
-    color: red;
-    margin-bottom: 15px;
+button:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+    opacity: 0.6;
 }
 
-.success {
-    color: green;
-    margin-bottom: 15px;
-}
-
-.logout-btn, .action-btn, .reserved-btn {
+/* Utility Buttons */
+.logout-btn,
+.action-btn,
+.reserved-btn {
     display: inline-block;
     padding: 10px 20px;
     color: white;
@@ -197,6 +260,59 @@ button:hover {
     background-color: #5a6268;
 }
 
+/* Add Device Button */
+.add-device-btn {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s ease;
+    margin-left: 10px;
+}
+
+.add-device-btn:hover {
+    background-color: #218838;
+}
+
+/* Refresh Button */
+.refresh-btn {
+    background-color: #17a2b8;
+    color: white;
+    border: none;
+    padding: 3px 6px;
+    font-size: 11px;
+    border-radius: 3px;
+    cursor: pointer;
+    margin-left: 5px;
+    width: 18px;
+    height: 18px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.refresh-btn:hover {
+    background-color: #138496;
+    transform: scale(1.1);
+}
+
+.refresh-btn:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Action Buttons - Tiny Size */
 .action-btn-tiny {
     display: inline-block;
     padding: 3px 6px;
@@ -253,68 +369,32 @@ button:hover {
     background-color: #138496;
 }
 
-.action-btn-tiny.action-first, .action-btn-tiny.action-prev, .action-btn-tiny.action-next, .action-btn-tiny.action-last {
+/* Pagination Buttons */
+.action-btn-tiny.action-first,
+.action-btn-tiny.action-prev,
+.action-btn-tiny.action-next,
+.action-btn-tiny.action-last {
     background-color: #6c757d;
     cursor: pointer;
 }
 
-.action-btn-tiny.action-first:hover, .action-btn-tiny.action-prev:hover, .action-btn-tiny.action-next:hover, .action-btn-tiny.action-last:hover {
+.action-btn-tiny.action-first:hover,
+.action-btn-tiny.action-prev:hover,
+.action-btn-tiny.action-next:hover,
+.action-btn-tiny.action-last:hover {
     background-color: #5a6268;
 }
 
-.action-btn-tiny.action-first.disabled, .action-btn-tiny.action-prev.disabled, .action-btn-tiny.action-next.disabled, .action-btn-tiny.action-last.disabled {
+.action-btn-tiny.action-first.disabled,
+.action-btn-tiny.action-prev.disabled,
+.action-btn-tiny.action-next.disabled,
+.action-btn-tiny.action-last.disabled {
     background-color: #d6d8db;
     cursor: not-allowed;
     pointer-events: none;
 }
 
-.pagination-select {
-    padding: 3px;
-    font-size: 10px;
-    border-radius: 4px;
-    border: 1px solid #ddd;
-    background-color: #fff;
-    margin: 0 5px;
-    vertical-align: middle;
-}
-
-.pagination-select:focus {
-    outline: none;
-    border-color: #007bff;
-}
-
-.status-btn {
-    display: inline-block;
-    padding: 5px 10px;
-    color: white;
-    border-radius: 4px;
-    font-size: 12px;
-    text-align: center;
-    margin: 0 5px;
-    cursor: default;
-}
-
-.status-btn.status-online {
-    background-color: #28a745;
-}
-
-.status-btn.status-offline, .status-btn.status-invalid {
-    background-color: #dc3545;
-}
-
-.status-btn.status-healthy {
-    background-color: #28a745;
-}
-
-.status-btn.status-online-issues {
-    background-color: #ffc107;
-    color: #212529;
-}
-
-.status-btn.status-not-initialized {
-    background-color: #6c757d;
-}
-
+/* Action Button Groups */
 .action-buttons {
     display: flex;
     justify-content: center;
@@ -336,343 +416,7 @@ button:hover {
     pointer-events: none;
 }
 
-.login-container {
-    max-width: 300px;
-    margin: 50px auto;
-    padding: 20px;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    text-align: center;
-}
-
-.login-container p, .login-container a {
-    margin-top: 15px;
-    font-size: 14px;
-}
-
-.login-container a {
-    color: #007bff;
-    text-decoration: none;
-}
-
-.login-container a:hover {
-    text-decoration: underline;
-}
-
-.info-panel p {
-    margin: 10px 0;
-    text-align: left;
-}
-
-.info-panel h3 {
-    margin-top: 20px;
-    font-size: 18px;
-}
-
-.device-table, .user-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-}
-
-.device-table td, .user-table td {
-    border: 1px solid #ddd;
-    padding: 8px;
-    text-align: left;
-}
-
-.device-table th, .user-table th {
-    background-color: #f2f2f2;
-    font-weight: bold;
-    border: 1px solid #ddd;
-    padding: 8px;
-    text-align: center;
-}
-
-.device-table tr:nth-child(even), .user-table tr:nth-child(even) {
-    background-color: #f9f9f9;
-}
-
-.device-table td:nth-child(4) {
-    text-align: center;
-}
-
-.device-table td:nth-child(4) .status-btn {
-    min-width: 80px;
-    display: inline-block;
-    margin: 2px auto;
-    font-size: 12px !important;
-}
-
-.device-table td:nth-child(4) .status-age,
-.device-table td:nth-child(4) .device-details {
-    text-align: center;
-    margin: 2px 0;
-}
-
-.status-age {
-    font-size: 10px;
-    color: #666;
-}
-
-.device-table td .status-age {
-    font-size: 16px !important;
-    font-weight: normal !important;
-}
-
-.device-table td .status-fresh,
-.device-table td .status-stale {
-    font-size: 16px !important;
-}
-
-.device-table td .last-check-date {
-    color: #999 !important;
-}
-
-.device-table td:nth-child(7) .status-fresh,
-.device-table td:nth-child(7) .status-stale {
-    font-size: 16px;
-    margin: 2px 0;
-}
-
-.device-table td:nth-child(7) .never-checked {
-    font-size: 16px;
-    font-weight: normal;
-    text-align: center;
-    margin: 2px 0;
-}
-
-.device-table td:nth-child(7) {
-    text-align: center;
-}
-
-.last-check-col {
-    text-align: center;
-    font-size: 11px;
-    color: #666;
-}
-
-.last-check-col > div {
-    margin: 2px 0;
-}
-
-.last-check-date {
-    color: black;
-    font-size: inherit !important;
-    margin: 2px 0;
-}
-
-.device-table input {
-    padding: 5px;
-    margin: 0;
-}
-
-.device-table th:last-child,
-.device-table td:last-child {
-    width: 230px;
-    max-width: 230px;
-    padding: 5px;
-    vertical-align: top;
-}
-
-.inner-table {
-    width: 100%;
-    margin: 10px 0;
-    border-collapse: collapse;
-}
-
-.inner-table th, .inner-table td {
-    border: 1px solid #ddd;
-    padding: 6px;
-    font-size: 14px;
-}
-
-.inner-table th {
-    background-color: #e9ecef;
-}
-
-.inner-table tr:nth-child(even) {
-    background-color: #f9f9f9;
-}
-
-details {
-    text-align: left;
-    margin: 5px 0;
-}
-
-details summary {
-    cursor: pointer;
-    padding: 5px;
-    background-color: #f2f2f2;
-    border-radius: 4px;
-}
-
-.status-info {
-    line-height: 1.3;
-    color: #666;
-}
-
-.status-info > div {
-    display: flex;
-    align-items: center;
-    margin-bottom: 2px;
-    min-height: 16px;
-}
-
-.status-info strong {
-    font-weight: bold;
-    color: #333;
-    width: 120px;
-    flex-shrink: 0;
-    margin: 0 15px 0 0;
-}
-
-.status-value {
-    color: #333;
-    font-weight: normal;
-    text-align: left;
-    flex: 1;
-}
-
-.status-btn.status-value {
-    color: white !important;
-    text-align: center;
-    font-size: 9px;
-    padding: 3px 6px;
-    min-height: 18px;
-    line-height: 1.2;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.version-info {
-    font-size: 10px;
-    line-height: 1.3;
-    color: #666;
-}
-
-.user-info-line, .device-info-line {
-    background-color: #e9ecef;
-    border: 1px solid #ddd;
-    padding: 8px;
-    margin: 10px 0;
-    border-radius: 4px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-    font-size: 14px;
-}
-
-.user-info-line {
-    background-color: #d1e7ff;
-    border-color: #007bff;
-}
-
-.user-info-line span strong {
-    color: #0056b3;
-}
-
-.device-info-line span strong {
-    color: #333;
-}
-
-.user-info-line span, .device-info-line span {
-    flex: 1 1 auto;
-}
-
-.log-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-    font-size: 12px;
-}
-
-.log-table th, .log-table td {
-    border: 1px solid #ddd;
-    padding: 4px;
-}
-
-.log-table th {
-    background-color: #e9ecef;
-    font-weight: bold;
-    text-align: center;
-}
-
-.log-table td {
-    text-align: left;
-}
-
-.log-table tr:nth-child(odd) {
-    background-color: #f8f9fa;
-}
-
-.log-table tr:nth-child(even) {
-    background-color: #e9ecef;
-}
-
-/* Device management styles (shared between devices.php and dashboard.php) */
-.button-gap {
-    height: 5px;
-}
-
-.sortable-header {
-    cursor: pointer;
-    user-select: none;
-    position: relative;
-    padding-right: 20px;
-    background-color: #f8f9fa;
-    border: 1px solid #dee2e6;
-    transition: background-color 0.2s ease;
-}
-
-.sortable-header:hover {
-    background-color: #e9ecef;
-    color: #007bff;
-}
-
-.sortable-header::before {
-    content: "⇅";
-    position: absolute;
-    right: 5px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 10px;
-    color: #999;
-    opacity: 0.7;
-}
-
-.sort-indicator {
-    position: absolute;
-    right: 5px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 12px;
-    color: #007bff;
-    font-weight: bold;
-}
-
-.sort-asc .sort-indicator::after {
-    content: " ▲";
-}
-
-.sort-desc .sort-indicator::after {
-    content: " ▼";
-}
-
-.sort-asc::before,
-.sort-desc::before {
-    display: none;
-}
-
-.update-buttons-container {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    width: 100%;
-}
-
+/* Device Action Buttons */
 .action-button {
     width: 200px;
     padding: 5px 8px;
@@ -743,6 +487,37 @@ details summary {
     cursor: not-allowed;
 }
 
+/* Dashboard Action Buttons */
+.dashboard-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    align-items: center;
+}
+
+.dashboard-actions .action-button {
+    width: 100px;
+    padding: 4px 8px;
+    margin: 0;
+    cursor: pointer;
+    display: inline-block;
+    text-align: center;
+    font-size: 11px;
+    border: none;
+    border-radius: 3px;
+    box-sizing: border-box;
+    color: white;
+    transition: background-color 0.2s ease;
+}
+
+/* Button Containers */
+.update-buttons-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+}
+
 .update-button-row {
     display: flex;
     align-items: center;
@@ -750,13 +525,79 @@ details summary {
     width: 100%;
 }
 
-.summary-container {
-    margin-bottom: 20px;
-    padding: 10px;
-    border: 1px solid #ccc;
-    background: #f9f9f9;
+.button-gap {
+    height: 5px;
 }
 
+/* Button Loading States */
+.btn-loading {
+    position: relative;
+    pointer-events: none;
+}
+
+.btn-loading::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 16px;
+    height: 16px;
+    margin: -8px 0 0 -8px;
+    border: 2px solid transparent;
+    border-top: 2px solid #ffffff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* ========== STATUS COMPONENTS ========== */
+
+/* Status Buttons */
+.status-btn {
+    display: inline-block;
+    padding: 5px 10px;
+    color: white;
+    border-radius: 4px;
+    font-size: 12px;
+    text-align: center;
+    margin: 0 5px;
+    cursor: default;
+}
+
+.status-btn.status-online {
+    background-color: #28a745;
+}
+
+.status-btn.status-offline,
+.status-btn.status-invalid {
+    background-color: #dc3545;
+}
+
+.status-btn.status-healthy {
+    background-color: #28a745;
+}
+
+.status-btn.status-online-issues {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.status-btn.status-not-initialized {
+    background-color: #6c757d;
+    color: white;
+    font-size: 12px;
+    font-weight: normal;
+    text-align: center;
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 4px;
+    margin: 2px auto;
+    min-width: 80px;
+    height: auto;
+    line-height: normal;
+    box-sizing: border-box;
+}
+
+/* Status Text Colors */
 .status-stale {
     color: #ff6600;
 }
@@ -765,39 +606,9 @@ details summary {
     color: #006600;
 }
 
-.refresh-btn {
-    background-color: #17a2b8;
-    color: white;
-    border: none;
-    padding: 3px 6px;
-    font-size: 11px;
-    border-radius: 3px;
-    cursor: pointer;
-    margin-left: 5px;
-    width: 18px;
-    height: 18px;
-    line-height: 1;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-}
-
-.refresh-btn:hover {
-    background-color: #138496;
-    transform: scale(1.1);
-}
-
-.refresh-btn:disabled {
-    background-color: #6c757d;
-    cursor: not-allowed;
-    transform: none;
-}
-
-.device-details, .device-status-details {
-    font-size: 11px;
-    color: #999;
-    margin-top: 3px;
+.status-age {
+    font-size: 10px;
+    color: #666;
 }
 
 .never-checked {
@@ -805,120 +616,516 @@ details summary {
     color: #999;
 }
 
-.status-log-table {
+/* Error and Success Messages */
+.error {
+    color: red;
+    margin-bottom: 15px;
+}
+
+.success {
+    color: green;
+    margin-bottom: 15px;
+}
+
+/* Update Status Icons */
+.update-status-icon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-left: 5px;
+    vertical-align: middle;
+    font-size: 14px;
+    line-height: 1;
+    cursor: help;
+}
+
+.update-status-error {
+    color: #dc3545;
+}
+
+.update-status-warning {
+    color: #ffc107;
+}
+
+.update-status-success {
+    color: #28a745;
+}
+
+.update-status-icon:hover {
+    opacity: 0.8;
+}
+
+/* ========== TABLES ========== */
+
+/* Base Table Styles */
+.device-table,
+.user-table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 10px;
-    font-size: 11px;
+    min-width: 1400px;
+    font-size: 14px;
 }
 
-.status-log-table th,
-.status-log-table td {
+.device-table td,
+.device-table th,
+.user-table td,
+.user-table th {
     border: 1px solid #ddd;
-    padding: 4px;
-    text-align: center;
-    font-size: 11px;
-    vertical-align: top;
+    padding: 8px;
+    text-align: left;
+    line-height: 1.3;
 }
 
-.status-log-table th {
+.device-table th,
+.user-table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+    text-align: center;
+}
+
+.device-table tr:nth-child(even),
+.user-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+/* Sortable Headers */
+.sortable-header {
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    padding-right: 20px;
     background-color: #f8f9fa;
-    font-weight: bold;
-}
-
-.log-status-online {
-    color: #28a745;
-    font-weight: bold;
-}
-
-.log-status-offline {
-    color: #dc3545;
-    font-weight: bold;
-}
-
-.log-status-error {
-    color: #ffc107;
-    font-weight: bold;
-}
-
-.log-health-pass {
-    color: #28a745;
-}
-
-.log-health-fail {
-    color: #dc3545;
-}
-
-.log-atlas-yes {
-    color: #28a745;
-}
-
-.log-atlas-no {
-    color: #dc3545;
-}
-
-.log-service-active {
-    color: #28a745;
-}
-
-.log-service-inactive {
-    color: #dc3545;
-}
-
-.log-metrics {
-    font-size: 10px;
-    color: #666;
-}
-
-.log-error {
-    color: #dc3545;
-    font-size: 10px;
-}
-
-/* Dashboard summary cards */
-.dashboard-summary {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 15px;
-    margin-bottom: 20px;
-}
-
-.summary-card {
-    background: #f8f9fa;
     border: 1px solid #dee2e6;
-    border-radius: 5px;
-    padding: 15px;
-    text-align: center;
+    transition: background-color 0.2s ease;
 }
 
-.summary-card h4 {
-    margin: 0 0 10px 0;
-    color: #495057;
-}
-
-.summary-number {
-    font-size: 24px;
-    font-weight: bold;
-    margin: 5px 0;
-}
-
-.summary-online {
-    color: #28a745;
-}
-
-.summary-offline {
-    color: #dc3545;
-}
-
-.summary-total {
+.sortable-header:hover {
+    background-color: #e9ecef;
     color: #007bff;
 }
 
-.summary-issues {
+.sortable-header::before {
+    content: "⇅";
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 10px;
+    color: #999;
+    opacity: 0.7;
+}
+
+.sort-indicator {
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+    color: #007bff;
+    font-weight: bold;
+}
+
+.sort-asc .sort-indicator::after {
+    content: " ▲";
+}
+
+.sort-desc .sort-indicator::after {
+    content: " ▼";
+}
+
+.sort-asc::before,
+.sort-desc::before {
+    display: none;
+}
+
+/* Device Table Specific Styling */
+.device-table td {
+    vertical-align: middle;
+}
+
+/* Column Sizing */
+.device-table th:nth-child(2),
+.device-table td:nth-child(2) {
+    width: 120px;
+    max-width: 120px;
+    padding: 6px;
+}
+
+.device-table th:nth-child(3),
+.device-table td:nth-child(3) {
+    width: 140px;
+    max-width: 140px;
+    padding: 6px;
+    font-size: 13px;
+}
+
+.device-table th:nth-child(4),
+.device-table td:nth-child(4) {
+    width: 100px;
+    max-width: 100px;
+    padding: 6px;
+    text-align: center;
+}
+
+.device-table td:nth-child(4),
+.device-table td:nth-child(5),
+.device-table td:nth-child(6),
+.device-table td:nth-child(7),
+.device-table td:nth-child(8) {
+    vertical-align: middle;
+    padding: 8px;
+}
+
+/* pNode Stats Column */
+.device-table .stats-column {
+    width: 200px;
+    max-width: 200px;
+    padding: 8px;
+    vertical-align: middle;
+    text-align: left;
+}
+
+.device-table th:nth-child(7) {
+    width: 200px;
+    max-width: 200px;
+    text-align: center;
+    padding: 8px;
+    font-size: 12px;
+}
+
+/* Last Checked Column */
+.device-table td:nth-child(8) {
+    text-align: center;
+    vertical-align: middle;
+    padding: 8px;
+}
+
+.device-table th:nth-child(8) {
+    text-align: center;
+    padding: 8px;
+}
+
+/* Actions Column */
+.actions-column {
+    width: 120px;
+    max-width: 120px;
+    padding: 8px;
+    vertical-align: middle;
+    text-align: center;
+}
+
+.device-table th:nth-child(9),
+.device-table td:nth-child(9) {
+    width: 120px;
+    max-width: 120px;
+    text-align: center;
+    padding: 8px;
+    vertical-align: middle;
+}
+
+/* Device Table Status and Version Info */
+.device-table .status-info {
+    line-height: 1.3;
+    color: #666;
+}
+
+.device-table .status-info > div {
+    display: flex;
+    align-items: center;
+    margin-bottom: 2px;
+    min-height: 16px;
+}
+
+.device-table .status-info strong {
+    font-weight: bold;
+    color: #333;
+    width: 120px;
+    flex-shrink: 0;
+    margin-right: 15px;
+    font-size: 14px;
+}
+
+.device-table .status-value {
+    color: #333;
+    font-weight: normal;
+    text-align: left;
+    flex: 1;
+    font-size: 14px;
+}
+
+.device-table .status-btn.status-value {
+    color: white;
+    text-align: center;
+    font-size: 9px;
+    padding: 3px 6px;
+    min-height: 18px;
+    line-height: 1.2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    border-radius: 3px;
+}
+
+.device-table td:nth-child(5) .status-btn.status-value {
+    font-size: 12px;
+}
+
+.device-table .version-value {
+    color: #333;
+    font-weight: normal;
+    font-size: 14px;
+}
+
+.device-table .device-details,
+.device-table .device-status-details {
+    font-size: 12px;
+    color: #999;
+    margin-top: 3px;
+}
+
+.device-table .last-check-date {
+    color: black;
+    font-size: inherit;
+    margin: 2px 0;
+}
+
+.device-table .never-checked {
+    font-size: 14px;
+    font-weight: normal;
+    text-align: center;
+    margin: 2px 0;
+}
+
+/* Device Table Status Ages */
+.device-table td .status-age {
+    font-size: 16px;
+    font-weight: normal;
+}
+
+.device-table td .status-fresh,
+.device-table td .status-stale {
+    font-size: 16px;
+}
+
+.device-table td .last-check-date {
+    color: #999;
+}
+
+.device-table td:nth-child(7) .status-fresh,
+.device-table td:nth-child(7) .status-stale {
+    font-size: 16px;
+    margin: 2px 0;
+}
+
+.device-table td:nth-child(7) .never-checked {
+    font-size: 16px;
+    font-weight: normal;
+    text-align: center;
+    margin: 2px 0;
+}
+
+.device-table td:nth-child(7) {
+    text-align: center;
+}
+
+/* Status Buttons in Tables */
+.device-table td:nth-child(4) {
+    text-align: center;
+}
+
+.device-table td:nth-child(4) .status-btn {
+    min-width: 80px;
+    display: inline-block;
+    margin: 2px auto;
+    font-size: 12px;
+}
+
+.device-table td:nth-child(4) .status-age,
+.device-table td:nth-child(4) .device-details {
+    text-align: center;
+    margin: 2px 0;
+}
+
+/* Consistent Status Button Sizing */
+.device-table td:nth-child(5) .status-btn.status-not-initialized,
+.device-table td:nth-child(6) .status-btn.status-not-initialized,
+.device-table .status-info .status-btn.status-not-initialized {
+    font-size: 12px;
+    font-weight: normal;
+    padding: 5px 10px;
+    min-width: 80px;
+    display: inline-block;
+    margin: 2px auto;
+    text-align: center;
+    height: auto;
+    line-height: normal;
+    box-sizing: border-box;
+    vertical-align: middle;
+}
+
+/* ========== STATISTICS COMPONENTS ========== */
+
+/* Statistics Info */
+.stats-info {
+    line-height: 1.3;
+    color: #666;
+}
+
+.stats-info > div {
+    display: flex;
+    align-items: center;
+    margin-bottom: 2px;
+    min-height: 16px;
+}
+
+.stats-info strong {
+    font-weight: bold;
+    color: #333;
+    width: 90px;
+    flex-shrink: 0;
+    margin-right: 10px;
+    font-size: 14px;
+}
+
+.stat-value {
+    color: #333;
+    font-weight: normal;
+    text-align: left;
+    flex: 1;
+    font-size: 14px;
+}
+
+/* CPU Color Coding */
+.stat-cpu {
+    font-weight: bold;
+}
+
+.stat-cpu[data-value^="0"],
+.stat-cpu[data-value^="1"],
+.stat-cpu[data-value^="2"],
+.stat-cpu[data-value^="3"],
+.stat-cpu[data-value^="4"],
+.stat-cpu[data-value="50.0"],
+.stat-cpu[data-value="50"] {
+    color: #28a745;
+}
+
+.stat-cpu[data-value^="5"]:not([data-value="50"]):not([data-value="5"]),
+.stat-cpu[data-value^="6"],
+.stat-cpu[data-value^="7"],
+.stat-cpu[data-value="80.0"],
+.stat-cpu[data-value="80"] {
     color: #ffc107;
 }
 
-/* Modal styling */
+.stat-cpu[data-value^="8"]:not([data-value="80"]):not([data-value="8"]),
+.stat-cpu[data-value^="9"],
+.stat-cpu[data-value="100.0"],
+.stat-cpu[data-value="100"] {
+    color: #dc3545;
+}
+
+/* Memory Color Coding */
+.stat-memory {
+    font-weight: bold;
+}
+
+.stat-memory[data-value^="0"],
+.stat-memory[data-value^="1"],
+.stat-memory[data-value^="2"],
+.stat-memory[data-value^="3"],
+.stat-memory[data-value^="4"],
+.stat-memory[data-value^="5"],
+.stat-memory[data-value^="6"],
+.stat-memory[data-value="70.0"],
+.stat-memory[data-value="70"] {
+    color: #28a745;
+}
+
+.stat-memory[data-value^="7"]:not([data-value="70"]):not([data-value="7"]),
+.stat-memory[data-value^="8"]:not([data-value^="9"]):not([data-value="85"]):not([data-value="8"]),
+.stat-memory[data-value="85.0"],
+.stat-memory[data-value="85"] {
+    color: #ffc107;
+}
+
+.stat-memory[data-value^="8"]:not([data-value^="8."]):not([data-value="85"]),
+.stat-memory[data-value^="9"],
+.stat-memory[data-value="100.0"],
+.stat-memory[data-value="100"] {
+    color: #dc3545;
+}
+
+/* Stats Error States */
+.stats-unavailable,
+.stats-no-data {
+    color: #6c757d;
+    font-style: italic;
+    text-align: center;
+    font-size: 12px;
+    padding: 20px 5px;
+    display: block;
+}
+
+.stats-no-data {
+    color: #856404;
+}
+
+/* ========== PAGINATION ========== */
+.pagination-select {
+    padding: 3px;
+    font-size: 10px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    background-color: #fff;
+    margin: 0 5px;
+    vertical-align: middle;
+}
+
+.pagination-select:focus {
+    outline: none;
+    border-color: #007bff;
+}
+
+.last-check-col {
+    text-align: center;
+    font-size: 11px;
+    color: #666;
+}
+
+.last-check-col > div {
+    margin: 2px 0;
+}
+
+/* ========== LOGIN COMPONENT ========== */
+.login-container {
+    max-width: 300px;
+    margin: 50px auto;
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.login-container p,
+.login-container a {
+    margin-top: 15px;
+    font-size: 14px;
+}
+
+.login-container a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.login-container a:hover {
+    text-decoration: underline;
+}
+
+/* ========== MODAL COMPONENTS ========== */
 .modal {
     display: none;
     position: fixed;
@@ -959,6 +1166,7 @@ details summary {
     color: black;
 }
 
+/* Modal Forms */
 .modal-form-group {
     margin-bottom: 15px;
 }
@@ -977,6 +1185,7 @@ details summary {
     box-sizing: border-box;
 }
 
+/* Modal Buttons */
 .modal-buttons {
     display: flex;
     justify-content: flex-end;
@@ -1026,106 +1235,132 @@ details summary {
     background-color: #e0a800;
 }
 
-/* Update status icons */
-.update-status-icon {
-    display: inline-block;
-    width: 16px;
-    height: 16px;
-    margin-left: 5px;
-    vertical-align: middle;
+.modal-btn:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.modal-btn:disabled:hover {
+    background-color: #6c757d;
+}
+
+/* Modal Error Display */
+.modal-error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+    padding: 10px;
+    margin-bottom: 15px;
     font-size: 14px;
-    line-height: 1;
-    cursor: help;
 }
 
-.update-status-error {
-    color: #dc3545;
+/* Modal Loading States */
+.modal-loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.8);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1001;
+    border-radius: 5px;
 }
 
-.update-status-warning {
-    color: #ffc107;
+.modal-loading-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
 
-.update-status-success {
+.modal-loading-spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #007bff;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 15px;
+}
+
+.modal-loading-text {
+    color: #333;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+/* ========== DASHBOARD COMPONENTS ========== */
+
+/* Page Headers */
+.devices-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.devices-title {
+    margin: 0;
+    font-size: 1.5em;
+}
+
+/* Dashboard Summary Cards */
+.dashboard-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.summary-card {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    padding: 15px;
+    text-align: center;
+}
+
+.summary-card h4 {
+    margin: 0 0 10px 0;
+    color: #495057;
+}
+
+.summary-number {
+    font-size: 24px;
+    font-weight: bold;
+    margin: 5px 0;
+}
+
+.summary-online {
     color: #28a745;
 }
 
-.update-status-icon:hover {
-    opacity: 0.8;
+.summary-offline {
+    color: #dc3545;
 }
 
-/* Standardized device table styling (used by both devices.php and dashboard.php) */
-/* Use the more spacious devices.php styling for both pages */
-.device-table .status-info {
-    line-height: 1.3;
-    color: #666;
+.summary-total {
+    color: #007bff;
 }
 
-.device-table .status-info > div {
-    display: flex;
-    align-items: center;
-    margin-bottom: 2px;
-    min-height: 16px;
+.summary-issues {
+    color: #ffc107;
 }
 
-.device-table .status-info strong {
-    font-weight: bold;
-    color: #333;
-    width: 120px;
-    flex-shrink: 0;
-    margin-right: 15px;
-    font-size: 16px;
-}
-
-.device-table .status-value {
-    color: #333;
-    font-weight: normal;
-    text-align: left;
-    flex: 1;
-    font-size: 16px;
-}
-
-.device-table .status-btn.status-value {
-    color: white !important;
-    text-align: center;
-    font-size: 9px;
-    padding: 3px 6px;
-    min-height: 18px;
-    line-height: 1.2;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0;
-    border-radius: 3px;
-}
-
-.device-table .version-value {
-    color: #333;
-    font-weight: normal;
-    font-size: 16px;
-}
-
-/* Vertical centering for Connectivity, Health Status, Versions, and Last Checked columns */
-.device-table td:nth-child(4),
-.device-table td:nth-child(5),
-.device-table td:nth-child(6),
-.device-table td:nth-child(7) {
-    vertical-align: middle;
-    padding: 8px;
-}
-
-/* Larger font for health status buttons (column 5) */
-.device-table td:nth-child(5) .status-btn.status-value {
-    font-size: 12px !important;
-}
-
-/* Ensure consistent spacing for Health Status and Versions columns */
-.device-table td:nth-child(5) .status-info > div,
-.device-table td:nth-child(6) .status-info > div {
-    margin-bottom: 2px !important;
-    min-height: 16px !important;
-    display: flex !important;
-    align-items: center !important;
+/* Summary Container */
+.summary-container {
+    margin-bottom: 20px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    background: #f9f9f9;
 }
 
 /* Version Summary Cards */
@@ -1209,7 +1444,7 @@ details summary {
     transition: width 0.3s ease;
 }
 
-/* Different colors for different services */
+/* Version Card Color Variations */
 .version-card:nth-child(1) .version-bar-fill {
     background: linear-gradient(90deg, #28a745, #1e7e34);
 }
@@ -1226,7 +1461,7 @@ details summary {
     background: linear-gradient(90deg, #6f42c1, #59359a);
 }
 
-/* Hover effects */
+/* Version Card Hover Effects */
 .version-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0,0,0,0.15);
@@ -1240,288 +1475,270 @@ details summary {
     margin: 0 -8px;
 }
 
-.add-device-btn {
-    background-color: #28a745;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 30px;          /* Changed from 40px to 30px */
-    height: 30px;         /* Changed from 40px to 30px */
-    font-size: 15px;      /* Changed from 20px to 15px */
-    font-weight: bold;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background-color 0.3s ease;
-    margin-left: 10px;
-}
+/* ========== USER DETAILS ========== */
 
-.add-device-btn:hover {
-    background-color: #218838;
-}
-
-.devices-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 20px;
-}
-
-.devices-title {
-    margin: 0;
-    font-size: 1.5em;
-}
-
-/* ========== CONSISTENT STATUS BUTTON SIZING ========== */
-.status-not-initialized {
-    font-size: 12px !important;
-    font-weight: normal !important;
-    text-align: center !important;
-    display: inline-block !important;
-    padding: 5px 10px !important;
-    border-radius: 4px !important;
-    background-color: #6c757d !important;
-    color: white !important;
-    margin: 2px auto !important;      /* Match connectivity margin */
-    min-width: 80px !important;
-    height: auto !important;
-    line-height: normal !important;
-    box-sizing: border-box !important;
-}
-
-/* Connectivity column (4th column) - reference styling */
-.device-table td:nth-child(4) .status-btn.status-not-initialized {
-    font-size: 12px !important;
-    font-weight: normal !important;
-    padding: 5px 10px !important;
-    min-width: 80px !important;
-    display: inline-block !important;
-    margin: 2px auto !important;
-    text-align: center !important;
-    height: auto !important;
-    line-height: normal !important;
-}
-
-/* Health Status column (5th column) - force same dimensions as connectivity */
-.device-table td:nth-child(5) .status-btn.status-not-initialized,
-.device-table td:nth-child(5) .status-value.status-not-initialized {
-    font-size: 12px !important;
-    font-weight: normal !important;
-    padding: 5px 10px !important;        /* Exact same as connectivity */
-    min-width: 80px !important;
-    display: inline-block !important;    /* Changed from block to inline-block */
-    margin: 2px auto !important;         /* Exact same as connectivity */
-    text-align: center !important;
-    height: auto !important;
-    line-height: normal !important;
-    box-sizing: border-box !important;
-}
-
-/* Versions column (6th column) - force same dimensions as connectivity */
-.device-table td:nth-child(6) .status-btn.status-not-initialized,
-.device-table td:nth-child(6) .status-value.status-not-initialized {
-    font-size: 12px !important;
-    font-weight: normal !important;
-    padding: 5px 10px !important;        /* Exact same as connectivity */
-    min-width: 80px !important;
-    display: inline-block !important;    /* Changed from block to inline-block */
-    margin: 2px auto !important;         /* Exact same as connectivity */
-    text-align: center !important;
-    height: auto !important;
-    line-height: normal !important;
-    box-sizing: border-box !important;
-}
-
-/* Last Checked column (7th column) - if it appears there */
-.device-table td:nth-child(7) .status-btn.status-not-initialized,
-.device-table td:nth-child(7) .status-value.status-not-initialized {
-    font-size: 12px !important;
-    font-weight: normal !important;
-    padding: 5px 10px !important;
-    min-width: 80px !important;
-    display: inline-block !important;
-    margin: 2px auto !important;
-    text-align: center !important;
-    height: auto !important;
-    line-height: normal !important;
-}
-
-/* Force status-info containers to not interfere with button dimensions */
-.device-table .status-info .status-btn.status-not-initialized,
-.device-table .status-info .status-value.status-not-initialized {
-    font-size: 12px !important;
-    font-weight: normal !important;
-    text-align: center !important;
-    padding: 5px 10px !important;        /* Exact same as connectivity */
-    margin: 2px auto !important;         /* Exact same as connectivity */
-    display: inline-block !important;    /* Force inline-block */
-    min-width: 80px !important;
-    height: auto !important;
-    line-height: normal !important;
-    box-sizing: border-box !important;
-    /* Override any container styles */
-    vertical-align: middle !important;
-}
-
-/* Ensure parent containers don't interfere */
-.device-table td:nth-child(5):has(.status-not-initialized:only-child),
-.device-table td:nth-child(6):has(.status-not-initialized:only-child) {
-    text-align: center !important;
-    vertical-align: middle !important;
-    padding: 8px !important;
-}
-
-/* Override any status-info div styles that might affect the not-initialized button */
-.device-table td:nth-child(5) .status-info:has(.status-not-initialized:only-child),
-.device-table td:nth-child(6) .status-info:has(.status-not-initialized:only-child) {
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-    min-height: auto !important;
-    margin: 0 !important;
-    padding: 0 !important;
-}
-
-/* For single not-initialized spans that are direct children */
-.device-table td:nth-child(5) > .status-btn.status-not-initialized:only-child,
-.device-table td:nth-child(6) > .status-btn.status-not-initialized:only-child,
-.device-table td:nth-child(5) > .status-value.status-not-initialized:only-child,
-.device-table td:nth-child(6) > .status-value.status-not-initialized:only-child {
-    display: inline-block !important;
-    margin: 2px auto !important;
-    padding: 5px 10px !important;
-}
-
-/* Ensure consistent height for all other status buttons too */
-.device-table td:nth-child(5) .status-btn.status-value,
-.device-table td:nth-child(6) .status-btn.status-value {
-    padding: 5px 10px !important;
-    margin: 2px auto !important;
-    display: inline-block !important;
-    height: auto !important;
-    line-height: normal !important;
-    box-sizing: border-box !important;
-}
-
-/* ========== MODAL VALIDATION STYLING ========== */
-/* Add this to your style.css file */
-
-/* Error display area at top of modal */
-.modal-error {
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
+/* User Information */
+.user-info-line,
+.device-info-line {
+    background-color: #e9ecef;
+    border: 1px solid #ddd;
+    padding: 8px;
+    margin: 10px 0;
     border-radius: 4px;
-    padding: 10px;
-    margin-bottom: 15px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
     font-size: 14px;
 }
 
-/* Field-specific error messages */
-.field-error {
-    color: #dc3545;
+.user-info-line {
+    background-color: #d1e7ff;
+    border-color: #007bff;
+}
+
+.user-info-line span strong {
+    color: #0056b3;
+}
+
+.device-info-line span strong {
+    color: #333;
+}
+
+.user-info-line span,
+.device-info-line span {
+    flex: 1 1 auto;
+}
+
+/* User Details Grid */
+.user-details-grid {
+    display: grid; 
+    grid-template-columns: 1fr 1fr; 
+    gap: 20px; 
+    background: #f8f9fa; 
+    padding: 15px; 
+    border-radius: 5px; 
+    margin-bottom: 20px;
+}
+
+.user-details-grid p {
+    margin: 0 0 8px 0;
+}
+
+.user-details-grid strong {
+    display: inline-block;
+    min-width: 80px;
+    font-weight: bold;
+}
+
+.user-details-item {
+    display: flex;
+    margin-bottom: 8px;
+}
+
+.user-details-label {
+    font-weight: bold;
+    min-width: 120px;
+    flex-shrink: 0;
+    margin-right: 10px;
+}
+
+.user-details-value {
+    flex: 1;
+    text-align: left;
+}
+
+.last-login-text {
+    font-weight: normal;
+}
+
+.last-login-label {
+    font-weight: bold;
+}
+
+/* ========== LOG TABLES ========== */
+
+/* General Log Table */
+.log-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
     font-size: 12px;
-    margin-top: 5px;
-    padding: 2px 0;
-    min-height: 16px;
 }
 
-/* Input field error styling */
-.input-error {
-    border-color: #dc3545 !important;
-    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+.log-table th,
+.log-table td {
+    border: 1px solid #ddd;
+    padding: 4px;
 }
 
-/* Required field indicator */
-.required {
+.log-table th {
+    background-color: #e9ecef;
+    font-weight: bold;
+    text-align: center;
+}
+
+.log-table td {
+    text-align: left;
+}
+
+.log-table tr:nth-child(odd) {
+    background-color: #f8f9fa;
+}
+
+.log-table tr:nth-child(even) {
+    background-color: #e9ecef;
+}
+
+/* Status Log Table */
+.status-log-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-size: 11px;
+}
+
+.status-log-table th,
+.status-log-table td {
+    border: 1px solid #ddd;
+    padding: 4px;
+    text-align: center;
+    font-size: 11px;
+    vertical-align: top;
+}
+
+.status-log-table th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+}
+
+/* Log Status Colors */
+.log-status-online {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.log-status-offline {
     color: #dc3545;
     font-weight: bold;
 }
 
-/* Input focus states */
-.modal-form-group input:focus {
-    outline: none;
-    border-color: #007bff;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+.log-status-error {
+    color: #ffc107;
+    font-weight: bold;
 }
 
-/* Success state (when validation passes) */
-.input-success {
-    border-color: #28a745 !important;
-    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25) !important;
+.log-health-pass {
+    color: #28a745;
 }
 
-/* ========== DASHBOARD ACTIONS COLUMN ========== */
-/* Add this to your style.css file */
-
-/* Actions column styling */
-.actions-column {
-    width: 120px;
-    max-width: 120px;
-    padding: 8px;
-    vertical-align: middle;
-    text-align: center;
+.log-health-fail {
+    color: #dc3545;
 }
 
-.dashboard-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    align-items: center;
+.log-atlas-yes {
+    color: #28a745;
 }
 
-/* Action buttons for dashboard - smaller than devices.php */
-.dashboard-actions .action-button {
-    width: 100px;
-    padding: 4px 8px;
-    margin: 0;
+.log-atlas-no {
+    color: #dc3545;
+}
+
+.log-service-active {
+    color: #28a745;
+}
+
+.log-service-inactive {
+    color: #dc3545;
+}
+
+.log-metrics {
+    font-size: 10px;
+    color: #666;
+}
+
+.log-error {
+    color: #dc3545;
+    font-size: 10px;
+}
+
+/* ========== INNER TABLES ========== */
+.inner-table {
+    width: 100%;
+    margin: 10px 0;
+    border-collapse: collapse;
+}
+
+.inner-table th,
+.inner-table td {
+    border: 1px solid #ddd;
+    padding: 6px;
+    font-size: 14px;
+}
+
+.inner-table th {
+    background-color: #e9ecef;
+}
+
+.inner-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+/* ========== DETAILS AND EXPANDABLE CONTENT ========== */
+details {
+    text-align: left;
+    margin: 5px 0;
+}
+
+details summary {
     cursor: pointer;
-    display: inline-block;
-    text-align: center;
-    font-size: 11px;
-    border: none;
-    border-radius: 3px;
-    box-sizing: border-box;
-    color: white;
-    transition: background-color 0.2s ease;
+    padding: 5px;
+    background-color: #f2f2f2;
+    border-radius: 4px;
 }
 
-.dashboard-actions .action-button.edit {
-    background-color: #17a2b8;
+.status-info {
+    line-height: 1.3;
+    color: #666;
 }
 
-.dashboard-actions .action-button.edit:hover {
-    background-color: #138496;
+.status-info > div {
+    display: flex;
+    align-items: center;
+    margin-bottom: 2px;
+    min-height: 16px;
 }
 
-.dashboard-actions .action-button.delete {
-    background-color: #dc3545;
-}
-
-.dashboard-actions .action-button.delete:hover {
-    background-color: #c82333;
-}
-
-/* Ensure actions column header is properly sized */
-.device-table th:last-child {
+.status-info strong {
+    font-weight: bold;
+    color: #333;
     width: 120px;
-    max-width: 120px;
-    text-align: center;
+    flex-shrink: 0;
+    margin: 0 15px 0 0;
 }
 
-/* Override any conflicting styles for the last column */
-.device-table td:last-child {
-    width: 120px !important;
-    max-width: 120px !important;
-    padding: 8px !important;
-    vertical-align: middle !important;
+.status-value {
+    color: #333;
+    font-weight: normal;
+    text-align: left;
+    flex: 1;
 }
 
-/* ========== LOADING SPINNER AND DISABLED STATES ========== */
-/* Add this to your style.css file */
+.version-info {
+    font-size: 10px;
+    line-height: 1.3;
+    color: #666;
+}
 
-/* Loading spinner */
+.device-details,
+.device-status-details {
+    font-size: 11px;
+    color: #999;
+    margin-top: 3px;
+}
+
+/* ========== LOADING AND ANIMATIONS ========== */
+
+/* Loading Spinner */
 .loading-spinner {
     border: 3px solid #f3f3f3;
     border-top: 3px solid #007bff;
@@ -1539,340 +1756,9 @@ details summary {
     100% { transform: rotate(360deg); }
 }
 
-/* Loading overlay for modal */
-.modal-loading-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(255, 255, 255, 0.8);
-    display: none;
-    justify-content: center;
-    align-items: center;
-    z-index: 1001;
-    border-radius: 5px;
-}
+/* ========== RESPONSIVE DESIGN ========== */
 
-.modal-loading-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 20px;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-}
-
-.modal-loading-spinner {
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #007bff;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    animation: spin 1s linear infinite;
-    margin-bottom: 15px;
-}
-
-.modal-loading-text {
-    color: #333;
-    font-size: 16px;
-    font-weight: 500;
-}
-
-/* Disabled button states during loading */
-.modal-btn:disabled {
-    background-color: #6c757d !important;
-    cursor: not-allowed !important;
-    opacity: 0.6;
-}
-
-.modal-btn:disabled:hover {
-    background-color: #6c757d !important;
-}
-
-/* Disabled form inputs during loading */
-.modal-form-group input:disabled {
-    background-color: #f8f9fa;
-    color: #6c757d;
-    cursor: not-allowed;
-    opacity: 0.7;
-}
-
-/* Button loading state with spinner */
-.btn-loading {
-    position: relative;
-    pointer-events: none;
-}
-
-.btn-loading::before {
-    content: "";
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    width: 16px;
-    height: 16px;
-    margin: -8px 0 0 -8px;
-    border: 2px solid transparent;
-    border-top: 2px solid #ffffff;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-/* Fix for Last Login - make only the label bold, not the value */
-.last-login-text {
-    font-weight: normal; /* Reset the whole paragraph to normal */
-}
-
-.last-login-label {
-    font-weight: bold; /* Only the label part is bold */
-}
-
-/* Fix for Your Details section - align values to the left */
-.user-details-grid {
-    display: grid; 
-    grid-template-columns: 1fr 1fr; 
-    gap: 20px; 
-    background: #f8f9fa; 
-    padding: 15px; 
-    border-radius: 5px; 
-    margin-bottom: 20px;
-}
-
-.user-details-grid p {
-    margin: 0 0 8px 0;
-}
-
-.user-details-grid strong {
-    display: inline-block;
-    min-width: 80px; /* Adjust this width as needed */
-    font-weight: bold;
-}
-
-/* Alternative approach with better alignment */
-.user-details-item {
-    display: flex;
-    margin-bottom: 8px;
-}
-
-.user-details-label {
-    font-weight: bold;
-    min-width: 120px; /* Increased from 100px to give more space */
-    flex-shrink: 0;
-    margin-right: 10px; /* Add some extra margin for better spacing */
-}
-
-.user-details-value {
-    flex: 1;
-    text-align: left;
-}
-
-/* ========== PNODE STATS COLUMN STYLING ========== */
-
-/* Shrink other columns to make room for pNode Stats */
-.device-table th:nth-child(2), /* IP Address */
-.device-table td:nth-child(2) {
-    width: 120px;
-    max-width: 120px;
-    padding: 6px;
-}
-
-.device-table th:nth-child(3), /* Registration Date */
-.device-table td:nth-child(3) {
-    width: 140px;
-    max-width: 140px;
-    padding: 6px;
-    font-size: 13px;
-}
-
-.device-table th:nth-child(4), /* Connectivity */
-.device-table td:nth-child(4) {
-    width: 100px;
-    max-width: 100px;
-    padding: 6px;
-    text-align: center;
-}
-
-/* Make pNode Stats column wider */
-.device-table .stats-column {
-    width: 200px;
-    max-width: 200px;
-    padding: 8px;
-    vertical-align: middle;
-    text-align: left;
-}
-
-.stats-info {
-    line-height: 1.3;
-    color: #666;
-}
-
-.stats-info > div {
-    display: flex;
-    align-items: center;
-    margin-bottom: 2px;
-    min-height: 16px;
-}
-
-.stats-info strong {
-    font-weight: bold;
-    color: #333;
-    width: 90px;
-    flex-shrink: 0;
-    margin-right: 10px;
-    font-size: 14px;
-}
-
-.stat-value {
-    color: #333;
-    font-weight: normal;
-    text-align: left;
-    flex: 1;
-    font-size: 14px;
-}
-
-/* Color coding for CPU percentage */
-.stat-cpu {
-    font-weight: bold !important;
-}
-
-/* CPU: Green ≤50%, Yellow 50-80%, Red >80% */
-.stat-cpu[data-value^="0"],
-.stat-cpu[data-value^="1"],
-.stat-cpu[data-value^="2"],
-.stat-cpu[data-value^="3"],
-.stat-cpu[data-value^="4"] {
-    color: #28a745 !important;
-}
-
-.stat-cpu[data-value="50.0"],
-.stat-cpu[data-value="50"] {
-    color: #28a745 !important;
-}
-
-.stat-cpu[data-value^="5"]:not([data-value="50"]):not([data-value="5"]),
-.stat-cpu[data-value^="6"],
-.stat-cpu[data-value^="7"] {
-    color: #ffc107 !important;
-}
-
-.stat-cpu[data-value="80.0"],
-.stat-cpu[data-value="80"] {
-    color: #ffc107 !important;
-}
-
-.stat-cpu[data-value^="8"]:not([data-value="80"]):not([data-value="8"]),
-.stat-cpu[data-value^="9"],
-.stat-cpu[data-value="100.0"],
-.stat-cpu[data-value="100"] {
-    color: #dc3545 !important;
-}
-
-/* Color coding for memory percentage */
-.stat-memory {
-    font-weight: bold !important;
-}
-
-/* Memory: Green ≤70%, Yellow 70-85%, Red >85% */
-.stat-memory[data-value^="0"],
-.stat-memory[data-value^="1"],
-.stat-memory[data-value^="2"],
-.stat-memory[data-value^="3"],
-.stat-memory[data-value^="4"],
-.stat-memory[data-value^="5"],
-.stat-memory[data-value^="6"] {
-    color: #28a745 !important;
-}
-
-.stat-memory[data-value="70.0"],
-.stat-memory[data-value="70"] {
-    color: #28a745 !important;
-}
-
-.stat-memory[data-value^="7"]:not([data-value="70"]):not([data-value="7"]),
-.stat-memory[data-value^="8"]:not([data-value^="9"]):not([data-value="85"]):not([data-value="8"]) {
-    color: #ffc107 !important;
-}
-
-.stat-memory[data-value="85.0"],
-.stat-memory[data-value="85"] {
-    color: #ffc107 !important;
-}
-
-.stat-memory[data-value^="8"]:not([data-value^="8."]):not([data-value="85"]),
-.stat-memory[data-value^="9"],
-.stat-memory[data-value="100.0"],
-.stat-memory[data-value="100"] {
-    color: #dc3545 !important;
-}
-
-/* Stats unavailable/error states */
-.stats-unavailable,
-.stats-no-data {
-    color: #6c757d;
-    font-style: italic;
-    text-align: center;
-    font-size: 12px;
-    padding: 20px 5px;
-    display: block;
-}
-
-.stats-no-data {
-    color: #856404;
-}
-
-/* Hover effects */
-.stats-column:hover .stats-info {
-    background-color: rgba(0, 123, 255, 0.05);
-    border-radius: 3px;
-    padding: 3px;
-    margin: -3px;
-    transition: background-color 0.2s ease;
-}
-
-.stats-column:hover .stats-info strong {
-    color: #007bff;
-}
-
-/* Table header adjustments for new column positions */
-.device-table th:nth-child(7) {
-    width: 200px;
-    max-width: 200px;
-    text-align: center;
-    padding: 8px;
-    font-size: 12px;
-}
-
-/* Fix Last Checked column centering (now 8th column) */
-.device-table td:nth-child(8) {
-    text-align: center !important;
-    vertical-align: middle !important;
-    padding: 8px !important;
-}
-
-.device-table th:nth-child(8) {
-    text-align: center;
-    padding: 8px;
-}
-
-/* Actions column is now 9th column */
-.device-table th:nth-child(9),
-.device-table td:nth-child(9) {
-    text-align: center;
-    padding: 8px;
-}
-
-/* Ensure table accommodates new column layout */
-.device-table {
-    min-width: 1400px;
-}
-
-/* Add horizontal scroll for smaller screens */
-.info-panel {
-    overflow-x: auto;
-}
-
-/* Responsive adjustments */
+/* Medium Screens */
 @media (max-width: 1400px) {
     .device-table .stats-column {
         width: 180px;
@@ -1907,6 +1793,7 @@ details summary {
     }
 }
 
+/* Small Screens */
 @media (max-width: 1200px) {
     .device-table .stats-column {
         width: 160px;

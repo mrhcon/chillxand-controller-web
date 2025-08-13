@@ -131,7 +131,7 @@ function getLatestDeviceStatuses($pdo, $device_ids) {
                    cpu_load_avg, memory_percent, memory_total_bytes, memory_used_bytes,
                    server_ip, server_hostname, chillxand_version,
                    pod_version, xandminer_version, xandminerd_version,
-                   error_message, check_method,
+                   error_message, check_method, health_json,
                    TIMESTAMPDIFF(MINUTE, check_time, NOW()) as age_minutes
             FROM (
                 SELECT device_id, status, check_time, response_time, consecutive_failures,
@@ -139,7 +139,7 @@ function getLatestDeviceStatuses($pdo, $device_ids) {
                        cpu_load_avg, memory_percent, memory_total_bytes, memory_used_bytes,
                        server_ip, server_hostname, chillxand_version,
                        pod_version, xandminer_version, xandminerd_version,
-                       error_message, check_method,
+                       error_message, check_method, health_json,
                        ROW_NUMBER() OVER (PARTITION BY device_id ORDER BY check_time DESC) as rn
                 FROM device_status_log
                 WHERE device_id IN ($placeholders)
@@ -154,6 +154,21 @@ function getLatestDeviceStatuses($pdo, $device_ids) {
         foreach ($results as $result) {
             $is_stale = ($result['age_minutes'] > 15);
             
+            // Parse network stats from health_json
+            $total_bytes_transferred = null;
+            $packets_received = null; 
+            $packets_sent = null;
+
+            if ($result['health_json']) {
+                $health_json = json_decode($result['health_json'], true);
+                if ($health_json && isset($health_json['checks']['system:network'])) {
+                    $network_data = $health_json['checks']['system:network'];
+                    $total_bytes_transferred = $network_data['total_bytes_transferred'] ?? null;
+                    $packets_received = $network_data['total_packets_received'] ?? null;
+                    $packets_sent = $network_data['total_packets_transmitted'] ?? null;
+                }
+            }            
+
             $statuses[$result['device_id']] = [
                 'status' => $result['status'],
                 'check_time' => $result['check_time'],
@@ -170,6 +185,9 @@ function getLatestDeviceStatuses($pdo, $device_ids) {
                 'memory_percent' => $result['memory_percent'],
                 'memory_total_bytes' => $result['memory_total_bytes'],
                 'memory_used_bytes' => $result['memory_used_bytes'],
+                'total_bytes_transferred' => $total_bytes_transferred,
+                'packets_received' => $packets_received,
+                'packets_sent' => $packets_sent                
                 'server_ip' => $result['server_ip'],
                 'server_hostname' => $result['server_hostname'],
                 'chillxand_version' => $result['chillxand_version'],

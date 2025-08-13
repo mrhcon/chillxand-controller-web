@@ -82,6 +82,18 @@ try {
         $overall_status = $cached_status['status'];
     }
     
+    // Build pNode stats from cached data (no additional DB queries!)
+    $pnode_stats = null;
+    if ($cached_status['status'] === 'Online' && $cached_status['cpu_load_avg'] !== null) {
+        $pnode_stats = [
+            'cpu_percent' => $cached_status['cpu_load_avg'],
+            'memory_percent' => $cached_status['memory_percent'],
+            'total_bytes_transferred' => $cached_status['total_bytes_transferred'] ?? 0,
+            'packets_received' => $cached_status['packets_received'] ?? 0,
+            'packets_sent' => $cached_status['packets_sent'] ?? 0
+        ];
+    }     
+
     // Return JSON response
     echo json_encode([
         'success' => true,
@@ -95,6 +107,7 @@ try {
         'consecutive_failures' => $cached_status['consecutive_failures'],
         'health_status' => $cached_status['health_status'],
         'summary' => $summary,
+        'pnode_stats' => $pnode_stats, 
         'timestamp' => date('M j, H:i', time())
     ]);
     

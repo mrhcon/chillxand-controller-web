@@ -238,50 +238,16 @@ try {
         $device['consecutive_failures'] = $cached_status['consecutive_failures'];
         $device['health_status'] = $cached_status['health_status'];
 
-        // ADD THIS NEW SECTION - Fetch latest pNode stats from database
+        // Add the stats section
         $device['pnode_stats'] = null;
-        try {
-            $stmt = $pdo->prepare("
-                SELECT 
-                    cpu_load_avg,
-                    memory_percent,
-                    health_json
-                FROM device_status_log 
-                WHERE device_id = :device_id 
-                AND health_json IS NOT NULL
-                ORDER BY check_time DESC 
-                LIMIT 1
-            ");
-            $stmt->bindValue(':device_id', $device_id, PDO::PARAM_INT);
-            $stmt->execute();
-            $latest_stats = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            if ($latest_stats) {
-                // Parse network data from health_json
-                $total_bytes_transferred = 0;
-                $packets_received = 0;
-                $packets_sent = 0;
-                
-                if ($latest_stats['health_json']) {
-                    $health_json = json_decode($latest_stats['health_json'], true);
-                    if ($health_json && isset($health_json['checks']['system:network'])) {
-                        $network_data = $health_json['checks']['system:network'];
-                        $total_bytes_transferred = $network_data['total_bytes_transferred'] ?? 0;
-                        $packets_received = $network_data['total_packets_received'] ?? 0;
-                        $packets_sent = $network_data['total_packets_transmitted'] ?? 0;
-                    }
-                }
-                
-                $device['pnode_stats'] = [
-                    'cpu_percent' => $latest_stats['cpu_load_avg'],
-                    'memory_percent' => $latest_stats['memory_percent'],
-                    'total_bytes_transferred' => $total_bytes_transferred,
-                    'packets_received' => $packets_received,
-                    'packets_sent' => $packets_sent
-                ];
-            }
-        } catch (PDOException $e) {
-            error_log("Error fetching pNode stats for device {$device_id}: " . $e->getMessage());
+        if ($cached_status['status'] === 'Online' && $cached_status['cpu_load_avg'] !== null) {
+            $device['pnode_stats'] = [
+                'cpu_percent' => $cached_status['cpu_load_avg'],
+                'memory_percent' => $cached_status['memory_percent'],
+                'total_bytes_transferred' => $cached_status['total_bytes_transferred'] ?? 0,
+                'packets_received' => $cached_status['packets_received'] ?? 0,
+                'packets_sent' => $cached_status['packets_sent'] ?? 0
+            ];
         }
 
         // Determine overall status (connectivity + health)
@@ -795,6 +761,10 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                 const versionsCell = row.cells[5];
                 this.updateVersionsCell(versionsCell, data);
 
+                // Update pNode stats (7th column) - NEW
+                const statsCell = row.cells[6];
+                this.updateStatsCell(statsCell, data);
+                
                 // Update last checked (8th column)
                 const lastCheckedCell = row.cells[7];
                 this.updateLastCheckedCell(lastCheckedCell, data);
@@ -805,6 +775,69 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                 }, 2000);
             }
 
+            updateStatsCell(cell, data) {
+                if (data.status !== 'Online') {
+                    cell.innerHTML = '<span class="stats-unavailable">Stats unavailable</span>';
+                    return;
+                }
+
+                // Check if we have stats data in the cached status
+                const stats = data.pnode_stats;
+                
+                if (!stats || stats.cpu_percent === null) {
+                    cell.innerHTML = '<span class="stats-no-data">No stats data</span>';
+                    return;
+                }
+
+                // Format bytes using the same function as PHP
+                const formatBytes = (bytes) => {
+                    if (!bytes || bytes < 0) return '0 B';
+                    
+                    const units = ['B', 'KiB', 'MiB', 'GiB', 'TiB'];
+                    let size = Math.max(bytes, 0);
+                    const pow = Math.floor(Math.log(size) / Math.log(1024));
+                    const finalPow = Math.min(pow, units.length - 1);
+                    
+                    size /= Math.pow(1024, finalPow);
+                    return Math.round(size * 10) / 10 + ' ' + units[finalPow];
+                };
+
+                // Build the stats HTML with the same structure as PHP
+                cell.innerHTML = `
+                    <div class="stats-info">
+                        <div><strong>CPU:</strong>
+                            <span class="stat-value stat-cpu" data-value="${stats.cpu_percent}">
+                                ${Number(stats.cpu_percent).toFixed(1)}%
+                            </span>
+                        </div>
+                        
+                        <div><strong>RAM:</strong>
+                            <span class="stat-value stat-memory" data-value="${stats.memory_percent}">
+                                ${Number(stats.memory_percent).toFixed(1)}%
+                            </span>
+                        </div>
+                        
+                        <div><strong>Total Bytes:</strong>
+                            <span class="stat-value">
+                                ${formatBytes(stats.total_bytes_transferred)}
+                            </span>
+                        </div>
+                        
+                        <div><strong>Packets RX:</strong>
+                            <span class="stat-value">
+                                ${Number(stats.packets_received).toLocaleString()}
+                            </span>
+                        </div>
+                        
+                        <div><strong>Packets TX:</strong>
+                            <span class="stat-value">
+                                ${Number(stats.packets_sent).toLocaleString()}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            }
+            
             updateConnectivityCell(cell, data) {
                 const statusClass = `status-${data.status.toLowerCase().replace(' ', '-')}`;
 
