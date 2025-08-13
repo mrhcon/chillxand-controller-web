@@ -8,18 +8,18 @@ require_once 'functions.php';
  */
 function formatUptime($seconds) {
     if (!$seconds || $seconds < 0) return '0s';
-    
+
     $days = floor($seconds / 86400);
     $hours = floor(($seconds % 86400) / 3600);
     $minutes = floor(($seconds % 3600) / 60);
     $secs = $seconds % 60;
-    
+
     $parts = [];
     if ($days > 0) $parts[] = $days . 'd';
     if ($hours > 0) $parts[] = $hours . 'h';
     if ($minutes > 0) $parts[] = $minutes . 'm';
     if ($secs > 0 || empty($parts)) $parts[] = $secs . 's';
-    
+
     return implode(' ', $parts);
 }
 
@@ -113,7 +113,7 @@ try {
             'total_pages' => $cached_status['stats_total_pages'] ?? 0,
             'packets_received' => $cached_status['stats_packets_received'] ?? 0,
             'packets_sent' => $cached_status['stats_packets_sent'] ?? 0,
-            
+
             // ALL additional stats from the stats section
             'current_index' => $cached_status['stats_current_index'] ?? 0,
             'last_updated' => $cached_status['stats_last_updated'] ?? 0,
@@ -122,7 +122,7 @@ try {
             'uptime' => $cached_status['stats_uptime'] ?? 0,
             'active_streams' => $cached_status['stats_active_streams'] ?? 0,
             'file_size' => $cached_status['stats_file_size'] ?? 0,
-            
+
             // Raw stats fields (direct database access)
             'stats_current_index' => $cached_status['stats_current_index'] ?? 0,
             'stats_total_pages' => $cached_status['stats_total_pages'] ?? 0,
@@ -136,7 +136,7 @@ try {
             'stats_packets_received' => $cached_status['stats_packets_received'] ?? 0,
             'stats_active_streams' => $cached_status['stats_active_streams'] ?? 0,
             'stats_file_size' => $cached_status['stats_file_size'] ?? 0,
-            
+
             // Additional computed/formatted values
             'uptime_formatted' => formatUptime($cached_status['stats_uptime'] ?? 0),
             'file_size_formatted' => formatBytesForDisplay($cached_status['stats_file_size'] ?? 0),

@@ -1,7 +1,7 @@
 <?php
 /**
  * device_status_checker.php - Background Device Status Checker (Health Endpoint)
- * 
+ *
  * Run this script via cron every 2 minutes
  */
 
@@ -32,14 +32,14 @@ function formatBytes($bytes) {
     if (!is_numeric($bytes) || $bytes < 0) {
         return '0 B';
     }
-    
+
     $units = ['B', 'KB', 'MB', 'GB', 'TB'];
     $bytes = max($bytes, 0);
     $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
     $pow = min($pow, count($units) - 1);
-    
+
     $bytes /= pow(1024, $pow);
-    
+
     return round($bytes, 1) . ' ' . $units[$pow];
 }
 
@@ -54,14 +54,14 @@ function checkDeviceStatus($ip, $timeout = 3) {
         'method' => 'none',
         'error' => null
     ];
-    
+
     // Validate IP
     if (!filter_var($ip, FILTER_VALIDATE_IP)) {
         $result['status'] = 'Error';
         $result['error'] = 'Invalid IP address';
         return $result;
     }
-    
+
     // Method 1: Try fsockopen on port 3001
     $connection = @fsockopen($ip, 3001, $errno, $errstr, $timeout);
     if ($connection) {
@@ -71,7 +71,7 @@ function checkDeviceStatus($ip, $timeout = 3) {
         $result['method'] = 'fsockopen';
         return $result;
     }
-    
+
     // Method 2: Try fsockopen on port 443 (HTTPS)
     $connection = @fsockopen($ip, 443, $errno, $errstr, $timeout);
     if ($connection) {
@@ -81,28 +81,28 @@ function checkDeviceStatus($ip, $timeout = 3) {
         $result['method'] = 'fsockopen:443';
         return $result;
     }
-    
+
     // Method 3: Try ping (if available)
     $ping_start = microtime(true);
-    $ping_command = (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') 
+    $ping_command = (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN')
         ? "ping -n 1 -w " . ($timeout * 1000) . " $ip"
         : "ping -c 1 -W $timeout $ip 2>/dev/null";
-    
+
     exec($ping_command, $output, $return_var);
-    
+
     if ($return_var === 0) {
         $result['status'] = 'Online';
         $result['response_time'] = microtime(true) - $ping_start;
         $result['method'] = 'ping';
         return $result;
     }
-    
+
     // All methods failed
     $result['status'] = 'Offline';
     $result['response_time'] = microtime(true) - $start_time;
     $result['method'] = 'fsockopen+ping';
     $result['error'] = "fsockopen: $errstr ($errno), ping failed";
-    
+
     return $result;
 }
 
@@ -121,9 +121,9 @@ function fetchDeviceHealth($ip, $timeout = 5) {
         CURLOPT_FOLLOWLOCATION => true,
         CURLOPT_FAILONERROR => false,
         CURLOPT_SSL_VERIFYPEER => false,
-        CURLOPT_USERAGENT => 'Device-Status-Checker/1.0'  
+        CURLOPT_USERAGENT => 'Device-Status-Checker/1.0'
     ]);
-    
+
     $response = curl_exec($ch);
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $error = curl_error($ch);
@@ -165,14 +165,14 @@ function parseHealthData($health_data, $device_ip) {
             'error' => $health_data['error']
         ];
     }
-    
+
     $result = [
         'health_status' => $health_data['status'] ?? 'unknown',
         'server_ip' => $device_ip, // Fallback to device IP
         'server_hostname' => null,
         'atlas_registered' => null,
         'pod_status' => 'unknown',
-        'xandminer_status' => 'unknown', 
+        'xandminer_status' => 'unknown',
         'xandminerd_status' => 'unknown',
         'cpu_load_avg' => null,
         'memory_percent' => null,
@@ -184,26 +184,26 @@ function parseHealthData($health_data, $device_ip) {
         'xandminerd_version' => null,
         'error' => null
     ];
-    
+
     // Extract ChillXand version - try both paths
     $result['chillxand_version'] = $health_data['chillxand_controller_version'] ?? null;
     if (!$result['chillxand_version'] && isset($health_data['versions']['data']['chillxand_controller'])) {
         $result['chillxand_version'] = $health_data['versions']['data']['chillxand_controller'];
     }
-    
+
     // Extract versions from versions.data
     if (isset($health_data['versions']['data'])) {
         $result['pod_version'] = $health_data['versions']['data']['pod'] ?? null;
         $result['xandminer_version'] = $health_data['versions']['data']['xandminer'] ?? null;
         $result['xandminerd_version'] = $health_data['versions']['data']['xandminerd'] ?? null;
     }
-    
+
     // Extract server info from connectivity check
     if (isset($health_data['checks']['connectivity']['server_info'])) {
         $result['server_ip'] = $health_data['checks']['connectivity']['server_info']['ip'] ?? $device_ip;
         $result['server_hostname'] = $health_data['checks']['connectivity']['server_info']['hostname'] ?? null;
     }
-    
+
     // Parse checks array
     if (isset($health_data['checks']) && is_array($health_data['checks'])) {
         foreach ($health_data['checks'] as $check_name => $check_data) {
@@ -211,32 +211,32 @@ function parseHealthData($health_data, $device_ip) {
                 case 'system:cpu':
                     $result['cpu_load_avg'] = $check_data['observedValue'] ?? null;
                     break;
-                    
+
                 case 'system:memory':
                     $result['memory_percent'] = $check_data['observedValue'] ?? null;
                     $result['memory_total_bytes'] = $check_data['memory_total_bytes'] ?? null;
                     $result['memory_used_bytes'] = $check_data['memory_used_bytes'] ?? null;
                     break;
-                    
+
                 case 'atlas:registration':
                     $result['atlas_registered'] = ($check_data['status'] ?? '') === 'pass' && ($check_data['registered'] ?? false);
                     break;
-                    
+
                 case 'service:pod':
                     $result['pod_status'] = ($check_data['status'] ?? '') === 'pass' ? ($check_data['observedValue'] ?? 'active') : 'inactive';
                     break;
-                    
+
                 case 'service:xandminer':
                     $result['xandminer_status'] = ($check_data['status'] ?? '') === 'pass' ? ($check_data['observedValue'] ?? 'active') : 'inactive';
                     break;
-                    
+
                 case 'service:xandminerd':
                     $result['xandminerd_status'] = ($check_data['status'] ?? '') === 'pass' ? ($check_data['observedValue'] ?? 'active') : 'inactive';
                     break;
             }
         }
     }
-    
+
     return $result;
 }
 
@@ -248,46 +248,46 @@ try {
                latest.last_check, latest.consecutive_failures
         FROM devices d
         LEFT JOIN (
-            SELECT device_id, 
+            SELECT device_id,
                    MAX(check_time) as last_check,
                    consecutive_failures
-            FROM device_status_log 
+            FROM device_status_log
             GROUP BY device_id
         ) latest ON d.id = latest.device_id
-        WHERE latest.last_check IS NULL 
+        WHERE latest.last_check IS NULL
            OR latest.last_check < DATE_SUB(NOW(), INTERVAL 2 MINUTE)
-        ORDER BY 
+        ORDER BY
             CASE WHEN latest.last_check IS NULL THEN 0 ELSE 1 END,
             latest.last_check ASC
         LIMIT 50
     ");
     $stmt->execute();
     $devices = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
+
     echo "Found " . count($devices) . " devices to check\n";
-    
+
     $checked = 0;
     $online = 0;
     $offline = 0;
     $errors = 0;
-    
+
     foreach ($devices as $device) {
         $device_id = $device['id'];
         $ip = $device['pnode_ip'];
         $name = $device['pnode_name'];
-        
+
         echo "Checking device {$device_id}: {$name} ({$ip})... ";
-        
+
         // Check basic connectivity
         $status = checkDeviceStatus($ip);
         echo $status['status'] . " (" . round($status['response_time'] * 1000, 1) . "ms)";
-        
+
         // Calculate consecutive failures
         $consecutive_failures = 0;
         if ($status['status'] === 'Offline' || $status['status'] === 'Error') {
             $consecutive_failures = ($device['consecutive_failures'] ?? 0) + 1;
         }
-        
+
         // Initialize all variables
         $health_status = 'unknown';
         $atlas_registered = null;
@@ -316,8 +316,8 @@ try {
         $stats_packets_sent = null;
         $stats_packets_received = null;
         $stats_active_streams = null;
-        $stats_file_size = null;        
-        
+        $stats_file_size = null;
+
         // If online, try to get health data
         if ($status['status'] === 'Online') {
             echo " -> fetching health... ";
@@ -327,7 +327,7 @@ try {
             } else {
                 echo "health OK";
                 $health_json = json_encode($health_response);
-                
+
                 // Parse health data
                 $parsed_health = parseHealthData($health_response, $ip);
                 $health_status = $parsed_health['health_status'];
@@ -364,31 +364,31 @@ try {
                 }
             }
         }
-        
+
         $stmt = $pdo->prepare("
             INSERT INTO device_status_log (
-                device_id, status, check_time, response_time, check_method, 
-                error_message, health_status, atlas_registered, pod_status, 
-                xandminer_status, xandminerd_status, cpu_load_avg, memory_percent, 
-                memory_total_bytes, memory_used_bytes, server_ip, server_hostname, 
-                chillxand_version, pod_version, xandminer_version, xandminerd_version, 
+                device_id, status, check_time, response_time, check_method,
+                error_message, health_status, atlas_registered, pod_status,
+                xandminer_status, xandminerd_status, cpu_load_avg, memory_percent,
+                memory_total_bytes, memory_used_bytes, server_ip, server_hostname,
+                chillxand_version, pod_version, xandminer_version, xandminerd_version,
                 health_json, consecutive_failures,
                 stats_current_index, stats_total_pages, stats_last_updated, stats_total_bytes,
                 stats_cpu_percent, stats_ram_used, stats_ram_total, stats_uptime,
                 stats_packets_sent, stats_packets_received, stats_active_streams, stats_file_size
             ) VALUES (
-                :device_id, :status, NOW(), :response_time, :check_method, 
-                :error_message, :health_status, :atlas_registered, :pod_status, 
-                :xandminer_status, :xandminerd_status, :cpu_load_avg, :memory_percent, 
-                :memory_total_bytes, :memory_used_bytes, :server_ip, :server_hostname, 
-                :chillxand_version, :pod_version, :xandminer_version, :xandminerd_version, 
+                :device_id, :status, NOW(), :response_time, :check_method,
+                :error_message, :health_status, :atlas_registered, :pod_status,
+                :xandminer_status, :xandminerd_status, :cpu_load_avg, :memory_percent,
+                :memory_total_bytes, :memory_used_bytes, :server_ip, :server_hostname,
+                :chillxand_version, :pod_version, :xandminer_version, :xandminerd_version,
                 :health_json, :consecutive_failures,
                 :stats_current_index, :stats_total_pages, :stats_last_updated, :stats_total_bytes,
                 :stats_cpu_percent, :stats_ram_used, :stats_ram_total, :stats_uptime,
                 :stats_packets_sent, :stats_packets_received, :stats_active_streams, :stats_file_size
             )
         ");
-        
+
         $success = $stmt->execute([
             ':device_id' => $device_id,
             ':status' => $status['status'],
@@ -425,7 +425,7 @@ try {
             ':stats_active_streams' => $stats_active_streams,
             ':stats_file_size' => $stats_file_size
         ]);
-        
+
         if ($success) {
             echo " -> logged";
         } else {
@@ -433,9 +433,9 @@ try {
             $errorInfo = $stmt->errorInfo();
             echo " (Error: " . $errorInfo[2] . ")";
         }
-        
+
         echo "\n";
-        
+
         // Update counters
         $checked++;
         switch ($status['status']) {
@@ -443,13 +443,13 @@ try {
             case 'Offline': $offline++; break;
             default: $errors++; break;
         }
-        
+
         // Small delay to avoid overwhelming network/devices
         usleep(500000); // 0.5 seconds
     }
-    
+
     echo "\nSummary: Checked $checked devices - Online: $online, Offline: $offline, Errors: $errors\n";
-    
+
     // Cleanup old logs (keep last 90 days)
     $stmt = $pdo->prepare("DELETE FROM device_status_log WHERE check_time < DATE_SUB(NOW(), INTERVAL 90 DAY)");
     $stmt->execute();
@@ -457,7 +457,7 @@ try {
     if ($deleted > 0) {
         echo "Cleaned up $deleted old log records\n";
     }
-    
+
 } catch (Exception $e) {
     error_log("Device Status Checker error: " . $e->getMessage());
     echo "Error: " . $e->getMessage() . "\n";

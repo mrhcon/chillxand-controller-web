@@ -1136,7 +1136,7 @@ button:disabled {
 }
 
 .modal-content {
-    position: relative;    
+    position: relative;
     background-color: #fefefe;
     margin: 15% auto;
     padding: 20px;
@@ -1509,12 +1509,12 @@ button:disabled {
 
 /* User Details Grid */
 .user-details-grid {
-    display: grid; 
-    grid-template-columns: 1fr 1fr; 
-    gap: 20px; 
-    background: #f8f9fa; 
-    padding: 15px; 
-    border-radius: 5px; 
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
     margin-bottom: 20px;
 }
 
@@ -1762,28 +1762,28 @@ details summary {
         width: 180px;
         max-width: 180px;
     }
-    
+
     .stats-info strong {
         width: 150px;
         font-size: 13px;
     }
-    
+
     .stat-value {
         font-size: 13px;
     }
-    
+
     .device-table th:nth-child(2),
     .device-table td:nth-child(2) {
         width: 100px;
         max-width: 100px;
     }
-    
+
     .device-table th:nth-child(3),
     .device-table td:nth-child(3) {
         width: 120px;
         max-width: 120px;
     }
-    
+
     .device-table th:nth-child(4),
     .device-table td:nth-child(4) {
         width: 90px;
@@ -1797,39 +1797,39 @@ details summary {
         width: 160px;
         max-width: 160px;
     }
-    
+
     .stats-info > div {
         flex-direction: column;
         align-items: flex-start;
         gap: 1px;
         min-height: 12px;
     }
-    
+
     .stats-info strong {
         width: auto;
         font-size: 12px;
     }
-    
+
     .stat-value {
         text-align: left;
         margin-left: 0;
         font-size: 12px;
     }
-    
+
     .device-table th:nth-child(2),
     .device-table td:nth-child(2) {
         width: 90px;
         max-width: 90px;
         font-size: 11px;
     }
-    
+
     .device-table th:nth-child(3),
     .device-table td:nth-child(3) {
         width: 100px;
         max-width: 100px;
         font-size: 11px;
     }
-    
+
     .device-table th:nth-child(4),
     .device-table td:nth-child(4) {
         width: 80px;
