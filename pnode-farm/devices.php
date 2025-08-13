@@ -896,9 +896,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             console.log('DOM loaded, initializing handlers...');
 
             // Initialize device status updater
-            if (document.querySelector('.device-table tbody tr')) {
-                deviceStatusUpdater = new DeviceStatusUpdater();
-            }
+            // if (document.querySelector('.device-table tbody tr')) {
+            //     deviceStatusUpdater = new DeviceStatusUpdater();
+            // }
 
             // Initialize table sorting
             const table = document.querySelector('.device-table');
