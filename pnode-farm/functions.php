@@ -24,10 +24,10 @@ function getLatestDeviceStatus($pdo, $device_id) {
     try {
         $stmt = $pdo->prepare("
             SELECT dsl.status, dsl.check_time, dsl.response_time, dsl.consecutive_failures,
-                   dsl.health_status, dsl.atlas_registered, dsl.pod_status, 
-                   dsl.xandminer_status, dsl.xandminerd_status, dsl.cpu_load_avg, 
+                   dsl.health_status, dsl.atlas_registered, dsl.pod_status,
+                   dsl.xandminer_status, dsl.xandminerd_status, dsl.cpu_load_avg,
                    dsl.memory_percent, dsl.memory_total_bytes, dsl.memory_used_bytes,
-                   dsl.server_ip, dsl.server_hostname, dsl.chillxand_version, 
+                   dsl.server_ip, dsl.server_hostname, dsl.chillxand_version,
                    dsl.pod_version, dsl.xandminer_version, dsl.xandminerd_version,
                    dsl.error_message, dsl.check_method,
                    d.pnode_name, d.pnode_ip,
@@ -40,7 +40,7 @@ function getLatestDeviceStatus($pdo, $device_id) {
         ");
         $stmt->execute([$device_id]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        
+
         if (!$result) {
             // No status record exists - return default values
             return [
@@ -69,10 +69,10 @@ function getLatestDeviceStatus($pdo, $device_id) {
                 'check_method' => null
             ];
         }
-        
+
         // Determine if status is stale (older than 15 minutes)
         $is_stale = ($result['age_minutes'] > 15);
-        
+
         return [
             'status' => $result['status'],
             'check_time' => $result['check_time'],
@@ -98,7 +98,7 @@ function getLatestDeviceStatus($pdo, $device_id) {
             'error_message' => $result['error_message'],
             'check_method' => $result['check_method']
         ];
-        
+
     } catch (PDOException $e) {
         error_log("Error getting latest device status: " . $e->getMessage());
         return [
@@ -120,10 +120,10 @@ function getLatestDeviceStatuses($pdo, $device_ids) {
     if (empty($device_ids)) {
         return [];
     }
-    
+
     try {
         $placeholders = str_repeat('?,', count($device_ids) - 1) . '?';
-        
+
         // Get latest status for each device using a window function
         $stmt = $pdo->prepare("
             SELECT device_id, status, check_time, response_time, consecutive_failures,
@@ -148,26 +148,26 @@ function getLatestDeviceStatuses($pdo, $device_ids) {
         ");
         $stmt->execute($device_ids);
         $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
+
         // Index by device_id and calculate staleness
         $statuses = [];
         foreach ($results as $result) {
             $is_stale = ($result['age_minutes'] > 15);
-            
+
             // Parse network stats from health_json
             $total_bytes_transferred = null;
-            $packets_received = null; 
+            $packets_received = null;
             $packets_sent = null;
 
-            if ($result['health_json']) {
-                $health_json = json_decode($result['health_json'], true);
-                if ($health_json && isset($health_json['checks']['system:network'])) {
-                    $network_data = $health_json['checks']['system:network'];
-                    $total_bytes_transferred = $network_data['total_bytes_transferred'] ?? null;
-                    $packets_received = $network_data['total_packets_received'] ?? null;
-                    $packets_sent = $network_data['total_packets_transmitted'] ?? null;
-                }
-            }            
+            // if ($result['health_json']) {
+            //     $health_json = json_decode($result['health_json'], true);
+            //     if ($health_json && isset($health_json['checks']['system:network'])) {
+            //         $network_data = $health_json['checks']['system:network'];
+            //         $total_bytes_transferred = $network_data['total_bytes_transferred'] ?? null;
+            //         $packets_received = $network_data['total_packets_received'] ?? null;
+            //         $packets_sent = $network_data['total_packets_transmitted'] ?? null;
+            //     }
+            // }
 
             $statuses[$result['device_id']] = [
                 'status' => $result['status'],
@@ -187,7 +187,7 @@ function getLatestDeviceStatuses($pdo, $device_ids) {
                 'memory_used_bytes' => $result['memory_used_bytes'],
                 'total_bytes_transferred' => $total_bytes_transferred,
                 'packets_received' => $packets_received,
-                'packets_sent' => $packets_sent,                
+                'packets_sent' => $packets_sent,
                 'server_ip' => $result['server_ip'],
                 'server_hostname' => $result['server_hostname'],
                 'chillxand_version' => $result['chillxand_version'],
@@ -198,7 +198,7 @@ function getLatestDeviceStatuses($pdo, $device_ids) {
                 'check_method' => $result['check_method']
             ];
         }
-        
+
         // Fill in missing devices with default status (no seeding required)
         foreach ($device_ids as $device_id) {
             if (!isset($statuses[$device_id])) {
@@ -228,9 +228,9 @@ function getLatestDeviceStatuses($pdo, $device_ids) {
                 ];
             }
         }
-        
+
         return $statuses;
-        
+
     } catch (PDOException $e) {
         error_log("Error getting latest device statuses: " . $e->getMessage());
         return [];
@@ -266,9 +266,9 @@ function parseCachedDeviceHealth($cached_status) {
         $update_time = new DateTime($cached_status['check_time']);
         $now = new DateTime();
         $age_hours = ($now->getTimestamp() - $update_time->getTimestamp()) / 3600;
-        
+
         if ($age_hours > 2) {
-            $result['error'] = 'Health data is stale (last updated ' . 
+            $result['error'] = 'Health data is stale (last updated ' .
                                $cached_status['check_time'] . ')';
         }
     } else {
@@ -283,7 +283,7 @@ function parseCachedDeviceHealth($cached_status) {
  */
 function pingDevice($ip, $pdo, $user_id, $username, $port = 80, $timeout = 2) {
     error_log("DEPRECATED: pingDevice called from UI - should use getLatestDeviceStatus instead");
-    
+
     $start_time = microtime(true);
     $details = "Device IP: $ip, Port: $port, Timeout: {$timeout}s";
 
@@ -322,7 +322,7 @@ function pingDevice($ip, $pdo, $user_id, $username, $port = 80, $timeout = 2) {
 
 function fetchDeviceSummary($ip) {
     error_log("DEPRECATED: fetchDeviceSummary called from UI - health data should come from device_status_log");
-    
+
     $url = "http://$ip:3001/summary";
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
@@ -350,7 +350,7 @@ function fetchDeviceSummary($ip) {
 
 function parseDeviceSummary($json_data, $ip) {
     error_log("DEPRECATED: parseDeviceSummary called - should use parseCachedDeviceHealth");
-    
+
     $result = [
         'error' => null,
         'uptime' => null,
@@ -419,7 +419,7 @@ function generateResetCode() {
 function sendResetCodeEmail($email, $username, $reset_code) {
     $to = $email;
     $subject = "Password Reset Code - ChillXand pNode Management Console";
-    
+
     $message = "Hello " . $username . ",\n\n";
     $message .= "You have requested a password reset for your account.\n";
     $message .= "Your reset code is: " . $reset_code . "\n\n";
@@ -428,7 +428,7 @@ function sendResetCodeEmail($email, $username, $reset_code) {
     $message .= "Best regards,\n";
     $message .= "ChillXand pNode Management Team\n";
     $message .= "https://control.chillxand.com";
-    
+
     // Improved headers for better delivery
     $headers = array();
     $headers[] = "From: ChillXand pNode Management <noreply@control.chillxand.com>";
@@ -437,28 +437,28 @@ function sendResetCodeEmail($email, $username, $reset_code) {
     $headers[] = "X-Mailer: PHP/" . phpversion();
     $headers[] = "Content-Type: text/plain; charset=UTF-8";
     $headers[] = "MIME-Version: 1.0";
-    
+
     // Add authentication headers to prevent spam
     $headers[] = "Message-ID: <" . time() . "." . md5($email . $reset_code) . "@control.chillxand.com>";
     $headers[] = "Date: " . date('r');
     $headers[] = "X-Priority: 1";
-    
+
     // Convert headers array to string
     $header_string = implode("\r\n", $headers);
-    
+
     // Send the email
     $result = mail($to, $subject, $message, $header_string);
-    
+
     // Enhanced logging
     if ($result) {
         error_log("SUCCESS: Password reset email sent to: $email for user: $username at " . date('Y-m-d H:i:s'));
     } else {
         error_log("FAILED: Could not send password reset email to: $email for user: $username at " . date('Y-m-d H:i:s'));
-        
+
         // Log system information for debugging
         error_log("Mail system: localhost:25, sendmail_path: /usr/sbin/sendmail -t -i");
     }
-    
+
     return $result;
 }
 
@@ -466,14 +466,14 @@ function formatBytesForDisplay($bytes) {
     if (!is_numeric($bytes) || $bytes < 0) {
         return '0 B';
     }
-    
+
     $units = ['B', 'KiB', 'MiB', 'GiB', 'TiB'];
     $bytes = max($bytes, 0);
     $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
     $pow = min($pow, count($units) - 1);
-    
+
     $bytes /= pow(1024, $pow);
-    
+
     return round($bytes, 1) . ' ' . $units[$pow];
 }
 
