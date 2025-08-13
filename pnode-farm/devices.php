@@ -174,7 +174,15 @@ try {
                 'cpu_percent' => $cached_status['stats_cpu_percent'],
                 'memory_percent' => (($cached_status['stats_ram_used'] ?? 0) / max($cached_status['stats_ram_total'] ?? 1, 1)) * 100,
                 'total_bytes_transferred' => $cached_status['stats_total_bytes'] ?? 0,
-                'total_pages' => $cached_status['stats_total_pages'] ?? 0
+                'total_pages' => $cached_status['stats_total_pages'] ?? 0,
+                'current_index' => $cached_status['stats_current_index'] ?? 0,
+                'ram_used' => $cached_status['stats_ram_used'] ?? 0,
+                'ram_total' => $cached_status['stats_ram_total'] ?? 0,
+                'uptime' => $cached_status['stats_uptime'] ?? 0,
+                'active_streams' => $cached_status['stats_active_streams'] ?? 0,
+                'file_size' => $cached_status['stats_file_size'] ?? 0,
+                'packets_received' => $cached_status['stats_packets_received'] ?? 0,
+                'packets_sent' => $cached_status['stats_packets_sent'] ?? 0
             ];
         }
 
@@ -660,9 +668,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                     </td>
                                     <td class="stats-column" id="stats-<?php echo $device['id']; ?>">
                                         <?php if ($device['status'] !== 'Online'): ?>
-                                            <span class="stats-unavailable">Stats unavailable</span>
+                                            <span class="stats-unavailable">Statistics Unavailable</span>
                                         <?php elseif ($device['pnode_stats'] === null): ?>
-                                            <span class="stats-no-data">No stats data</span>
+                                            <span class="stats-no-data">Statistics Unavailable data</span>
                                         <?php else: ?>
                                             <?php $stats = $device['pnode_stats']; ?>
                                             <div class="stats-info">
@@ -677,6 +685,57 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                                         <?php echo number_format($stats['memory_percent'], 1); ?>%
                                                     </span>
                                                 </div>
+
+                                                <div><strong>Total Bytes:</strong>
+                                                    <span class="stat-value">
+                                                        <?php echo formatBytesForDisplay($stats['total_bytes_transferred']); ?>
+                                                    </span>
+                                                </div>
+
+                                                <div><strong>Active Streams:</strong>
+                                                    <span class="stat-value">
+                                                        <?php echo number_format($stats['active_streams'] ?? 0); ?>
+                                                    </span>
+                                                </div>
+
+                                                <div><strong>Pages Used:</strong>
+                                                    <span class="stat-value">
+                                                        <?php echo number_format($stats['total_pages']); ?>
+                                                    </span>
+                                                </div>
+
+                                                <div><strong>Total Pages:</strong>
+                                                    <span class="stat-value">
+                                                        <?php
+                                                        $fileSize = $stats['file_size'] ?? 0;
+                                                        $totalPages = $fileSize > 0 ? ceil($fileSize / (1024 * 1024)) : 0; // 1MB page size
+                                                        echo number_format($totalPages);
+                                                        ?>
+                                                    </span>
+                                                </div>
+
+                                                <div><strong>Uptime:</strong>
+                                                    <span class="stat-value">
+                                                        <?php
+                                                        $uptime = $stats['uptime'] ?? 0;
+                                                        if ($uptime > 0) {
+                                                            $days = floor($uptime / 86400);
+                                                            $hours = floor(($uptime % 86400) / 3600);
+                                                            $minutes = floor(($uptime % 3600) / 60);
+                                                            if ($days > 0) {
+                                                                echo $days . 'd ' . $hours . 'h';
+                                                            } elseif ($hours > 0) {
+                                                                echo $hours . 'h ' . $minutes . 'm';
+                                                            } else {
+                                                                echo $minutes . 'm';
+                                                            }
+                                                        } else {
+                                                            echo '0m';
+                                                        }
+                                                        ?>
+                                                    </span>
+                                                </div>
+                                            </div>
                                             </div>
                                         <?php endif; ?>
                                     </td>
@@ -1311,7 +1370,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
 
             updateStatsCell(cell, data) {
                 if (data.status !== 'Online') {
-                    cell.innerHTML = '<span class="stats-unavailable">Stats unavailable</span>';
+                    cell.innerHTML = '<span class="stats-unavailable">Statistics Unavailable</span>';
                     return;
                 }
 
@@ -1319,7 +1378,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 const stats = data.pnode_stats;
 
                 if (!stats || stats.cpu_percent === null) {
-                    cell.innerHTML = '<span class="stats-no-data">No stats data</span>';
+                    cell.innerHTML = '<span class="stats-no-data">Statistics Unavailable data</span>';
                     return;
                 }
 
@@ -1334,6 +1393,30 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
 
                     size /= Math.pow(1024, finalPow);
                     return Math.round(size * 10) / 10 + ' ' + units[finalPow];
+                };
+
+                // Format uptime for display
+                const formatUptime = (seconds) => {
+                    if (!seconds || seconds <= 0) return '0m';
+
+                    const days = Math.floor(seconds / 86400);
+                    const hours = Math.floor((seconds % 86400) / 3600);
+                    const minutes = Math.floor((seconds % 3600) / 60);
+
+                    if (days > 0) {
+                        return `${days}d ${hours}h`;
+                    } else if (hours > 0) {
+                        return `${hours}h ${minutes}m`;
+                    } else {
+                        return `${minutes}m`;
+                    }
+                };
+
+                // Calculate total pages from file size (1MB page size)
+                const formatTotalPages = (fileSize) => {
+                    if (!fileSize || fileSize <= 0) return '0';
+                    const totalPages = Math.ceil(fileSize / (1024 * 1024)); // 1MB page size
+                    return Number(totalPages).toLocaleString();
                 };
 
                 // Build the stats HTML with the same structure as PHP
@@ -1354,6 +1437,30 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         <div><strong>Total Bytes:</strong>
                             <span class="stat-value">
                                 ${formatBytes(stats.total_bytes_transferred)}
+                            </span>
+                        </div>
+
+                        <div><strong>Active Streams:</strong>
+                            <span class="stat-value">
+                                ${Number(stats.active_streams || 0).toLocaleString()}
+                            </span>
+                        </div>
+
+                        <div><strong>Pages Used:</strong>
+                            <span class="stat-value">
+                                ${Number(stats.total_pages || 0).toLocaleString()}
+                            </span>
+                        </div>
+
+                        <div><strong>Total Pages:</strong>
+                            <span class="stat-value">
+                                ${formatTotalPages(stats.file_size || 0)}
+                            </span>
+                        </div>
+
+                        <div><strong>Uptime:</strong>
+                            <span class="stat-value">
+                                ${formatUptime(stats.uptime || 0)}
                             </span>
                         </div>
                     </div>
@@ -1598,6 +1705,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                 return Math.round(size * 10) / 10 + ' ' + units[finalPow];
                             };
 
+                            const formatUptime = (seconds) => {
+                                if (!seconds || seconds <= 0) return '0m';
+                                const days = Math.floor(seconds / 86400);
+                                const hours = Math.floor((seconds % 86400) / 3600);
+                                const minutes = Math.floor((seconds % 3600) / 60);
+                                if (days > 0) {
+                                    return `${days}d ${hours}h`;
+                                } else if (hours > 0) {
+                                    return `${hours}h ${minutes}m`;
+                                } else {
+                                    return `${minutes}m`;
+                                }
+                            };
+
+                            const formatTotalPages = (fileSize) => {
+                                if (!fileSize || fileSize <= 0) return '0';
+                                const totalPages = Math.ceil(fileSize / (1024 * 1024));
+                                return Number(totalPages).toLocaleString();
+                            };
+
                             statsElement.innerHTML = `
                                 <div class="stats-info">
                                     <div><strong>CPU:</strong>
@@ -1615,15 +1742,30 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                             ${formatBytes(stats.total_bytes_transferred)}
                                         </span>
                                     </div>
+                                    <div><strong>Active Streams:</strong>
+                                        <span class="stat-value">
+                                            ${Number(stats.active_streams || 0).toLocaleString()}
+                                        </span>
+                                    </div>
                                     <div><strong>Pages Used:</strong>
                                         <span class="stat-value">
-                                             ${formatBytes(stats.total_pages)}
+                                            ${Number(stats.total_pages || 0).toLocaleString()}
+                                        </span>
+                                    </div>
+                                    <div><strong>Total Pages:</strong>
+                                        <span class="stat-value">
+                                            ${formatTotalPages(stats.file_size || 0)}
+                                        </span>
+                                    </div>
+                                    <div><strong>Uptime:</strong>
+                                        <span class="stat-value">
+                                            ${formatUptime(stats.uptime || 0)}
                                         </span>
                                     </div>
                                 </div>
                             `;
                         } else {
-                            statsElement.innerHTML = '<span class="stats-unavailable">Stats unavailable</span>';
+                            statsElement.innerHTML = '<span class="stats-unavailable">Statistics Unavailable</span>';
                         }
                     }
 

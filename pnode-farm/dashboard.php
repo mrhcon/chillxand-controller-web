@@ -509,9 +509,9 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                     </td>
                                     <td class="stats-column" id="stats-<?php echo $device['id']; ?>">
                                         <?php if ($device['status'] !== 'Online'): ?>
-                                            <span class="stats-unavailable">Stats unavailable</span>
+                                            <span class="stats-unavailable">Statistics Unavailable</span>
                                         <?php elseif ($device['pnode_stats'] === null): ?>
-                                            <span class="stats-no-data">No stats data</span>
+                                            <span class="stats-no-data">Statistics Unavailable data</span>
                                         <?php else: ?>
                                             <?php $stats = $device['pnode_stats']; ?>
                                             <div class="stats-info">
@@ -819,7 +819,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
 
             updateStatsCell(cell, data) {
                 if (data.status !== 'Online') {
-                    cell.innerHTML = '<span class="stats-unavailable">Stats unavailable</span>';
+                    cell.innerHTML = '<span class="stats-unavailable">Statistics Unavailable</span>';
                     return;
                 }
 
@@ -827,7 +827,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                 const stats = data.pnode_stats;
 
                 if (!stats || stats.cpu_percent === null) {
-                    cell.innerHTML = '<span class="stats-no-data">No stats data</span>';
+                    cell.innerHTML = '<span class="stats-no-data">Statistics Unavailable data</span>';
                     return;
                 }
 
