@@ -104,25 +104,46 @@ try {
 
     // Build pNode stats from cached data (no additional DB queries!)
     $pnode_stats = null;
-    if ($cached_status['status'] === 'Online' && $cached_status['cpu_load_avg'] !== null) {
+    if ($cached_status['status'] === 'Online' && $cached_status['stats_cpu_percent'] !== null) {
         $pnode_stats = [
-            'cpu_percent' => $cached_status['cpu_load_avg'],
-            'memory_percent' => $cached_status['memory_percent'],
-            'total_bytes_transferred' => $cached_status['total_bytes_transferred'] ?? 0,
+            // Main display stats (for compatibility with existing UI)
+            'cpu_percent' => $cached_status['stats_cpu_percent'],
+            'memory_percent' => (($cached_status['stats_ram_used'] ?? 0) / max($cached_status['stats_ram_total'] ?? 1, 1)) * 100,
+            'total_bytes_transferred' => $cached_status['stats_total_bytes'] ?? 0,
+            'total_pages' => $cached_status['stats_total_pages'] ?? 0,
+            'packets_received' => $cached_status['stats_packets_received'] ?? 0,
+            'packets_sent' => $cached_status['stats_packets_sent'] ?? 0,
+            
+            // ALL additional stats from the stats section
+            'current_index' => $cached_status['stats_current_index'] ?? 0,
+            'last_updated' => $cached_status['stats_last_updated'] ?? 0,
             'ram_used' => $cached_status['stats_ram_used'] ?? 0,
             'ram_total' => $cached_status['stats_ram_total'] ?? 0,
             'uptime' => $cached_status['stats_uptime'] ?? 0,
             'active_streams' => $cached_status['stats_active_streams'] ?? 0,
             'file_size' => $cached_status['stats_file_size'] ?? 0,
-            'current_index' => $cached_status['stats_current_index'] ?? 0,
-            'total_pages' => $cached_status['stats_total_pages'] ?? 0,
-            'last_updated' => $cached_status['stats_last_updated'] ?? 0,
+            
+            // Raw stats fields (direct database access)
+            'stats_current_index' => $cached_status['stats_current_index'] ?? 0,
+            'stats_total_pages' => $cached_status['stats_total_pages'] ?? 0,
+            'stats_last_updated' => $cached_status['stats_last_updated'] ?? 0,
+            'stats_total_bytes' => $cached_status['stats_total_bytes'] ?? 0,
+            'stats_cpu_percent' => $cached_status['stats_cpu_percent'] ?? 0,
+            'stats_ram_used' => $cached_status['stats_ram_used'] ?? 0,
+            'stats_ram_total' => $cached_status['stats_ram_total'] ?? 0,
+            'stats_uptime' => $cached_status['stats_uptime'] ?? 0,
+            'stats_packets_sent' => $cached_status['stats_packets_sent'] ?? 0,
+            'stats_packets_received' => $cached_status['stats_packets_received'] ?? 0,
+            'stats_active_streams' => $cached_status['stats_active_streams'] ?? 0,
+            'stats_file_size' => $cached_status['stats_file_size'] ?? 0,
+            
+            // Additional computed/formatted values
             'uptime_formatted' => formatUptime($cached_status['stats_uptime'] ?? 0),
             'file_size_formatted' => formatBytesForDisplay($cached_status['stats_file_size'] ?? 0),
             'ram_used_formatted' => formatBytesForDisplay($cached_status['stats_ram_used'] ?? 0),
             'ram_total_formatted' => formatBytesForDisplay($cached_status['stats_ram_total'] ?? 0),
-            'total_bytes_formatted' => formatBytesForDisplay($cached_status['stats_total_bytes'] ?? 0)
-
+            'total_bytes_formatted' => formatBytesForDisplay($cached_status['stats_total_bytes'] ?? 0),
+            'last_updated_formatted' => $cached_status['stats_last_updated'] ? date('Y-m-d H:i:s', $cached_status['stats_last_updated']) : 'N/A'
         ];
     }
 
