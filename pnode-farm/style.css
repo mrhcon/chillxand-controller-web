@@ -757,7 +757,6 @@ button:disabled {
     width: 140px;
     max-width: 140px;
     padding: 6px;
-    font-size: 13px;
 }
 
 .device-table th:nth-child(4),
@@ -791,7 +790,6 @@ button:disabled {
     max-width: 200px;
     text-align: center;
     padding: 8px;
-    /* font-size: 12px; */
 }
 
 /* Last Checked Column */
