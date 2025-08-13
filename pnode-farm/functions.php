@@ -133,6 +133,9 @@ function getLatestDeviceStatuses($pdo, $device_ids) {
                 dsl.server_ip, dsl.server_hostname, dsl.chillxand_version,
                 dsl.pod_version, dsl.xandminer_version, dsl.xandminerd_version,
                 dsl.error_message, dsl.check_method, dsl.health_json,
+                dsl.stats_current_index, dsl.stats_total_pages, dsl.stats_last_updated, dsl.stats_total_bytes,
+                dsl.stats_cpu_percent, dsl.stats_ram_used, dsl.stats_ram_total, dsl.stats_uptime,
+                dsl.stats_packets_sent, dsl.stats_packets_received, dsl.stats_active_streams, dsl.stats_file_size,
                 TIMESTAMPDIFF(MINUTE, dsl.check_time, NOW()) as age_minutes
             FROM device_status_log dsl
             INNER JOIN (
