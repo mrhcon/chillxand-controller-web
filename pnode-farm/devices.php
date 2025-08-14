@@ -972,7 +972,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         class DeviceStatusUpdater {
             constructor() {
                 this.devices = [];
-                this.updateInterval = 60000; // 60 seconds
+                this.updateInterval = 120000; // 60 seconds
                 this.deviceStatuses = new Map(); // Track current status of each device
                 this.activeOperations = new Set(); // Track devices with active operations
                 this.deviceVersions = new Map();
