@@ -972,8 +972,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         class DeviceStatusUpdater {
             constructor() {
                 this.devices = [];
-                this.updateInterval = 30000; // 30 seconds per device
-                this.staggerDelay = 2000; // 2 seconds between device updates
+                this.updateInterval = 60000; // 60 seconds
                 this.deviceStatuses = new Map(); // Track current status of each device
                 this.activeOperations = new Set(); // Track devices with active operations
                 this.deviceVersions = new Map();
@@ -1006,6 +1005,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 });
 
                 if (this.devices.length > 0) {
+                    // Calculate dynamic stagger delay: spread updates evenly across the refresh interval
+                    this.staggerDelay = this.updateInterval / this.devices.length;
+
                     // Start staggered updates
                     this.startStaggeredUpdates();
                 }
