@@ -205,7 +205,7 @@ try {
 // Fetch user's devices with enhanced status and order by node name
 try {
     $stmt = $pdo->prepare("
-        SELECT d.id, d.pnode_name, d.pnode_ip, d.registration_date
+        SELECT d.id, d.pnode_name, d.pnode_ip, d.location, d.registration_date
         FROM devices d
         WHERE d.username = ?
         ORDER BY d.pnode_name ASC
@@ -436,7 +436,16 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                             <?php foreach ($devices as $device): ?>
                                 <tr>
                                     <td><a href="device_details.php?device_id=<?php echo $device['id']; ?>"><?php echo htmlspecialchars($device['pnode_name']); ?></a></td>
-                                    <td><?php echo htmlspecialchars($device['pnode_ip']); ?></td>
+                                    <td>
+                                        <div class="ip-location-container">
+                                            <div class="ip-address"><?php echo htmlspecialchars($device['pnode_ip']); ?></div>
+                                            <?php if (!empty($device['location'])): ?>
+                                                <div class="location-text"><?php echo htmlspecialchars($device['location']); ?></div>
+                                            <?php else: ?>
+                                                <div class="location-text location-unknown">Location pending...</div>
+                                            <?php endif; ?>
+                                        </div>
+                                    </td>
                                     <td><?php echo htmlspecialchars($device['registration_date']); ?></td>
                                     <td id="status-<?php echo $device['id']; ?>">
                                         <span class="status-btn status-<?php echo strtolower(str_replace(' ', '-', $device['status'])); ?>">

@@ -1832,3 +1832,38 @@ details summary {
         font-size: 11px;
     }
 }
+
+/* Location display styles */
+.ip-location-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.ip-address {
+    font-weight: 500;
+    color: #333;
+}
+
+.location-text {
+    font-size: 0.85em;
+    color: #666;
+    font-style: italic;
+    line-height: 1.2;
+}
+
+.location-unknown {
+    color: #999;
+    opacity: 0.8;
+}
+
+/* Optional: Add a small icon or styling for better visual separation */
+.location-text:before {
+    content: "📍 ";
+    font-size: 0.8em;
+    opacity: 0.7;
+}
+
+.location-unknown:before {
+    content: "⏳ ";
+}
