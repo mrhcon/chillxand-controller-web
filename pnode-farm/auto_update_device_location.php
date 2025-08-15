@@ -1,5 +1,6 @@
 <?php
 /**
+ * auto_update_device_location.php
  * Location Update Script
  * Runs every 2 hours to update device locations based on IP addresses
  * Only updates if location is empty or if geolocation lookup succeeds

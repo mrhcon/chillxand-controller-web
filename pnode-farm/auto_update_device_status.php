@@ -1,6 +1,6 @@
 <?php
 /**
- * device_status_checker.php - Background Device Status Checker (Health Endpoint)
+ * auto_update_device_status.php - Background Device Status Checker (Health Endpoint)
  *
  * Run this script via cron every 2 minutes
  */
