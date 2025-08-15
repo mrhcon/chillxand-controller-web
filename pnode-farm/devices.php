@@ -1780,8 +1780,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         }
                     }
 
-                    // After updating the versions element, also update our tracked versions
-                    if (data.version_data) {
+                    if (deviceStatusUpdater && data.version_data) {
                         const newVersions = {
                             controller: data.version_data.chillxand_version || 'N/A',
                             pod: data.version_data.pod_version || 'N/A',
@@ -1789,10 +1788,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                             xandminerd: data.version_data.xandminerd_version || 'N/A'
                         };
 
-                        if (deviceStatusUpdater) {
-                            deviceStatusUpdater.deviceVersions.set(deviceId, newVersions);
-                            deviceStatusUpdater.updateVersionCards();
-                        }
+                        // Update the tracked versions for this device
+                        deviceStatusUpdater.deviceVersions.set(deviceId, newVersions);
+                        
+                        // Update the device status too for consistency
+                        const newStatus = {
+                            status: data.status,
+                            overallStatus: overallStatus
+                        };
+                        deviceStatusUpdater.deviceStatuses.set(deviceId, newStatus);
+                        
+                        // Trigger update of summary and version cards
+                        deviceStatusUpdater.updateSummaryCards();
+                        deviceStatusUpdater.updateVersionCards();
                     }
 
                     // Update timestamp
