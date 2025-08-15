@@ -826,7 +826,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                 // Check if we have stats data in the cached status
                 const stats = data.pnode_stats;
 
-                if (!stats || stats.cpu_percent === null) {
+                if (!stats) {
                     cell.innerHTML = '<span class="stats-no-data">Statistics Unavailable</span>';
                     return;
                 }
