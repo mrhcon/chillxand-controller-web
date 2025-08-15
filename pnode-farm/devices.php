@@ -86,7 +86,7 @@ try {
 // Fetch ALL devices (admin only page)
 try {
     $stmt = $pdo->prepare("
-        SELECT d.id, d.pnode_name, d.pnode_ip, d.registration_date, d.username
+        SELECT d.id, d.pnode_name, d.pnode_ip, d.location, d.registration_date, d.username
         FROM devices d
         ORDER BY d.pnode_name ASC
     ");
@@ -592,7 +592,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                             <?php foreach ($devices as $device): ?>
                                 <tr>
                                     <td><a href="device_details.php?device_id=<?php echo $device['id']; ?>"><?php echo htmlspecialchars($device['pnode_name']); ?></a></td>
-                                    <td><?php echo htmlspecialchars($device['pnode_ip']); ?></td>
+                                    <td>
+                                        <div class="ip-location-container">
+                                            <div class="ip-address"><?php echo htmlspecialchars($device['pnode_ip']); ?></div>
+                                            <?php if (!empty($device['location'])): ?>
+                                                <div class="location-text"><?php echo htmlspecialchars($device['location']); ?></div>
+                                            <?php else: ?>
+                                                <div class="location-text location-unknown">Location pending...</div>
+                                            <?php endif; ?>
+                                        </div>
+                                    </td>
                                     <td>
                                         <div><?php echo htmlspecialchars($device['registration_date']); ?></div>
                                         <div style="color: #666; font-size: 0.9em;">Owner: <?php echo htmlspecialchars($device['username']); ?></div>
