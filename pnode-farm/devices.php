@@ -1789,27 +1789,31 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         }
                     }
 
-                    if (deviceStatusUpdater && data.version_data) {
-                        const newVersions = {
-                            controller: data.version_data.chillxand_version || 'N/A',
-                            pod: data.version_data.pod_version || 'N/A',
-                            xandminer: data.version_data.xandminer_version || 'N/A',
-                            xandminerd: data.version_data.xandminerd_version || 'N/A'
-                        };
-
-                        // Update the tracked versions for this device
-                        deviceStatusUpdater.deviceVersions.set(deviceId, newVersions);
-                        
-                        // Update the device status too for consistency
+                    if (deviceStatusUpdater) {
+                        // Always update the device status for summary card calculations
                         const newStatus = {
                             status: data.status,
                             overallStatus: overallStatus
                         };
                         deviceStatusUpdater.deviceStatuses.set(deviceId, newStatus);
-                        
-                        // Trigger update of summary and version cards
-                        deviceStatusUpdater.updateSummaryCards();
-                        deviceStatusUpdater.updateVersionCards();
+
+                        // Update version data if available
+                        if (data.version_data) {
+                            const newVersions = {
+                                controller: data.version_data.chillxand_version || 'N/A',
+                                pod: data.version_data.pod_version || 'N/A',
+                                xandminer: data.version_data.xandminer_version || 'N/A',
+                                xandminerd: data.version_data.xandminerd_version || 'N/A'
+                            };
+                            deviceStatusUpdater.deviceVersions.set(deviceId, newVersions);
+
+                            // Update both summary and version cards when version data changes
+                            deviceStatusUpdater.updateSummaryCards();
+                            deviceStatusUpdater.updateVersionCards();
+                        } else {
+                            // Update only summary cards when no version data (status may have changed)
+                            deviceStatusUpdater.updateSummaryCards();
+                        }
                     }
 
                     // Update timestamp
