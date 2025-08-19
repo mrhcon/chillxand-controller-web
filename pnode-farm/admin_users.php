@@ -601,7 +601,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
             hideModalLoading('addModal', 'addModalLoading');
 
             // Show modal
-            document.getElementById('addModal').style.display = 'block';
+            document.getElementById('addModal').style.display = 'flex';
 
             // Focus on first field
             setTimeout(() => {
@@ -630,7 +630,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
             // Hide loading overlay
             hideModalLoading('editModal', 'editModalLoading');
 
-            document.getElementById('editModal').style.display = 'block';
+            document.getElementById('editModal').style.display = 'flex';
 
             // Focus on first field
             setTimeout(() => {
@@ -651,7 +651,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
             // Hide loading overlay
             hideModalLoading('deleteModal', 'deleteModalLoading');
 
-            document.getElementById('deleteModal').style.display = 'block';
+            document.getElementById('deleteModal').style.display = 'flex';
         }
 
         function closeDeleteModal() {
@@ -1401,12 +1401,12 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
             background-color: rgba(0, 0, 0, 0.5);
             display: none;
             z-index: 1000;
-            justify-content: center;
-            align-items: center;
         }
 
         .modal.show {
             display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         .modal-content {
