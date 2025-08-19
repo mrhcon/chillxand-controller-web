@@ -1172,23 +1172,23 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
             return true;
         }
 
-        window.onclick = function(event) {
-            if (!preventModalCloseDuringLoading(event)) return;
+        // window.onclick = function(event) {
+        //     if (!preventModalCloseDuringLoading(event)) return;
 
-            const addModal = document.getElementById('addModal');
-            const editModal = document.getElementById('editModal');
-            const deleteModal = document.getElementById('deleteModal');
+        //     const addModal = document.getElementById('addModal');
+        //     const editModal = document.getElementById('editModal');
+        //     const deleteModal = document.getElementById('deleteModal');
 
-            if (event.target == addModal) {
-                closeAddModal();
-            }
-            if (event.target == editModal) {
-                closeEditModal();
-            }
-            if (event.target == deleteModal) {
-                closeDeleteModal();
-            }
-        }
+        //     if (event.target == addModal) {
+        //         closeAddModal();
+        //     }
+        //     if (event.target == editModal) {
+        //         closeEditModal();
+        //     }
+        //     if (event.target == deleteModal) {
+        //         closeDeleteModal();
+        //     }
+        // }
 
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
