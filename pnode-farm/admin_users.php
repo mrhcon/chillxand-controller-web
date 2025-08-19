@@ -155,10 +155,6 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
                     <input type="text" id="add-country" name="country">
                 </div>
                 <div class="modal-form-group">
-                    <label for="add-password">Password:</label>
-                    <input type="password" id="add-password" name="password" required>
-                </div>
-                <div class="modal-form-group">
                     <label for="add-admin">Admin Privileges:</label>
                     <select id="add-admin" name="admin">
                         <option value="0">No</option>
@@ -250,7 +246,6 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
             document.getElementById('add-first-name').value = '';
             document.getElementById('add-last-name').value = '';
             document.getElementById('add-country').value = '';
-            document.getElementById('add-password').value = '';
             document.getElementById('add-admin').value = '0';
             document.getElementById('addModal').style.display = 'flex';
         }
@@ -514,27 +509,20 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
             color: white;
             border: none;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            font-size: 24px;
+            width: 30px;
+            height: 30px;
+            font-size: 15px;
             font-weight: bold;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: background-color 0.2s;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s ease;
+            margin-left: 10px;
         }
 
         .add-device-btn:hover {
             background-color: #218838;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-        }
-
-        .add-device-btn:active {
-            transform: translateY(0);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
     </style> {
             document.getElementById('editForm').submit();
