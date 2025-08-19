@@ -421,351 +421,6 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
         </div>
     </div>
 
-    <!-- Add User Modal -->
-    <div id="addModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Add New User</h3>
-                <span class="close" onclick="closeAddModal()">&times;</span>
-            </div>
-            <form id="addForm" method="POST" action="">
-                <input type="hidden" name="action" value="add">
-                <div class="modal-form-group">
-                    <label for="add-username">Username: <span style="color: red;">*</span></label>
-                    <input type="text" id="add-username" name="username" required maxlength="50">
-                </div>
-                <div class="modal-form-group">
-                    <label for="add-email">Email: <span style="color: red;">*</span></label>
-                    <input type="email" id="add-email" name="email" required>
-                </div>
-                <div class="modal-form-group">
-                    <label for="add-first-name">First Name: <span style="color: red;">*</span></label>
-                    <input type="text" id="add-first-name" name="first_name" required>
-                </div>
-                <div class="modal-form-group">
-                    <label for="add-last-name">Last Name: <span style="color: red;">*</span></label>
-                    <input type="text" id="add-last-name" name="last_name" required>
-                </div>
-                <div class="modal-form-group">
-                    <label for="add-country">Country: <span style="color: red;">*</span></label>
-                    <input type="text" id="add-country" name="country" required>
-                </div>
-                <div class="modal-form-group">
-                    <label for="add-admin">Admin Privileges:</label>
-                    <select id="add-admin" name="admin">
-                        <option value="0">No</option>
-                        <option value="1">Yes</option>
-                    </select>
-                </div>
-                <div class="modal-buttons">
-                    <button type="button" class="modal-btn modal-btn-secondary" onclick="closeAddModal()">Cancel</button>
-                    <button type="button" class="modal-btn modal-btn-primary" onclick="validateAndSubmitAdd()">Add User</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Edit User Modal -->
-    <div id="editModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Edit User</h3>
-                <span class="close" onclick="closeEditModal()">&times;</span>
-            </div>
-            <form id="editForm" method="POST" action="">
-                <input type="hidden" name="action" value="edit">
-                <input type="hidden" id="edit-user-id" name="user_id">
-                <div class="modal-form-group">
-                    <label for="edit-username">Username:</label>
-                    <input type="text" id="edit-username" name="username" readonly style="background-color: #f8f9fa; color: #6c757d;">
-                    <small style="color: #6c757d; font-style: italic;">Username cannot be changed</small>
-                </div>
-                <div class="modal-form-group">
-                    <label for="edit-email">Email: <span style="color: red;">*</span></label>
-                    <input type="email" id="edit-email" name="email" required>
-                </div>
-                <div class="modal-form-group">
-                    <label for="edit-first-name">First Name: <span style="color: red;">*</span></label>
-                    <input type="text" id="edit-first-name" name="first_name" required>
-                </div>
-                <div class="modal-form-group">
-                    <label for="edit-last-name">Last Name: <span style="color: red;">*</span></label>
-                    <input type="text" id="edit-last-name" name="last_name" required>
-                </div>
-                <div class="modal-form-group">
-                    <label for="edit-country">Country: <span style="color: red;">*</span></label>
-                    <input type="text" id="edit-country" name="country" required>
-                </div>
-                <div class="modal-form-group">
-                    <label for="edit-admin">Admin Privileges:</label>
-                    <select id="edit-admin" name="admin">
-                        <option value="0">No</option>
-                        <option value="1">Yes</option>
-                    </select>
-                </div>
-                <div class="modal-buttons">
-                    <button type="button" class="modal-btn modal-btn-secondary" onclick="closeEditModal()">Cancel</button>
-                    <button type="button" class="modal-btn modal-btn-primary" onclick="validateAndSubmitEdit()">Save Changes</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Delete User Modal -->
-    <div id="deleteModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Delete User</h3>
-                <span class="close" onclick="closeDeleteModal()">&times;</span>
-            </div>
-            <form id="deleteForm" method="POST" action="">
-                <input type="hidden" name="action" value="delete">
-                <input type="hidden" id="delete-user-id" name="user_id">
-                <p><strong>Are you sure you want to delete the user "<span id="delete-user-name"></span>"?</strong></p>
-                <p style="color: #dc3545; font-weight: bold;">⚠️ This action cannot be undone!</p>
-                <p>This will permanently remove the user and may affect their associated devices.</p>
-                <div class="modal-buttons">
-                    <button type="button" class="modal-btn modal-btn-secondary" onclick="closeDeleteModal()">Cancel</button>
-                    <button type="button" class="modal-btn modal-btn-danger" onclick="submitDelete()">Delete User</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <style>
-        /* Center modals properly on screen */
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: none;
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal.show {
-            display: flex;
-        }
-
-        .modal-content {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            max-width: 500px;
-            width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
-            position: relative;
-            margin: 0;
-            transform: none;
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #eee;
-        }
-
-        .modal-header h3 {
-            margin: 0;
-            color: #333;
-        }
-
-        .close {
-            font-size: 24px;
-            font-weight: bold;
-            cursor: pointer;
-            color: #999;
-            line-height: 1;
-        }
-
-        .close:hover {
-            color: #333;
-        }
-
-        .modal-form-group {
-            margin-bottom: 15px;
-        }
-
-        .modal-form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #333;
-        }
-
-        .modal-form-group input,
-        .modal-form-group select {
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-            box-sizing: border-box;
-        }
-
-        .modal-form-group input:focus,
-        .modal-form-group select:focus {
-            outline: none;
-            border-color: #007bff;
-            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
-        }
-
-        .modal-buttons {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-top: 20px;
-            padding-top: 15px;
-            border-top: 1px solid #eee;
-        }
-
-        .modal-btn {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: background-color 0.2s;
-        }
-
-        .modal-btn-primary {
-            background-color: #007bff;
-            color: white;
-        }
-
-        .modal-btn-primary:hover {
-            background-color: #0056b3;
-        }
-
-        .modal-btn-secondary {
-            background-color: #6c757d;
-            color: white;
-        }
-
-        .modal-btn-secondary:hover {
-            background-color: #545b62;
-        }
-
-        .modal-btn-danger {
-            background-color: #dc3545;
-            color: white;
-        }
-
-        .modal-btn-danger:hover {
-            background-color: #c82333;
-        }
-
-        /* User Table Specific Styling */
-        .user-table th:nth-child(6),
-        .user-table td:nth-child(6) {
-            width: 80px;
-            max-width: 80px;
-            text-align: center;
-            padding: 8px;
-        }
-
-        .user-table th:nth-child(7),
-        .user-table td:nth-child(7) {
-            width: 120px;
-            max-width: 120px;
-            text-align: center;
-            padding: 8px;
-        }
-
-        .user-table th:nth-child(8),
-        .user-table td:nth-child(8) {
-            width: 120px;
-            max-width: 120px;
-            text-align: center;
-            padding: 8px;
-            vertical-align: middle;
-        }
-
-        .action-buttons-container {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .action-button-row {
-            display: flex;
-            justify-content: center;
-        }
-
-        .action-button {
-            padding: 4px 8px;
-            border: none;
-            border-radius: 3px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 500;
-            min-width: 60px;
-            transition: background-color 0.2s;
-        }
-
-        .action-button.edit {
-            background-color: #007bff;
-            color: white;
-        }
-
-        .action-button.edit:hover {
-            background-color: #0056b3;
-        }
-
-        .action-button.delete {
-            background-color: #dc3545;
-            color: white;
-        }
-
-        .action-button.delete:hover {
-            background-color: #c82333;
-        }
-
-        /* Make sure devices-header and add-device-btn styles are available */
-        .devices-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .devices-title {
-            margin: 0;
-            color: #333;
-        }
-
-        .add-device-btn {
-            background-color: #28a745;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            font-size: 15px;
-            font-weight: bold;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background-color 0.3s ease;
-            margin-left: 10px;
-        }
-
-        .add-device-btn:hover {
-            background-color: #218838;
-        }
-    </style>
-
     <script>
         // Initialize table sorting when page loads
         document.addEventListener('DOMContentLoaded', function() {
@@ -872,18 +527,92 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
             rows.forEach(row => tbody.appendChild(row));
         }
 
+        // VALIDATION FUNCTIONS - Same as dashboard
+        function validateUsername(username) {
+            if (!username || username.trim() === '') {
+                return 'Username is required.';
+            }
+
+            if (username.length > 50) {
+                return 'Username must be 50 characters or less.';
+            }
+
+            // Check for valid characters (letters, numbers, spaces, hyphens, underscores)
+            const validPattern = /^[a-zA-Z0-9\s\-_]+$/;
+            if (!validPattern.test(username)) {
+                return 'Username can only contain letters, numbers, spaces, hyphens, and underscores.';
+            }
+
+            return null; // Valid
+        }
+
+        function validateEmail(email) {
+            if (!email || email.trim() === '') {
+                return 'Email is required.';
+            }
+
+            // Basic email pattern
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailPattern.test(email)) {
+                return 'Please enter a valid email address.';
+            }
+
+            return null; // Valid
+        }
+
+        function validateName(name, fieldName) {
+            if (!name || name.trim() === '') {
+                return fieldName + ' is required.';
+            }
+
+            if (name.length > 100) {
+                return fieldName + ' must be 100 characters or less.';
+            }
+
+            return null; // Valid
+        }
+
+        function validateCountry(country) {
+            if (!country || country.trim() === '') {
+                return 'Country is required.';
+            }
+
+            if (country.length > 100) {
+                return 'Country must be 100 characters or less.';
+            }
+
+            return null; // Valid
+        }
+
+        // MODAL FUNCTIONS
         function openAddModal() {
+            // Clear form fields
             document.getElementById('add-username').value = '';
             document.getElementById('add-email').value = '';
             document.getElementById('add-first-name').value = '';
             document.getElementById('add-last-name').value = '';
             document.getElementById('add-country').value = '';
             document.getElementById('add-admin').value = '0';
-            document.getElementById('addModal').style.display = 'flex';
+
+            // Clear any previous errors
+            clearAddModalErrors();
+
+            // Hide loading overlay
+            hideModalLoading('addModal', 'addModalLoading');
+
+            // Show modal
+            document.getElementById('addModal').style.display = 'block';
+
+            // Focus on first field
+            setTimeout(() => {
+                document.getElementById('add-username').focus();
+            }, 100);
         }
 
         function closeAddModal() {
             document.getElementById('addModal').style.display = 'none';
+            clearAddModalErrors();
+            hideModalLoading('addModal', 'addModalLoading');
         }
 
         function openEditModal(userId, username, email, firstName, lastName, country, isAdmin) {
@@ -894,24 +623,185 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
             document.getElementById('edit-last-name').value = lastName || '';
             document.getElementById('edit-country').value = country || '';
             document.getElementById('edit-admin').value = isAdmin ? '1' : '0';
-            document.getElementById('editModal').style.display = 'flex';
+
+            // Clear any previous errors
+            clearEditModalErrors();
+
+            // Hide loading overlay
+            hideModalLoading('editModal', 'editModalLoading');
+
+            document.getElementById('editModal').style.display = 'block';
+
+            // Focus on first field
+            setTimeout(() => {
+                document.getElementById('edit-email').focus();
+            }, 100);
         }
 
         function closeEditModal() {
             document.getElementById('editModal').style.display = 'none';
+            clearEditModalErrors();
+            hideModalLoading('editModal', 'editModalLoading');
         }
 
         function openDeleteModal(userId, username) {
             document.getElementById('delete-user-id').value = userId;
             document.getElementById('delete-user-name').textContent = username;
-            document.getElementById('deleteModal').style.display = 'flex';
+
+            // Hide loading overlay
+            hideModalLoading('deleteModal', 'deleteModalLoading');
+
+            document.getElementById('deleteModal').style.display = 'block';
         }
 
         function closeDeleteModal() {
             document.getElementById('deleteModal').style.display = 'none';
+            hideModalLoading('deleteModal', 'deleteModalLoading');
         }
 
+        // ERROR HANDLING FUNCTIONS - Same as dashboard
+        function clearAddModalErrors() {
+            // Hide main error area
+            const errorDiv = document.getElementById('addModalError');
+            errorDiv.style.display = 'none';
+            errorDiv.innerHTML = '';
+
+            // Hide field-specific errors
+            const usernameError = document.getElementById('add-username-error');
+            const emailError = document.getElementById('add-email-error');
+            const firstNameError = document.getElementById('add-first-name-error');
+            const lastNameError = document.getElementById('add-last-name-error');
+            const countryError = document.getElementById('add-country-error');
+
+            usernameError.style.display = 'none';
+            emailError.style.display = 'none';
+            firstNameError.style.display = 'none';
+            lastNameError.style.display = 'none';
+            countryError.style.display = 'none';
+
+            usernameError.innerHTML = '';
+            emailError.innerHTML = '';
+            firstNameError.innerHTML = '';
+            lastNameError.innerHTML = '';
+            countryError.innerHTML = '';
+
+            // Remove error styling from inputs
+            document.getElementById('add-username').classList.remove('input-error');
+            document.getElementById('add-email').classList.remove('input-error');
+            document.getElementById('add-first-name').classList.remove('input-error');
+            document.getElementById('add-last-name').classList.remove('input-error');
+            document.getElementById('add-country').classList.remove('input-error');
+        }
+
+        function clearEditModalErrors() {
+            // Hide main error area
+            const errorDiv = document.getElementById('editModalError');
+            errorDiv.style.display = 'none';
+            errorDiv.innerHTML = '';
+
+            // Hide field-specific errors
+            const emailError = document.getElementById('edit-email-error');
+            const firstNameError = document.getElementById('edit-first-name-error');
+            const lastNameError = document.getElementById('edit-last-name-error');
+            const countryError = document.getElementById('edit-country-error');
+
+            emailError.style.display = 'none';
+            firstNameError.style.display = 'none';
+            lastNameError.style.display = 'none';
+            countryError.style.display = 'none';
+
+            emailError.innerHTML = '';
+            firstNameError.innerHTML = '';
+            lastNameError.innerHTML = '';
+            countryError.innerHTML = '';
+
+            // Remove error styling from inputs
+            document.getElementById('edit-email').classList.remove('input-error');
+            document.getElementById('edit-first-name').classList.remove('input-error');
+            document.getElementById('edit-last-name').classList.remove('input-error');
+            document.getElementById('edit-country').classList.remove('input-error');
+        }
+
+        function showAddModalError(message, fieldId = null) {
+            if (fieldId) {
+                // Show field-specific error
+                const errorDiv = document.getElementById('add-' + fieldId + '-error');
+                errorDiv.innerHTML = message;
+                errorDiv.style.display = 'block';
+
+                // Add error styling to input
+                document.getElementById('add-' + fieldId).classList.add('input-error');
+            } else {
+                // Show general error
+                const errorDiv = document.getElementById('addModalError');
+                errorDiv.innerHTML = '<strong>Error:</strong> ' + message;
+                errorDiv.style.display = 'block';
+            }
+        }
+
+        function showEditModalError(message, fieldId = null) {
+            if (fieldId) {
+                // Show field-specific error
+                const errorDiv = document.getElementById('edit-' + fieldId + '-error');
+                errorDiv.innerHTML = message;
+                errorDiv.style.display = 'block';
+
+                // Add error styling to input
+                document.getElementById('edit-' + fieldId).classList.add('input-error');
+            } else {
+                // Show general error
+                const errorDiv = document.getElementById('editModalError');
+                errorDiv.innerHTML = '<strong>Error:</strong> ' + message;
+                errorDiv.style.display = 'block';
+            }
+        }
+
+        // LOADING STATE FUNCTIONS - Same as dashboard
+        function showModalLoading(modalId, loadingId) {
+            document.getElementById(loadingId).style.display = 'flex';
+
+            // Disable all buttons in the modal, but NOT the form inputs
+            const modal = document.getElementById(modalId);
+            const buttons = modal.querySelectorAll('button');
+            const closeBtn = modal.querySelector('.close');
+
+            buttons.forEach(btn => btn.disabled = true);
+            if (closeBtn) closeBtn.style.pointerEvents = 'none';
+
+            // Make form inputs readonly instead of disabled (so they still submit)
+            const inputs = modal.querySelectorAll('input[type="text"], input[type="email"], select');
+            inputs.forEach(input => {
+                input.readOnly = true;
+                input.style.backgroundColor = '#f8f9fa';
+                input.style.cursor = 'not-allowed';
+            });
+        }
+
+        function hideModalLoading(modalId, loadingId) {
+            document.getElementById(loadingId).style.display = 'none';
+
+            // Re-enable all buttons
+            const modal = document.getElementById(modalId);
+            const buttons = modal.querySelectorAll('button');
+            const closeBtn = modal.querySelector('.close');
+
+            buttons.forEach(btn => btn.disabled = false);
+            if (closeBtn) closeBtn.style.pointerEvents = 'auto';
+
+            // Remove readonly from inputs
+            const inputs = modal.querySelectorAll('input[type="text"], input[type="email"], select');
+            inputs.forEach(input => {
+                input.readOnly = false;
+                input.style.backgroundColor = '';
+                input.style.cursor = '';
+            });
+        }
+
+        // FORM VALIDATION AND SUBMISSION - Same pattern as dashboard
         function validateAndSubmitAdd() {
+            // Clear previous errors
+            clearAddModalErrors();
+
             // Get form values
             const username = document.getElementById('add-username').value.trim();
             const email = document.getElementById('add-email').value.trim();
@@ -919,105 +809,918 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
             const lastName = document.getElementById('add-last-name').value.trim();
             const country = document.getElementById('add-country').value.trim();
 
-            // Validate all required fields
-            if (!username) {
-                alert('Username is required.');
-                document.getElementById('add-username').focus();
-                return;
+            let hasErrors = false;
+
+            // Validate username
+            const usernameError = validateUsername(username);
+            if (usernameError) {
+                showAddModalError(usernameError, 'username');
+                hasErrors = true;
             }
 
-            if (username.length > 50) {
-                alert('Username must be 50 characters or less.');
-                document.getElementById('add-username').focus();
-                return;
+            // Validate email
+            const emailError = validateEmail(email);
+            if (emailError) {
+                showAddModalError(emailError, 'email');
+                hasErrors = true;
             }
 
-            if (!email) {
-                alert('Email is required.');
-                document.getElementById('add-email').focus();
-                return;
+            // Validate first name
+            const firstNameError = validateName(firstName, 'First name');
+            if (firstNameError) {
+                showAddModalError(firstNameError, 'first-name');
+                hasErrors = true;
             }
 
-            // Basic email validation
-            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailPattern.test(email)) {
-                alert('Please enter a valid email address.');
-                document.getElementById('add-email').focus();
-                return;
+            // Validate last name
+            const lastNameError = validateName(lastName, 'Last name');
+            if (lastNameError) {
+                showAddModalError(lastNameError, 'last-name');
+                hasErrors = true;
             }
 
-            if (!firstName) {
-                alert('First name is required.');
-                document.getElementById('add-first-name').focus();
-                return;
+            // Validate country
+            const countryError = validateCountry(country);
+            if (countryError) {
+                showAddModalError(countryError, 'country');
+                hasErrors = true;
             }
 
-            if (!lastName) {
-                alert('Last name is required.');
-                document.getElementById('add-last-name').focus();
-                return;
-            }
+            // If no errors, submit the form
+            if (!hasErrors) {
+                // Update form values with trimmed versions
+                document.getElementById('add-username').value = username;
+                document.getElementById('add-email').value = email;
+                document.getElementById('add-first-name').value = firstName;
+                document.getElementById('add-last-name').value = lastName;
+                document.getElementById('add-country').value = country;
 
-            if (!country) {
-                alert('Country is required.');
-                document.getElementById('add-country').focus();
-                return;
-            }
+                // Show loading state
+                showModalLoading('addModal', 'addModalLoading');
 
-            // If all validation passes, submit the form
-            document.getElementById('addForm').submit();
+                // Submit the form
+                document.getElementById('addForm').submit();
+            }
         }
 
         function validateAndSubmitEdit() {
+            // Clear previous errors
+            clearEditModalErrors();
+
             // Get form values
             const email = document.getElementById('edit-email').value.trim();
             const firstName = document.getElementById('edit-first-name').value.trim();
             const lastName = document.getElementById('edit-last-name').value.trim();
             const country = document.getElementById('edit-country').value.trim();
 
-            // Validate all required fields
-            if (!email) {
-                alert('Email is required.');
-                document.getElementById('edit-email').focus();
-                return;
+            let hasErrors = false;
+
+            // Validate email
+            const emailError = validateEmail(email);
+            if (emailError) {
+                showEditModalError(emailError, 'email');
+                hasErrors = true;
             }
 
-            // Basic email validation
-            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailPattern.test(email)) {
-                alert('Please enter a valid email address.');
-                document.getElementById('edit-email').focus();
-                return;
+            // Validate first name
+            const firstNameError = validateName(firstName, 'First name');
+            if (firstNameError) {
+                showEditModalError(firstNameError, 'first-name');
+                hasErrors = true;
             }
 
-            if (!firstName) {
-                alert('First name is required.');
-                document.getElementById('edit-first-name').focus();
-                return;
+            // Validate last name
+            const lastNameError = validateName(lastName, 'Last name');
+            if (lastNameError) {
+                showEditModalError(lastNameError, 'last-name');
+                hasErrors = true;
             }
 
-            if (!lastName) {
-                alert('Last name is required.');
-                document.getElementById('edit-last-name').focus();
-                return;
+            // Validate country
+            const countryError = validateCountry(country);
+            if (countryError) {
+                showEditModalError(countryError, 'country');
+                hasErrors = true;
             }
 
-            if (!country) {
-                alert('Country is required.');
-                document.getElementById('edit-country').focus();
-                return;
-            }
+            // If no errors, submit the form
+            if (!hasErrors) {
+                // Update form values with trimmed versions
+                document.getElementById('edit-email').value = email;
+                document.getElementById('edit-first-name').value = firstName;
+                document.getElementById('edit-last-name').value = lastName;
+                document.getElementById('edit-country').value = country;
 
-            // If all validation passes, submit the form
-            document.getElementById('editForm').submit();
+                // Show loading state
+                showModalLoading('editModal', 'editModalLoading');
+
+                // Submit the form
+                document.getElementById('editForm').submit();
+            }
         }
 
-        function submitDelete() {
+        function confirmDelete() {
+            // Show loading state immediately
+            showModalLoading('deleteModal', 'deleteModalLoading');
+
+            // Submit the form
             document.getElementById('deleteForm').submit();
         }
 
-        // Modal closing disabled - can only close with buttons or X
-        // window.onclick and keydown handlers are disabled
+        // REAL-TIME VALIDATION - Same as dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add form validation for ADD modal
+            const addUsernameInput = document.getElementById('add-username');
+            const addEmailInput = document.getElementById('add-email');
+            const addFirstNameInput = document.getElementById('add-first-name');
+            const addLastNameInput = document.getElementById('add-last-name');
+            const addCountryInput = document.getElementById('add-country');
+
+            // Username validation
+            if (addUsernameInput) {
+                addUsernameInput.addEventListener('blur', function() {
+                    const usernameError = validateUsername(this.value.trim());
+                    const errorDiv = document.getElementById('add-username-error');
+
+                    if (usernameError) {
+                        errorDiv.innerHTML = usernameError;
+                        errorDiv.style.display = 'block';
+                        this.classList.add('input-error');
+                    } else {
+                        errorDiv.style.display = 'none';
+                        this.classList.remove('input-error');
+                    }
+                });
+
+                addUsernameInput.addEventListener('input', function() {
+                    if (this.classList.contains('input-error')) {
+                        document.getElementById('add-username-error').style.display = 'none';
+                        this.classList.remove('input-error');
+                    }
+                });
+            }
+
+            // Email validation
+            if (addEmailInput) {
+                addEmailInput.addEventListener('blur', function() {
+                    const emailError = validateEmail(this.value.trim());
+                    const errorDiv = document.getElementById('add-email-error');
+
+                    if (emailError) {
+                        errorDiv.innerHTML = emailError;
+                        errorDiv.style.display = 'block';
+                        this.classList.add('input-error');
+                    } else {
+                        errorDiv.style.display = 'none';
+                        this.classList.remove('input-error');
+                    }
+                });
+
+                addEmailInput.addEventListener('input', function() {
+                    if (this.classList.contains('input-error')) {
+                        document.getElementById('add-email-error').style.display = 'none';
+                        this.classList.remove('input-error');
+                    }
+                });
+            }
+
+            // First name validation
+            if (addFirstNameInput) {
+                addFirstNameInput.addEventListener('blur', function() {
+                    const firstNameError = validateName(this.value.trim(), 'First name');
+                    const errorDiv = document.getElementById('add-first-name-error');
+
+                    if (firstNameError) {
+                        errorDiv.innerHTML = firstNameError;
+                        errorDiv.style.display = 'block';
+                        this.classList.add('input-error');
+                    } else {
+                        errorDiv.style.display = 'none';
+                        this.classList.remove('input-error');
+                    }
+                });
+
+                addFirstNameInput.addEventListener('input', function() {
+                    if (this.classList.contains('input-error')) {
+                        document.getElementById('add-first-name-error').style.display = 'none';
+                        this.classList.remove('input-error');
+                    }
+                });
+            }
+
+            // Last name validation
+            if (addLastNameInput) {
+                addLastNameInput.addEventListener('blur', function() {
+                    const lastNameError = validateName(this.value.trim(), 'Last name');
+                    const errorDiv = document.getElementById('add-last-name-error');
+
+                    if (lastNameError) {
+                        errorDiv.innerHTML = lastNameError;
+                        errorDiv.style.display = 'block';
+                        this.classList.add('input-error');
+                    } else {
+                        errorDiv.style.display = 'none';
+                        this.classList.remove('input-error');
+                    }
+                });
+
+                addLastNameInput.addEventListener('input', function() {
+                    if (this.classList.contains('input-error')) {
+                        document.getElementById('add-last-name-error').style.display = 'none';
+                        this.classList.remove('input-error');
+                    }
+                });
+            }
+
+            // Country validation
+            if (addCountryInput) {
+                addCountryInput.addEventListener('blur', function() {
+                    const countryError = validateCountry(this.value.trim());
+                    const errorDiv = document.getElementById('add-country-error');
+
+                    if (countryError) {
+                        errorDiv.innerHTML = countryError;
+                        errorDiv.style.display = 'block';
+                        this.classList.add('input-error');
+                    } else {
+                        errorDiv.style.display = 'none';
+                        this.classList.remove('input-error');
+                    }
+                });
+
+                addCountryInput.addEventListener('input', function() {
+                    if (this.classList.contains('input-error')) {
+                        document.getElementById('add-country-error').style.display = 'none';
+                        this.classList.remove('input-error');
+                    }
+                });
+            }
+
+            // Edit form validation
+            const editEmailInput = document.getElementById('edit-email');
+            const editFirstNameInput = document.getElementById('edit-first-name');
+            const editLastNameInput = document.getElementById('edit-last-name');
+            const editCountryInput = document.getElementById('edit-country');
+
+            // Email validation for edit
+            if (editEmailInput) {
+                editEmailInput.addEventListener('blur', function() {
+                    const emailError = validateEmail(this.value.trim());
+                    const errorDiv = document.getElementById('edit-email-error');
+
+                    if (emailError) {
+                        errorDiv.innerHTML = emailError;
+                        errorDiv.style.display = 'block';
+                        this.classList.add('input-error');
+                    } else {
+                        errorDiv.style.display = 'none';
+                        this.classList.remove('input-error');
+                    }
+                });
+
+                editEmailInput.addEventListener('input', function() {
+                    if (this.classList.contains('input-error')) {
+                        document.getElementById('edit-email-error').style.display = 'none';
+                        this.classList.remove('input-error');
+                    }
+                });
+            }
+
+            // First name validation for edit
+            if (editFirstNameInput) {
+                editFirstNameInput.addEventListener('blur', function() {
+                    const firstNameError = validateName(this.value.trim(), 'First name');
+                    const errorDiv = document.getElementById('edit-first-name-error');
+
+                    if (firstNameError) {
+                        errorDiv.innerHTML = firstNameError;
+                        errorDiv.style.display = 'block';
+                        this.classList.add('input-error');
+                    } else {
+                        errorDiv.style.display = 'none';
+                        this.classList.remove('input-error');
+                    }
+                });
+
+                editFirstNameInput.addEventListener('input', function() {
+                    if (this.classList.contains('input-error')) {
+                        document.getElementById('edit-first-name-error').style.display = 'none';
+                        this.classList.remove('input-error');
+                    }
+                });
+            }
+
+            // Last name validation for edit
+            if (editLastNameInput) {
+                editLastNameInput.addEventListener('blur', function() {
+                    const lastNameError = validateName(this.value.trim(), 'Last name');
+                    const errorDiv = document.getElementById('edit-last-name-error');
+
+                    if (lastNameError) {
+                        errorDiv.innerHTML = lastNameError;
+                        errorDiv.style.display = 'block';
+                        this.classList.add('input-error');
+                    } else {
+                        errorDiv.style.display = 'none';
+                        this.classList.remove('input-error');
+                    }
+                });
+
+                editLastNameInput.addEventListener('input', function() {
+                    if (this.classList.contains('input-error')) {
+                        document.getElementById('edit-last-name-error').style.display = 'none';
+                        this.classList.remove('input-error');
+                    }
+                });
+            }
+
+            // Country validation for edit
+            if (editCountryInput) {
+                editCountryInput.addEventListener('blur', function() {
+                    const countryError = validateCountry(this.value.trim());
+                    const errorDiv = document.getElementById('edit-country-error');
+
+                    if (countryError) {
+                        errorDiv.innerHTML = countryError;
+                        errorDiv.style.display = 'block';
+                        this.classList.add('input-error');
+                    } else {
+                        errorDiv.style.display = 'none';
+                        this.classList.remove('input-error');
+                    }
+                });
+
+                editCountryInput.addEventListener('input', function() {
+                    if (this.classList.contains('input-error')) {
+                        document.getElementById('edit-country-error').style.display = 'none';
+                        this.classList.remove('input-error');
+                    }
+                });
+            }
+        });
+
+        // MODAL CLOSE HANDLERS - Same as dashboard
+        function preventModalCloseDuringLoading(event) {
+            const loadingOverlays = document.querySelectorAll('.modal-loading-overlay');
+            for (let overlay of loadingOverlays) {
+                if (overlay.style.display === 'flex') {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        window.onclick = function(event) {
+            if (!preventModalCloseDuringLoading(event)) return;
+
+            const addModal = document.getElementById('addModal');
+            const editModal = document.getElementById('editModal');
+            const deleteModal = document.getElementById('deleteModal');
+
+            if (event.target == addModal) {
+                closeAddModal();
+            }
+            if (event.target == editModal) {
+                closeEditModal();
+            }
+            if (event.target == deleteModal) {
+                closeDeleteModal();
+            }
+        }
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                if (!preventModalCloseDuringLoading(event)) return;
+
+                closeAddModal();
+                closeEditModal();
+                closeDeleteModal();
+            }
+        });
     </script>
+
+    <!-- Add User Modal -->
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New User</h3>
+                <span class="close" onclick="closeAddModal()">&times;</span>
+            </div>
+
+            <!-- Error display area -->
+            <div id="addModalError" class="modal-error" style="display: none;"></div>
+
+            <form id="addForm" method="POST" action="">
+                <input type="hidden" name="action" value="add">
+                <div class="modal-form-group">
+                    <label for="add-username">Username: <span class="required">*</span></label>
+                    <input type="text" 
+                        id="add-username" 
+                        name="username" 
+                        required 
+                        maxlength="50"
+                        placeholder="Enter username">
+                    <div class="field-error" id="add-username-error" style="display: none;"></div>
+                </div>
+                <div class="modal-form-group">
+                    <label for="add-email">Email: <span class="required">*</span></label>
+                    <input type="email" 
+                        id="add-email" 
+                        name="email" 
+                        required
+                        placeholder="Enter email address">
+                    <div class="field-error" id="add-email-error" style="display: none;"></div>
+                </div>
+                <div class="modal-form-group">
+                    <label for="add-first-name">First Name: <span class="required">*</span></label>
+                    <input type="text" 
+                        id="add-first-name" 
+                        name="first_name" 
+                        required
+                        placeholder="Enter first name">
+                    <div class="field-error" id="add-first-name-error" style="display: none;"></div>
+                </div>
+                <div class="modal-form-group">
+                    <label for="add-last-name">Last Name: <span class="required">*</span></label>
+                    <input type="text" 
+                        id="add-last-name" 
+                        name="last_name" 
+                        required
+                        placeholder="Enter last name">
+                    <div class="field-error" id="add-last-name-error" style="display: none;"></div>
+                </div>
+                <div class="modal-form-group">
+                    <label for="add-country">Country: <span class="required">*</span></label>
+                    <input type="text" 
+                        id="add-country" 
+                        name="country" 
+                        required
+                        placeholder="Enter country">
+                    <div class="field-error" id="add-country-error" style="display: none;"></div>
+                </div>
+                <div class="modal-form-group">
+                    <label for="add-admin">Admin Privileges:</label>
+                    <select id="add-admin" name="admin">
+                        <option value="0">No</option>
+                        <option value="1">Yes</option>
+                    </select>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="modal-btn modal-btn-secondary" onclick="closeAddModal()">Cancel</button>
+                    <button type="button" class="modal-btn modal-btn-primary" onclick="validateAndSubmitAdd()">Add User</button>
+                </div>
+            </form>
+
+            <!-- Loading overlay -->
+            <div class="modal-loading-overlay" id="addModalLoading">
+                <div class="modal-loading-content">
+                    <div class="modal-loading-spinner"></div>
+                    <div class="modal-loading-text">Adding user...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit User</h3>
+                <span class="close" onclick="closeEditModal()">&times;</span>
+            </div>
+
+            <!-- Error display area -->
+            <div id="editModalError" class="modal-error" style="display: none;"></div>
+
+            <form id="editForm" method="POST" action="">
+                <input type="hidden" name="action" value="edit">
+                <input type="hidden" id="edit-user-id" name="user_id">
+                <div class="modal-form-group">
+                    <label for="edit-username">Username:</label>
+                    <input type="text" 
+                        id="edit-username" 
+                        name="username" 
+                        readonly 
+                        style="background-color: #f8f9fa; color: #6c757d;">
+                    <small style="color: #6c757d; font-style: italic;">Username cannot be changed</small>
+                </div>
+                <div class="modal-form-group">
+                    <label for="edit-email">Email: <span class="required">*</span></label>
+                    <input type="email" 
+                        id="edit-email" 
+                        name="email" 
+                        required>
+                    <div class="field-error" id="edit-email-error" style="display: none;"></div>
+                </div>
+                <div class="modal-form-group">
+                    <label for="edit-first-name">First Name: <span class="required">*</span></label>
+                    <input type="text" 
+                        id="edit-first-name" 
+                        name="first_name" 
+                        required>
+                    <div class="field-error" id="edit-first-name-error" style="display: none;"></div>
+                </div>
+                <div class="modal-form-group">
+                    <label for="edit-last-name">Last Name: <span class="required">*</span></label>
+                    <input type="text" 
+                        id="edit-last-name" 
+                        name="last_name" 
+                        required>
+                    <div class="field-error" id="edit-last-name-error" style="display: none;"></div>
+                </div>
+                <div class="modal-form-group">
+                    <label for="edit-country">Country: <span class="required">*</span></label>
+                    <input type="text" 
+                        id="edit-country" 
+                        name="country" 
+                        required>
+                    <div class="field-error" id="edit-country-error" style="display: none;"></div>
+                </div>
+                <div class="modal-form-group">
+                    <label for="edit-admin">Admin Privileges:</label>
+                    <select id="edit-admin" name="admin">
+                        <option value="0">No</option>
+                        <option value="1">Yes</option>
+                    </select>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="modal-btn modal-btn-secondary" onclick="closeEditModal()">Cancel</button>
+                    <button type="button" class="modal-btn modal-btn-primary" onclick="validateAndSubmitEdit()">Save Changes</button>
+                </div>
+            </form>
+
+            <!-- Loading overlay -->
+            <div class="modal-loading-overlay" id="editModalLoading">
+                <div class="modal-loading-content">
+                    <div class="modal-loading-spinner"></div>
+                    <div class="modal-loading-text">Saving changes...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete User Modal -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Delete User</h3>
+                <span class="close" onclick="closeDeleteModal()">&times;</span>
+            </div>
+            <form id="deleteForm" method="POST" action="">
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" id="delete-user-id" name="user_id">
+                <p><strong>Are you sure you want to delete the user "<span id="delete-user-name"></span>"?</strong></p>
+                <p style="color: #dc3545; font-weight: bold;">⚠️ This action cannot be undone!</p>
+                <p>This will permanently remove the user and may affect their associated devices.</p>
+                <div class="modal-buttons">
+                    <button type="button" class="modal-btn modal-btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+                    <button type="button" class="modal-btn modal-btn-danger" onclick="confirmDelete()">Delete User</button>
+                </div>
+            </form>
+
+            <!-- Loading overlay -->
+            <div class="modal-loading-overlay" id="deleteModalLoading">
+                <div class="modal-loading-content">
+                    <div class="modal-loading-spinner"></div>
+                    <div class="modal-loading-text">Deleting user...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* Modal styles from dashboard - Same as dashboard.php */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            margin: 0;
+            transform: none;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            color: #333;
+        }
+
+        .close {
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #999;
+            line-height: 1;
+        }
+
+        .close:hover {
+            color: #333;
+        }
+
+        /* Modal error display - Same as dashboard */
+        .modal-error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .field-error {
+            color: #dc3545;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .input-error {
+            border-color: #dc3545 !important;
+            box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.25) !important;
+        }
+
+        .required {
+            color: #dc3545;
+        }
+
+        .modal-form-group {
+            margin-bottom: 15px;
+        }
+
+        .modal-form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .modal-form-group input,
+        .modal-form-group select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        .modal-form-group input:focus,
+        .modal-form-group select:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .modal-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .modal-btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .modal-btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+        .modal-btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .modal-btn-secondary:hover {
+            background-color: #545b62;
+        }
+
+        .modal-btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .modal-btn-danger:hover {
+            background-color: #c82333;
+        }
+
+        /* Loading overlay styles - Same as dashboard */
+        .modal-loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            border-radius: 8px;
+            z-index: 1001;
+        }
+
+        .modal-loading-content {
+            text-align: center;
+            color: #333;
+        }
+
+        .modal-loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        .modal-loading-text {
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* User Table Specific Styling */
+        .user-table th:nth-child(6),
+        .user-table td:nth-child(6) {
+            width: 80px;
+            max-width: 80px;
+            text-align: center;
+            padding: 8px;
+        }
+
+        .user-table th:nth-child(7),
+        .user-table td:nth-child(7) {
+            width: 120px;
+            max-width: 120px;
+            text-align: center;
+            padding: 8px;
+        }
+
+        .user-table th:nth-child(8),
+        .user-table td:nth-child(8) {
+            width: 120px;
+            max-width: 120px;
+            text-align: center;
+            padding: 8px;
+            vertical-align: middle;
+        }
+
+        .action-buttons-container {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .action-button-row {
+            display: flex;
+            justify-content: center;
+        }
+
+        .action-button {
+            padding: 4px 8px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            min-width: 60px;
+            transition: background-color 0.2s;
+        }
+
+        .action-button.edit {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .action-button.edit:hover {
+            background-color: #0056b3;
+        }
+
+        .action-button.delete {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .action-button.delete:hover {
+            background-color: #c82333;
+        }
+
+        /* Make sure devices-header and add-device-btn styles are available */
+        .devices-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .devices-title {
+            margin: 0;
+            color: #333;
+        }
+
+        .add-device-btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s ease;
+            margin-left: 10px;
+        }
+
+        .add-device-btn:hover {
+            background-color: #218838;
+        }
+
+        /* Sorting indicators - from dashboard */
+        .sortable-header {
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+            padding-right: 20px;
+        }
+
+        .sortable-header:hover {
+            background-color: #f8f9fa;
+        }
+
+        .sort-indicator {
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        .sortable-header.sort-asc .sort-indicator:after {
+            content: "▲";
+            color: #007bff;
+        }
+
+        .sortable-header.sort-desc .sort-indicator:after {
+            content: "▼";
+            color: #007bff;
+        }
+    </style>
 </body>
 </html>
