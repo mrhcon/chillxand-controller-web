@@ -1,111 +1,4 @@
-function submitAdd() {
-            document.getElementById('addForm').submit();
-        }
-
-        function validateAndSubmitAdd() {
-            // Get form values
-            const username = document.getElementById('add-username').value.trim();
-            const email = document.getElementById('add-email').value.trim();
-            const firstName = document.getElementById('add-first-name').value.trim();
-            const lastName = document.getElementById('add-last-name').value.trim();
-            const country = document.getElementById('add-country').value.trim();
-
-            // Validate all required fields
-            if (!username) {
-                alert('Username is required.');
-                document.getElementById('add-username').focus();
-                return;
-            }
-
-            if (username.length > 50) {
-                alert('Username must be 50 characters or less.');
-                document.getElementById('add-username').focus();
-                return;
-            }
-
-            if (!email) {
-                alert('Email is required.');
-                document.getElementById('add-email').focus();
-                return;
-            }
-
-            // Basic email validation
-            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailPattern.test(email)) {
-                alert('Please enter a valid email address.');
-                document.getElementById('add-email').focus();
-                return;
-            }
-
-            if (!firstName) {
-                alert('First name is required.');
-                document.getElementById('add-first-name').focus();
-                return;
-            }
-
-            if (!lastName) {
-                alert('Last name is required.');
-                document.getElementById('add-last-name').focus();
-                return;
-            }
-
-            if (!country) {
-                alert('Country is required.');
-                document.getElementById('add-country').focus();
-                return;
-            }
-
-            // If all validation passes, submit the form
-            document.getElementById('addForm').submit();
-        }
-
-        function submitEdit() {
-            document.getElementById('editForm').submit();
-        }
-
-        function validateAndSubmitEdit() {
-            // Get form values
-            const email = document.getElementById('edit-email').value.trim();
-            const firstName = document.getElementById('edit-first-name').value.trim();
-            const lastName = document.getElementById('edit-last-name').value.trim();
-            const country = document.getElementById('edit-country').value.trim();
-
-            // Validate all required fields
-            if (!email) {
-                alert('Email is required.');
-                document.getElementById('edit-email').focus();
-                return;
-            }
-
-            // Basic email validation
-            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailPattern.test(email)) {
-                alert('Please enter a valid email address.');
-                document.getElementById('edit-email').focus();
-                return;
-            }
-
-            if (!firstName) {
-                alert('First name is required.');
-                document.getElementById('edit-first-name').focus();
-                return;
-            }
-
-            if (!lastName) {
-                alert('Last name is required.');
-                document.getElementById('edit-last-name').focus();
-                return;
-            }
-
-            if (!country) {
-                alert('Country is required.');
-                document.getElementById('edit-country').focus();
-                return;
-            }
-
-            // If all validation passes, submit the form
-            document.getElementById('editForm').submit();
-        }<?php
+<?php
 session_start();
 require_once 'db_connect.php';
 require_once 'functions.php';
@@ -1018,11 +911,104 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
             document.getElementById('deleteModal').style.display = 'none';
         }
 
-        function submitAdd() {
+        function validateAndSubmitAdd() {
+            // Get form values
+            const username = document.getElementById('add-username').value.trim();
+            const email = document.getElementById('add-email').value.trim();
+            const firstName = document.getElementById('add-first-name').value.trim();
+            const lastName = document.getElementById('add-last-name').value.trim();
+            const country = document.getElementById('add-country').value.trim();
+
+            // Validate all required fields
+            if (!username) {
+                alert('Username is required.');
+                document.getElementById('add-username').focus();
+                return;
+            }
+
+            if (username.length > 50) {
+                alert('Username must be 50 characters or less.');
+                document.getElementById('add-username').focus();
+                return;
+            }
+
+            if (!email) {
+                alert('Email is required.');
+                document.getElementById('add-email').focus();
+                return;
+            }
+
+            // Basic email validation
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailPattern.test(email)) {
+                alert('Please enter a valid email address.');
+                document.getElementById('add-email').focus();
+                return;
+            }
+
+            if (!firstName) {
+                alert('First name is required.');
+                document.getElementById('add-first-name').focus();
+                return;
+            }
+
+            if (!lastName) {
+                alert('Last name is required.');
+                document.getElementById('add-last-name').focus();
+                return;
+            }
+
+            if (!country) {
+                alert('Country is required.');
+                document.getElementById('add-country').focus();
+                return;
+            }
+
+            // If all validation passes, submit the form
             document.getElementById('addForm').submit();
         }
 
-        function submitEdit() {
+        function validateAndSubmitEdit() {
+            // Get form values
+            const email = document.getElementById('edit-email').value.trim();
+            const firstName = document.getElementById('edit-first-name').value.trim();
+            const lastName = document.getElementById('edit-last-name').value.trim();
+            const country = document.getElementById('edit-country').value.trim();
+
+            // Validate all required fields
+            if (!email) {
+                alert('Email is required.');
+                document.getElementById('edit-email').focus();
+                return;
+            }
+
+            // Basic email validation
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailPattern.test(email)) {
+                alert('Please enter a valid email address.');
+                document.getElementById('edit-email').focus();
+                return;
+            }
+
+            if (!firstName) {
+                alert('First name is required.');
+                document.getElementById('edit-first-name').focus();
+                return;
+            }
+
+            if (!lastName) {
+                alert('Last name is required.');
+                document.getElementById('edit-last-name').focus();
+                return;
+            }
+
+            if (!country) {
+                alert('Country is required.');
+                document.getElementById('edit-country').focus();
+                return;
+            }
+
+            // If all validation passes, submit the form
             document.getElementById('editForm').submit();
         }
 
@@ -1030,31 +1016,8 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
             document.getElementById('deleteForm').submit();
         }
 
-        // Close modal when clicking outside of it - DISABLED
-        // window.onclick = function(event) {
-        //     const addModal = document.getElementById('addModal');
-        //     const editModal = document.getElementById('editModal');
-        //     const deleteModal = document.getElementById('deleteModal');
-
-        //     if (event.target == addModal) {
-        //         closeAddModal();
-        //     }
-        //     if (event.target == editModal) {
-        //         closeEditModal();
-        //     }
-        //     if (event.target == deleteModal) {
-        //         closeDeleteModal();
-        //     }
-        // }
-
-        // Close modal with Escape key - DISABLED
-        // document.addEventListener('keydown', function(event) {
-        //     if (event.key === 'Escape') {
-        //         closeAddModal();
-        //         closeEditModal();
-        //         closeDeleteModal();
-        //     }
-        // });
+        // Modal closing disabled - can only close with buttons or X
+        // window.onclick and keydown handlers are disabled
     </script>
 </body>
 </html>
