@@ -90,7 +90,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
                                 <th>Last Name</th>
                                 <th>Country</th>
                                 <th>Admin</th>
-                                <th>Devices</th>
+                                <th>Device Count</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -102,8 +102,8 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
                                     <td><?php echo htmlspecialchars($user['first_name'] ?? 'N/A'); ?></td>
                                     <td><?php echo htmlspecialchars($user['last_name'] ?? 'N/A'); ?></td>
                                     <td><?php echo htmlspecialchars($user['country'] ?? 'N/A'); ?></td>
-                                    <td><?php echo $user['admin'] ? 'Yes' : 'No'; ?></td>
-                                    <td><?php echo htmlspecialchars($user['device_count']); ?></td>
+                                    <td style="text-align: center;"><?php echo $user['admin'] ? '✓' : ''; ?></td>
+                                    <td style="text-align: center;"><?php echo htmlspecialchars($user['device_count']); ?></td>
                                     <td>
                                         <div class="action-buttons-container">
                                             <div class="action-button-row">
@@ -449,6 +449,32 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
 
         .modal-btn-danger:hover {
             background-color: #c82333;
+        }
+
+        /* User Table Specific Styling */
+        .user-table th:nth-child(6),
+        .user-table td:nth-child(6) {
+            width: 80px;
+            max-width: 80px;
+            text-align: center;
+            padding: 8px;
+        }
+
+        .user-table th:nth-child(7),
+        .user-table td:nth-child(7) {
+            width: 120px;
+            max-width: 120px;
+            text-align: center;
+            padding: 8px;
+        }
+
+        .user-table th:nth-child(8),
+        .user-table td:nth-child(8) {
+            width: 120px;
+            max-width: 120px;
+            text-align: center;
+            padding: 8px;
+            vertical-align: middle;
         }
 
         .action-buttons-container {
