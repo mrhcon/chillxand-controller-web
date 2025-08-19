@@ -252,7 +252,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
             document.getElementById('add-country').value = '';
             document.getElementById('add-password').value = '';
             document.getElementById('add-admin').value = '0';
-            document.getElementById('addModal').style.display = 'block';
+            document.getElementById('addModal').style.display = 'flex';
         }
 
         function closeAddModal() {
@@ -268,7 +268,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
             document.getElementById('edit-country').value = country || '';
             document.getElementById('edit-password').value = '';
             document.getElementById('edit-admin').value = isAdmin ? '1' : '0';
-            document.getElementById('editModal').style.display = 'block';
+            document.getElementById('editModal').style.display = 'flex';
         }
 
         function closeEditModal() {
@@ -278,7 +278,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
         function openDeleteModal(userId, username) {
             document.getElementById('delete-user-id').value = userId;
             document.getElementById('delete-user-name').textContent = username;
-            document.getElementById('deleteModal').style.display = 'block';
+            document.getElementById('deleteModal').style.display = 'flex';
         }
 
         function closeDeleteModal() {
@@ -338,6 +338,10 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
             align-items: center;
         }
 
+        .modal.show {
+            display: flex;
+        }
+
         .modal-content {
             background-color: white;
             padding: 20px;
@@ -348,6 +352,8 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
             max-height: 90vh;
             overflow-y: auto;
             position: relative;
+            margin: 0;
+            transform: none;
         }
 
         .modal-header {

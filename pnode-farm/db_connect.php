@@ -18,7 +18,7 @@ try {
 } catch (PDOException $e) {
     $error_message = "Database connection failed: " . $e->getMessage();
     error_log($error_message);
-    // Avoid die() to allow error display in devices.php
+    // Avoid die() to allow error display in admin_devices.php
     $pdo = null;
 }
 ?>

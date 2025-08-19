@@ -86,7 +86,7 @@ try {
     // Parse health data
     $summary = parseCachedDeviceHealth($cached_status);
 
-    // Determine overall status (must match the logic from dashboard.php and devices.php)
+    // Determine overall status (must match the logic from dashboard.php and admin_devices.php)
     $overall_status = 'Unknown';
     if ($cached_status['status'] === 'Online') {
         if ($summary['health_status'] === 'pass') {
