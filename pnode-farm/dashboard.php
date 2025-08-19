@@ -1295,32 +1295,6 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
             document.getElementById('deleteForm').submit();
         }
 
-        // // UPDATE your existing window.onclick function to include the new modals
-        // window.onclick = function(event) {
-        //     const addModal = document.getElementById('addModal');
-        //     const editModal = document.getElementById('editModal');
-        //     const deleteModal = document.getElementById('deleteModal');
-
-        //     if (event.target == addModal) {
-        //         closeAddModal();
-        //     }
-        //     if (event.target == editModal) {
-        //         closeEditModal();
-        //     }
-        //     if (event.target == deleteModal) {
-        //         closeDeleteModal();
-        //     }
-        // }
-
-        // UPDATE your existing keydown event listener to include the new modals
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                closeAddModal();
-                closeEditModal();
-                closeDeleteModal();
-            }
-        });
-
         function showEditModalError(message, fieldId = null) {
             if (fieldId) {
                 // Show field-specific error
@@ -1695,19 +1669,19 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
         window.onclick = function(event) {
             if (!preventModalCloseDuringLoading(event)) return;
 
-            const addModal = document.getElementById('addModal');
-            const editModal = document.getElementById('editModal');
-            const deleteModal = document.getElementById('deleteModal');
+            // const addModal = document.getElementById('addModal');
+            // const editModal = document.getElementById('editModal');
+            // const deleteModal = document.getElementById('deleteModal');
 
-            if (event.target == addModal) {
-                closeAddModal();
-            }
-            if (event.target == editModal) {
-                closeEditModal();
-            }
-            if (event.target == deleteModal) {
-                closeDeleteModal();
-            }
+            // if (event.target == addModal) {
+            //     closeAddModal();
+            // }
+            // if (event.target == editModal) {
+            //     closeEditModal();
+            // }
+            // if (event.target == deleteModal) {
+            //     closeDeleteModal();
+            // }
         }
 
         document.addEventListener('keydown', function(event) {
