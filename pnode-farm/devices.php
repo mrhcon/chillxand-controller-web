@@ -789,7 +789,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                                         <button type="button" class="action-button update-controller"
                                                         data-device-id="<?php echo $device['id']; ?>"
                                                         data-device-ip="<?php echo htmlspecialchars($device['pnode_ip']); ?>"
-                                                        data-device-name="<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>">
+                                                        data-device-name="<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>"
+                                                        <?php echo ($device['status'] !== 'Online') ? 'disabled' : ''; ?>>
                                                     Update Controller
                                                 </button>
                                             </div>
@@ -797,7 +798,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                                 <button type="button" class="action-button update-pod"
                                                         data-device-id="<?php echo $device['id']; ?>"
                                                         data-device-ip="<?php echo htmlspecialchars($device['pnode_ip']); ?>"
-                                                        data-device-name="<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>">
+                                                        data-device-name="<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>"
+                                                        <?php echo ($device['status'] !== 'Online') ? 'disabled' : ''; ?>>
                                                     Update Pod
                                                 </button>
                                             </div>
@@ -1370,6 +1372,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 const lastCheckedCell = row.cells[7];
                 this.updateLastCheckedCell(lastCheckedCell, data);
 
+                // Update button states based on device status
+                const updateControllerBtn = document.querySelector(`[data-device-id="${device.id}"].update-controller`);
+                const updatePodBtn = document.querySelector(`[data-device-id="${device.id}"].update-pod`);
+
+                if (updateControllerBtn) {
+                    updateControllerBtn.disabled = (data.status !== 'Online');
+                }
+                if (updatePodBtn) {
+                    updatePodBtn.disabled = (data.status !== 'Online');
+                }
+
                 // Remove highlight after 2 seconds
                 setTimeout(() => {
                     row.style.backgroundColor = '';
@@ -1643,6 +1656,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     statusElement.innerHTML = `
                         <span class="status-btn status-${statusClass}">${overallStatus}</span>
                     `;
+
+                    // Update button states based on new status
+                    const updateControllerBtn = document.querySelector(`[data-device-id="${deviceId}"].update-controller`);
+                    const updatePodBtn = document.querySelector(`[data-device-id="${deviceId}"].update-pod`);
+
+                    if (updateControllerBtn) {
+                        updateControllerBtn.disabled = (data.status !== 'Online');
+                    }
+                    if (updatePodBtn) {
+                        updatePodBtn.disabled = (data.status !== 'Online');
+                    }
 
                     // Update health data if available
                     const healthElement = statusElement.nextElementSibling;
