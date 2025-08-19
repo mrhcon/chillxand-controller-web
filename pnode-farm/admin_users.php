@@ -9,6 +9,106 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['admin']) || !$_SESSION['ad
     exit();
 }
 
+// Handle delete user
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['action'] == 'delete') {
+    if (!isset($_POST['user_id'])) {
+        $error = "Missing user ID.";
+        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_delete_failed', 'Missing user ID');
+    } else {
+        $user_id = $_POST['user_id'];
+        
+        // Prevent admin from deleting themselves
+        if ($user_id == $_SESSION['user_id']) {
+            $error = "You cannot delete your own account.";
+            logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_delete_failed', 'Attempted to delete own account');
+        } else {
+            try {
+                // Get user details before deletion for logging
+                $stmt = $pdo->prepare("SELECT username, email, first_name, last_name FROM users WHERE id = :user_id");
+                $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+                $stmt->execute();
+                $user_to_delete = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($user_to_delete) {
+                    // Start transaction
+                    $pdo->beginTransaction();
+
+                    // First, delete or reassign any devices owned by this user
+                    // Option 1: Delete devices (uncomment this if you want to delete devices)
+                    // $stmt = $pdo->prepare("DELETE FROM devices WHERE username = :username");
+                    // $stmt->bindValue(':username', $user_to_delete['username'], PDO::PARAM_STR);
+                    // $stmt->execute();
+
+                    // Option 2: Reassign devices to admin (uncomment this if you want to reassign)
+                    // $stmt = $pdo->prepare("UPDATE devices SET username = :admin_username WHERE username = :username");
+                    // $stmt->bindValue(':admin_username', $_SESSION['username'], PDO::PARAM_STR);
+                    // $stmt->bindValue(':username', $user_to_delete['username'], PDO::PARAM_STR);
+                    // $stmt->execute();
+
+                    // Option 3: Just delete the user and let foreign key constraints handle devices
+                    // (This will fail if there are devices - you'll need to handle this case)
+                    
+                    // Check if user has devices
+                    $stmt = $pdo->prepare("SELECT COUNT(*) FROM devices WHERE username = :username");
+                    $stmt->bindValue(':username', $user_to_delete['username'], PDO::PARAM_STR);
+                    $stmt->execute();
+                    $device_count = $stmt->fetchColumn();
+
+                    if ($device_count > 0) {
+                        // Delete all devices owned by this user first
+                        $stmt = $pdo->prepare("DELETE FROM devices WHERE username = :username");
+                        $stmt->bindValue(':username', $user_to_delete['username'], PDO::PARAM_STR);
+                        $stmt->execute();
+                        
+                        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_devices_deleted_with_user', "Deleted $device_count devices for user: {$user_to_delete['username']}");
+                    }
+
+                    // Delete user interactions/logs for this user
+                    $stmt = $pdo->prepare("DELETE FROM user_interactions WHERE user_id = :user_id");
+                    $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+                    $stmt->execute();
+
+                    // Finally, delete the user
+                    $stmt = $pdo->prepare("DELETE FROM users WHERE id = :user_id");
+                    $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+                    $stmt->execute();
+
+                    // Commit transaction
+                    $pdo->commit();
+
+                    $success = "User '{$user_to_delete['username']}' has been successfully deleted.";
+                    if ($device_count > 0) {
+                        $success .= " Also deleted $device_count associated devices.";
+                    }
+                    
+                    logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_delete_success', "Deleted user: {$user_to_delete['username']} (ID: $user_id)");
+                    
+                    // Redirect to prevent re-submission
+                    header("Location: admin_users.php?deleted=1");
+                    exit();
+                } else {
+                    $error = "User not found.";
+                    logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_delete_failed', 'User not found');
+                }
+            } catch (PDOException $e) {
+                // Rollback transaction on error
+                if ($pdo->inTransaction()) {
+                    $pdo->rollback();
+                }
+                
+                $error = "Error deleting user: " . $e->getMessage();
+                error_log($error);
+                logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_delete_failed', $error);
+            }
+        }
+    }
+}
+
+// Check for success message from redirect
+if (isset($_GET['deleted']) && $_GET['deleted'] == '1') {
+    $success = "User has been successfully deleted.";
+}
+
 // Fetch all users and their device counts
 try {
     $stmt = $pdo->prepare("
@@ -72,6 +172,9 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
                 <h2>Manage Users</h2>
                 <?php if (isset($error)): ?>
                     <p class="error"><?php echo htmlspecialchars($error); ?></p>
+                <?php endif; ?>
+                <?php if (isset($success)): ?>
+                    <p class="success"><?php echo htmlspecialchars($success); ?></p>
                 <?php endif; ?>
 
                 <div class="devices-header">
