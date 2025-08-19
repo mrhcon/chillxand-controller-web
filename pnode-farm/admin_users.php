@@ -9,6 +9,170 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['admin']) || !$_SESSION['ad
     exit();
 }
 
+// Handle add user
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['action'] == 'add') {
+    $username = trim($_POST['username']);
+    $email = trim($_POST['email']);
+    $first_name = trim($_POST['first_name']);
+    $last_name = trim($_POST['last_name']);
+    $country = trim($_POST['country']);
+    $admin = isset($_POST['admin']) ? (int)$_POST['admin'] : 0;
+
+    if (empty($username) || empty($email)) {
+        $error = "Username and email are required.";
+        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_add_failed', 'Empty required fields');
+    } elseif (strlen($username) > 50) {
+        $error = "Username must be 50 characters or less.";
+        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_add_failed', 'Username too long');
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error = "Invalid email address.";
+        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_add_failed', 'Invalid email');
+    } else {
+        try {
+            // Check for duplicate username
+            $stmt = $pdo->prepare("SELECT COUNT(*) FROM users WHERE username = :username");
+            $stmt->bindValue(':username', $username, PDO::PARAM_STR);
+            $stmt->execute();
+            if ($stmt->fetchColumn() > 0) {
+                $error = "Username already exists.";
+                logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_add_failed', 'Duplicate username');
+            } else {
+                // Check for duplicate email
+                $stmt = $pdo->prepare("SELECT COUNT(*) FROM users WHERE email = :email");
+                $stmt->bindValue(':email', $email, PDO::PARAM_STR);
+                $stmt->execute();
+                if ($stmt->fetchColumn() > 0) {
+                    $error = "Email address already exists.";
+                    logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_add_failed', 'Duplicate email');
+                } else {
+                    // Generate random password
+                    $random_password = bin2hex(random_bytes(8)); // 16 character random password
+                    $hashed_password = password_hash($random_password, PASSWORD_DEFAULT);
+
+                    // Insert new user
+                    $stmt = $pdo->prepare("
+                        INSERT INTO users (username, email, password, first_name, last_name, country, admin, registration_date) 
+                        VALUES (:username, :email, :password, :first_name, :last_name, :country, :admin, NOW())
+                    ");
+                    $stmt->bindValue(':username', $username, PDO::PARAM_STR);
+                    $stmt->bindValue(':email', $email, PDO::PARAM_STR);
+                    $stmt->bindValue(':password', $hashed_password, PDO::PARAM_STR);
+                    $stmt->bindValue(':first_name', !empty($first_name) ? $first_name : null, PDO::PARAM_STR);
+                    $stmt->bindValue(':last_name', !empty($last_name) ? $last_name : null, PDO::PARAM_STR);
+                    $stmt->bindValue(':country', !empty($country) ? $country : null, PDO::PARAM_STR);
+                    $stmt->bindValue(':admin', $admin, PDO::PARAM_INT);
+                    $stmt->execute();
+
+                    $success = "User '$username' has been successfully created with temporary password: $random_password";
+                    logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_add_success', "Created user: $username, Email: $email, Admin: $admin");
+                    
+                    // Redirect to prevent re-submission
+                    header("Location: admin_users.php?added=1&temp_pass=" . urlencode($random_password) . "&new_user=" . urlencode($username));
+                    exit();
+                }
+            }
+        } catch (PDOException $e) {
+            $error = "Error creating user: " . $e->getMessage();
+            error_log($error);
+            logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_add_failed', $error);
+        }
+    }
+}
+
+// Handle edit user
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['action'] == 'edit') {
+    $user_id = $_POST['user_id'];
+    $username = trim($_POST['username']);
+    $email = trim($_POST['email']);
+    $first_name = trim($_POST['first_name']);
+    $last_name = trim($_POST['last_name']);
+    $country = trim($_POST['country']);
+    $admin = isset($_POST['admin']) ? (int)$_POST['admin'] : 0;
+
+    if (empty($username) || empty($email)) {
+        $error = "Username and email are required.";
+        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_edit_failed', 'Empty required fields');
+    } elseif (strlen($username) > 50) {
+        $error = "Username must be 50 characters or less.";
+        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_edit_failed', 'Username too long');
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error = "Invalid email address.";
+        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_edit_failed', 'Invalid email');
+    } else {
+        try {
+            // Check if user exists
+            $stmt = $pdo->prepare("SELECT username FROM users WHERE id = :user_id");
+            $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+            $stmt->execute();
+            $existing_user = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$existing_user) {
+                $error = "User not found.";
+                logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_edit_failed', 'User not found');
+            } else {
+                // Check for duplicate username (excluding current user)
+                $stmt = $pdo->prepare("SELECT COUNT(*) FROM users WHERE username = :username AND id != :user_id");
+                $stmt->bindValue(':username', $username, PDO::PARAM_STR);
+                $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+                $stmt->execute();
+                if ($stmt->fetchColumn() > 0) {
+                    $error = "Username already exists.";
+                    logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_edit_failed', 'Duplicate username');
+                } else {
+                    // Check for duplicate email (excluding current user)
+                    $stmt = $pdo->prepare("SELECT COUNT(*) FROM users WHERE email = :email AND id != :user_id");
+                    $stmt->bindValue(':email', $email, PDO::PARAM_STR);
+                    $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+                    $stmt->execute();
+                    if ($stmt->fetchColumn() > 0) {
+                        $error = "Email address already exists.";
+                        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_edit_failed', 'Duplicate email');
+                    } else {
+                        // Prevent admin from removing their own admin privileges
+                        if ($user_id == $_SESSION['user_id'] && $admin == 0) {
+                            $error = "You cannot remove your own admin privileges.";
+                            logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_edit_failed', 'Attempted to remove own admin privileges');
+                        } else {
+                            // Update user
+                            $stmt = $pdo->prepare("
+                                UPDATE users 
+                                SET username = :username, email = :email, first_name = :first_name, 
+                                    last_name = :last_name, country = :country, admin = :admin 
+                                WHERE id = :user_id
+                            ");
+                            $stmt->bindValue(':username', $username, PDO::PARAM_STR);
+                            $stmt->bindValue(':email', $email, PDO::PARAM_STR);
+                            $stmt->bindValue(':first_name', !empty($first_name) ? $first_name : null, PDO::PARAM_STR);
+                            $stmt->bindValue(':last_name', !empty($last_name) ? $last_name : null, PDO::PARAM_STR);
+                            $stmt->bindValue(':country', !empty($country) ? $country : null, PDO::PARAM_STR);
+                            $stmt->bindValue(':admin', $admin, PDO::PARAM_INT);
+                            $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+                            $stmt->execute();
+
+                            // If we're editing our own account, update session
+                            if ($user_id == $_SESSION['user_id']) {
+                                $_SESSION['username'] = $username;
+                                $_SESSION['admin'] = $admin;
+                            }
+
+                            $success = "User '$username' has been successfully updated.";
+                            logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_edit_success', "Updated user ID: $user_id, Username: $username, Admin: $admin");
+                            
+                            // Redirect to prevent re-submission
+                            header("Location: admin_users.php?edited=1");
+                            exit();
+                        }
+                    }
+                }
+            }
+        } catch (PDOException $e) {
+            $error = "Error updating user: " . $e->getMessage();
+            error_log($error);
+            logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_edit_failed', $error);
+        }
+    }
+}
+
 // Handle delete user
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['action'] == 'delete') {
     if (!isset($_POST['user_id'])) {
@@ -33,21 +197,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     // Start transaction
                     $pdo->beginTransaction();
 
-                    // First, delete or reassign any devices owned by this user
-                    // Option 1: Delete devices (uncomment this if you want to delete devices)
-                    // $stmt = $pdo->prepare("DELETE FROM devices WHERE username = :username");
-                    // $stmt->bindValue(':username', $user_to_delete['username'], PDO::PARAM_STR);
-                    // $stmt->execute();
-
-                    // Option 2: Reassign devices to admin (uncomment this if you want to reassign)
-                    // $stmt = $pdo->prepare("UPDATE devices SET username = :admin_username WHERE username = :username");
-                    // $stmt->bindValue(':admin_username', $_SESSION['username'], PDO::PARAM_STR);
-                    // $stmt->bindValue(':username', $user_to_delete['username'], PDO::PARAM_STR);
-                    // $stmt->execute();
-
-                    // Option 3: Just delete the user and let foreign key constraints handle devices
-                    // (This will fail if there are devices - you'll need to handle this case)
-                    
                     // Check if user has devices
                     $stmt = $pdo->prepare("SELECT COUNT(*) FROM devices WHERE username = :username");
                     $stmt->bindValue(':username', $user_to_delete['username'], PDO::PARAM_STR);
@@ -104,7 +253,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
     }
 }
 
-// Check for success message from redirect
+// Check for success messages from redirects
+if (isset($_GET['added']) && $_GET['added'] == '1') {
+    $temp_password = $_GET['temp_pass'] ?? '';
+    $new_username = $_GET['new_user'] ?? '';
+    if ($temp_password && $new_username) {
+        $success = "User '$new_username' has been successfully created with temporary password: $temp_password";
+    } else {
+        $success = "User has been successfully created.";
+    }
+}
+
+if (isset($_GET['edited']) && $_GET['edited'] == '1') {
+    $success = "User has been successfully updated.";
+}
+
 if (isset($_GET['deleted']) && $_GET['deleted'] == '1') {
     $success = "User has been successfully deleted.";
 }
