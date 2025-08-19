@@ -235,117 +235,6 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
         </div>
     </div>
 
-    <script>
-        function openAddModal() {
-            document.getElementById('add-username').value = '';
-            document.getElementById('add-email').value = '';
-            document.getElementById('add-first-name').value = '';
-            document.getElementById('add-last-name').value = '';
-            document.getElementById('add-country').value = '';
-            document.getElementById('add-admin').value = '0';
-            document.getElementById('addModal').style.display = 'flex';
-        }
-
-        function closeAddModal() {
-            document.getElementById('addModal').style.display = 'none';
-        }
-
-        function openEditModal(userId, username, email, firstName, lastName, country, isAdmin) {
-            document.getElementById('edit-user-id').value = userId;
-            document.getElementById('edit-username').value = username;
-            document.getElementById('edit-email').value = email;
-            document.getElementById('edit-first-name').value = firstName || '';
-            document.getElementById('edit-last-name').value = lastName || '';
-            document.getElementById('edit-country').value = country || '';
-            document.getElementById('edit-admin').value = isAdmin ? '1' : '0';
-            document.getElementById('editModal').style.display = 'flex';
-        }
-
-        function closeEditModal() {
-            document.getElementById('editModal').style.display = 'none';
-        }
-
-        function openDeleteModal(userId, username) {
-            document.getElementById('delete-user-id').value = userId;
-            document.getElementById('delete-user-name').textContent = username;
-            document.getElementById('deleteModal').style.display = 'flex';
-        }
-
-        function closeDeleteModal() {
-            document.getElementById('deleteModal').style.display = 'none';
-        }
-
-        function submitAdd() {
-            document.getElementById('addForm').submit();
-        }
-
-        function submitEdit() {
-            document.getElementById('editForm').submit();
-        }
-
-        function submitDelete() {
-            document.getElementById('deleteForm').submit();
-        }
-
-        // Close modal when clicking outside of it
-        window.onclick = function(event) {
-            const addModal = document.getElementById('addModal');
-            const editModal = document.getElementById('editModal');
-            const deleteModal = document.getElementById('deleteModal');
-
-            if (event.target == addModal) {
-                closeAddModal();
-            }
-            if (event.target == editModal) {
-                closeEditModal();
-            }
-            if (event.target == deleteModal) {
-                closeDeleteModal();
-            }
-        }
-
-        // Close modal with Escape key
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                closeAddModal();
-                closeEditModal();
-                closeDeleteModal();
-            }
-        });
-    </script>
-            document.getElementById('editForm').submit();
-        }
-
-        function submitDelete() {
-            document.getElementById('deleteForm').submit();
-        }
-
-        // Close modal when clicking outside of it
-        window.onclick = function(event) {
-            const addModal = document.getElementById('addModal');
-            const editModal = document.getElementById('editModal');
-            const deleteModal = document.getElementById('deleteModal');
-
-            if (event.target == addModal) {
-                closeAddModal();
-            }
-            if (event.target == editModal) {
-                closeEditModal();
-            }
-            if (event.target == deleteModal) {
-                closeDeleteModal();
-            }
-        }
-
-        // Close modal with Escape key
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                closeAddModal();
-                closeEditModal();
-                closeDeleteModal();
-            }
-        });
-    </script>
     <style>
         /* Center modals properly on screen */
         .modal {
@@ -578,7 +467,53 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
         .add-device-btn:hover {
             background-color: #218838;
         }
-    </style> {
+    </style>
+
+    <script>
+        function openAddModal() {
+            document.getElementById('add-username').value = '';
+            document.getElementById('add-email').value = '';
+            document.getElementById('add-first-name').value = '';
+            document.getElementById('add-last-name').value = '';
+            document.getElementById('add-country').value = '';
+            document.getElementById('add-admin').value = '0';
+            document.getElementById('addModal').style.display = 'flex';
+        }
+
+        function closeAddModal() {
+            document.getElementById('addModal').style.display = 'none';
+        }
+
+        function openEditModal(userId, username, email, firstName, lastName, country, isAdmin) {
+            document.getElementById('edit-user-id').value = userId;
+            document.getElementById('edit-username').value = username;
+            document.getElementById('edit-email').value = email;
+            document.getElementById('edit-first-name').value = firstName || '';
+            document.getElementById('edit-last-name').value = lastName || '';
+            document.getElementById('edit-country').value = country || '';
+            document.getElementById('edit-admin').value = isAdmin ? '1' : '0';
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        function openDeleteModal(userId, username) {
+            document.getElementById('delete-user-id').value = userId;
+            document.getElementById('delete-user-name').textContent = username;
+            document.getElementById('deleteModal').style.display = 'flex';
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').style.display = 'none';
+        }
+
+        function submitAdd() {
+            document.getElementById('addForm').submit();
+        }
+
+        function submitEdit() {
             document.getElementById('editForm').submit();
         }
 
