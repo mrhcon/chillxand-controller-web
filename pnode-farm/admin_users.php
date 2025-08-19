@@ -84,13 +84,34 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
                     <table class="user-table">
                         <thead>
                             <tr>
-                                <th>Username</th>
-                                <th>Email</th>
-                                <th>First Name</th>
-                                <th>Last Name</th>
-                                <th>Country</th>
-                                <th>Admin</th>
-                                <th>Device Count</th>
+                                <th class="sortable-header" data-sort="username">
+                                    Username
+                                    <span class="sort-indicator"></span>
+                                </th>
+                                <th class="sortable-header" data-sort="email">
+                                    Email
+                                    <span class="sort-indicator"></span>
+                                </th>
+                                <th class="sortable-header" data-sort="first_name">
+                                    First Name
+                                    <span class="sort-indicator"></span>
+                                </th>
+                                <th class="sortable-header" data-sort="last_name">
+                                    Last Name
+                                    <span class="sort-indicator"></span>
+                                </th>
+                                <th class="sortable-header" data-sort="country">
+                                    Country
+                                    <span class="sort-indicator"></span>
+                                </th>
+                                <th class="sortable-header" data-sort="admin">
+                                    Admin
+                                    <span class="sort-indicator"></span>
+                                </th>
+                                <th class="sortable-header" data-sort="device_count">
+                                    Device Count
+                                    <span class="sort-indicator"></span>
+                                </th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -470,6 +491,111 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
     </style>
 
     <script>
+        // Initialize table sorting when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            const table = document.querySelector('.user-table');
+            if (table) {
+                initializeTableSorting(table);
+            }
+        });
+
+        // Table sorting functionality
+        function initializeTableSorting(table) {
+            const headers = table.querySelectorAll('.sortable-header');
+            let currentSort = { column: null, direction: 'asc' };
+
+            headers.forEach(header => {
+                header.addEventListener('click', function() {
+                    const sortType = this.getAttribute('data-sort');
+
+                    // Toggle direction if clicking same column
+                    if (currentSort.column === sortType) {
+                        currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        currentSort.direction = 'asc';
+                    }
+                    currentSort.column = sortType;
+
+                    // Update visual indicators
+                    headers.forEach(h => {
+                        h.classList.remove('sort-asc', 'sort-desc');
+                    });
+                    this.classList.add(currentSort.direction === 'asc' ? 'sort-asc' : 'sort-desc');
+
+                    // Sort the table
+                    sortTable(table, sortType, currentSort.direction);
+                });
+            });
+        }
+
+        function sortTable(table, sortType, direction) {
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+
+            rows.sort((a, b) => {
+                let aValue, bValue;
+
+                switch(sortType) {
+                    case 'username':
+                        aValue = a.cells[0].textContent.trim().toLowerCase();
+                        bValue = b.cells[0].textContent.trim().toLowerCase();
+                        break;
+
+                    case 'email':
+                        aValue = a.cells[1].textContent.trim().toLowerCase();
+                        bValue = b.cells[1].textContent.trim().toLowerCase();
+                        break;
+
+                    case 'first_name':
+                        aValue = a.cells[2].textContent.trim().toLowerCase();
+                        bValue = b.cells[2].textContent.trim().toLowerCase();
+                        // Handle N/A values
+                        if (aValue === 'n/a') aValue = '';
+                        if (bValue === 'n/a') bValue = '';
+                        break;
+
+                    case 'last_name':
+                        aValue = a.cells[3].textContent.trim().toLowerCase();
+                        bValue = b.cells[3].textContent.trim().toLowerCase();
+                        // Handle N/A values
+                        if (aValue === 'n/a') aValue = '';
+                        if (bValue === 'n/a') bValue = '';
+                        break;
+
+                    case 'country':
+                        aValue = a.cells[4].textContent.trim().toLowerCase();
+                        bValue = b.cells[4].textContent.trim().toLowerCase();
+                        // Handle N/A values
+                        if (aValue === 'n/a') aValue = '';
+                        if (bValue === 'n/a') bValue = '';
+                        break;
+
+                    case 'admin':
+                        // Admin column: checkmark = 1, empty = 0
+                        aValue = a.cells[5].textContent.trim() === '✓' ? 1 : 0;
+                        bValue = b.cells[5].textContent.trim() === '✓' ? 1 : 0;
+                        return direction === 'asc' ? aValue - bValue : bValue - aValue;
+
+                    case 'device_count':
+                        aValue = parseInt(a.cells[6].textContent.trim()) || 0;
+                        bValue = parseInt(b.cells[6].textContent.trim()) || 0;
+                        return direction === 'asc' ? aValue - bValue : bValue - aValue;
+
+                    default:
+                        aValue = a.cells[0].textContent.trim().toLowerCase();
+                        bValue = b.cells[0].textContent.trim().toLowerCase();
+                }
+
+                // String comparison for most columns
+                if (aValue < bValue) return direction === 'asc' ? -1 : 1;
+                if (aValue > bValue) return direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            // Re-append sorted rows
+            rows.forEach(row => tbody.appendChild(row));
+        }
+
         function openAddModal() {
             document.getElementById('add-username').value = '';
             document.getElementById('add-email').value = '';
