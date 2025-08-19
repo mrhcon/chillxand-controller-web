@@ -82,25 +82,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
 // Handle edit user
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['action'] == 'edit') {
     $user_id = $_POST['user_id'];
-    $username = trim($_POST['username']);
     $email = trim($_POST['email']);
     $first_name = trim($_POST['first_name']);
     $last_name = trim($_POST['last_name']);
     $country = trim($_POST['country']);
     $admin = isset($_POST['admin']) ? (int)$_POST['admin'] : 0;
 
-    if (empty($username) || empty($email)) {
-        $error = "Username and email are required.";
-        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_edit_failed', 'Empty required fields');
-    } elseif (strlen($username) > 50) {
-        $error = "Username must be 50 characters or less.";
-        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_edit_failed', 'Username too long');
+    if (empty($email)) {
+        $error = "Email is required.";
+        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_edit_failed', 'Empty email field');
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = "Invalid email address.";
         logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_edit_failed', 'Invalid email');
     } else {
         try {
-            // Check if user exists
+            // Check if user exists and get current username
             $stmt = $pdo->prepare("SELECT username FROM users WHERE id = :user_id");
             $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
             $stmt->execute();
@@ -110,58 +106,48 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 $error = "User not found.";
                 logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_edit_failed', 'User not found');
             } else {
-                // Check for duplicate username (excluding current user)
-                $stmt = $pdo->prepare("SELECT COUNT(*) FROM users WHERE username = :username AND id != :user_id");
-                $stmt->bindValue(':username', $username, PDO::PARAM_STR);
+                $username = $existing_user['username']; // Keep original username
+                
+                // Check for duplicate email (excluding current user)
+                $stmt = $pdo->prepare("SELECT COUNT(*) FROM users WHERE email = :email AND id != :user_id");
+                $stmt->bindValue(':email', $email, PDO::PARAM_STR);
                 $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
                 $stmt->execute();
                 if ($stmt->fetchColumn() > 0) {
-                    $error = "Username already exists.";
-                    logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_edit_failed', 'Duplicate username');
+                    $error = "Email address already exists.";
+                    logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_edit_failed', 'Duplicate email');
                 } else {
-                    // Check for duplicate email (excluding current user)
-                    $stmt = $pdo->prepare("SELECT COUNT(*) FROM users WHERE email = :email AND id != :user_id");
-                    $stmt->bindValue(':email', $email, PDO::PARAM_STR);
-                    $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
-                    $stmt->execute();
-                    if ($stmt->fetchColumn() > 0) {
-                        $error = "Email address already exists.";
-                        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_edit_failed', 'Duplicate email');
+                    // Prevent admin from removing their own admin privileges
+                    if ($user_id == $_SESSION['user_id'] && $admin == 0) {
+                        $error = "You cannot remove your own admin privileges.";
+                        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_edit_failed', 'Attempted to remove own admin privileges');
                     } else {
-                        // Prevent admin from removing their own admin privileges
-                        if ($user_id == $_SESSION['user_id'] && $admin == 0) {
-                            $error = "You cannot remove your own admin privileges.";
-                            logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_edit_failed', 'Attempted to remove own admin privileges');
-                        } else {
-                            // Update user
-                            $stmt = $pdo->prepare("
-                                UPDATE users 
-                                SET username = :username, email = :email, first_name = :first_name, 
-                                    last_name = :last_name, country = :country, admin = :admin 
-                                WHERE id = :user_id
-                            ");
-                            $stmt->bindValue(':username', $username, PDO::PARAM_STR);
-                            $stmt->bindValue(':email', $email, PDO::PARAM_STR);
-                            $stmt->bindValue(':first_name', !empty($first_name) ? $first_name : null, PDO::PARAM_STR);
-                            $stmt->bindValue(':last_name', !empty($last_name) ? $last_name : null, PDO::PARAM_STR);
-                            $stmt->bindValue(':country', !empty($country) ? $country : null, PDO::PARAM_STR);
-                            $stmt->bindValue(':admin', $admin, PDO::PARAM_INT);
-                            $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
-                            $stmt->execute();
+                        // Update user (excluding username)
+                        $stmt = $pdo->prepare("
+                            UPDATE users 
+                            SET email = :email, first_name = :first_name, 
+                                last_name = :last_name, country = :country, admin = :admin 
+                            WHERE id = :user_id
+                        ");
+                        $stmt->bindValue(':email', $email, PDO::PARAM_STR);
+                        $stmt->bindValue(':first_name', !empty($first_name) ? $first_name : null, PDO::PARAM_STR);
+                        $stmt->bindValue(':last_name', !empty($last_name) ? $last_name : null, PDO::PARAM_STR);
+                        $stmt->bindValue(':country', !empty($country) ? $country : null, PDO::PARAM_STR);
+                        $stmt->bindValue(':admin', $admin, PDO::PARAM_INT);
+                        $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+                        $stmt->execute();
 
-                            // If we're editing our own account, update session
-                            if ($user_id == $_SESSION['user_id']) {
-                                $_SESSION['username'] = $username;
-                                $_SESSION['admin'] = $admin;
-                            }
-
-                            $success = "User '$username' has been successfully updated.";
-                            logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_edit_success', "Updated user ID: $user_id, Username: $username, Admin: $admin");
-                            
-                            // Redirect to prevent re-submission
-                            header("Location: admin_users.php?edited=1");
-                            exit();
+                        // If we're editing our own account, update session admin status
+                        if ($user_id == $_SESSION['user_id']) {
+                            $_SESSION['admin'] = $admin;
                         }
+
+                        $success = "User '$username' has been successfully updated.";
+                        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_edit_success', "Updated user ID: $user_id, Username: $username, Admin: $admin");
+                        
+                        // Redirect to prevent re-submission
+                        header("Location: admin_users.php?edited=1");
+                        exit();
                     }
                 }
             }
@@ -468,7 +454,8 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
                 <input type="hidden" id="edit-user-id" name="user_id">
                 <div class="modal-form-group">
                     <label for="edit-username">Username:</label>
-                    <input type="text" id="edit-username" name="username" required>
+                    <input type="text" id="edit-username" name="username" readonly style="background-color: #f8f9fa; color: #6c757d;">
+                    <small style="color: #6c757d; font-style: italic;">Username cannot be changed</small>
                 </div>
                 <div class="modal-form-group">
                     <label for="edit-email">Email:</label>
@@ -913,31 +900,31 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
             document.getElementById('deleteForm').submit();
         }
 
-        // Close modal when clicking outside of it
-        window.onclick = function(event) {
-            const addModal = document.getElementById('addModal');
-            const editModal = document.getElementById('editModal');
-            const deleteModal = document.getElementById('deleteModal');
+        // Close modal when clicking outside of it - DISABLED
+        // window.onclick = function(event) {
+        //     const addModal = document.getElementById('addModal');
+        //     const editModal = document.getElementById('editModal');
+        //     const deleteModal = document.getElementById('deleteModal');
 
-            if (event.target == addModal) {
-                closeAddModal();
-            }
-            if (event.target == editModal) {
-                closeEditModal();
-            }
-            if (event.target == deleteModal) {
-                closeDeleteModal();
-            }
-        }
+        //     if (event.target == addModal) {
+        //         closeAddModal();
+        //     }
+        //     if (event.target == editModal) {
+        //         closeEditModal();
+        //     }
+        //     if (event.target == deleteModal) {
+        //         closeDeleteModal();
+        //     }
+        // }
 
-        // Close modal with Escape key
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                closeAddModal();
-                closeEditModal();
-                closeDeleteModal();
-            }
-        });
+        // Close modal with Escape key - DISABLED
+        // document.addEventListener('keydown', function(event) {
+        //     if (event.key === 'Escape') {
+        //         closeAddModal();
+        //         closeEditModal();
+        //         closeDeleteModal();
+        //     }
+        // });
     </script>
 </body>
 </html>
