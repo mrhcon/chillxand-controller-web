@@ -103,7 +103,6 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
                         </tbody>
                     </table>
                 <?php endif; ?>
-                <button type="button" class="action-btn reserved-btn">Reserved for Future Use</button>
             </div>
         </div>
     </div>
