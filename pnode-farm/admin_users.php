@@ -1,4 +1,111 @@
-<?php
+function submitAdd() {
+            document.getElementById('addForm').submit();
+        }
+
+        function validateAndSubmitAdd() {
+            // Get form values
+            const username = document.getElementById('add-username').value.trim();
+            const email = document.getElementById('add-email').value.trim();
+            const firstName = document.getElementById('add-first-name').value.trim();
+            const lastName = document.getElementById('add-last-name').value.trim();
+            const country = document.getElementById('add-country').value.trim();
+
+            // Validate all required fields
+            if (!username) {
+                alert('Username is required.');
+                document.getElementById('add-username').focus();
+                return;
+            }
+
+            if (username.length > 50) {
+                alert('Username must be 50 characters or less.');
+                document.getElementById('add-username').focus();
+                return;
+            }
+
+            if (!email) {
+                alert('Email is required.');
+                document.getElementById('add-email').focus();
+                return;
+            }
+
+            // Basic email validation
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailPattern.test(email)) {
+                alert('Please enter a valid email address.');
+                document.getElementById('add-email').focus();
+                return;
+            }
+
+            if (!firstName) {
+                alert('First name is required.');
+                document.getElementById('add-first-name').focus();
+                return;
+            }
+
+            if (!lastName) {
+                alert('Last name is required.');
+                document.getElementById('add-last-name').focus();
+                return;
+            }
+
+            if (!country) {
+                alert('Country is required.');
+                document.getElementById('add-country').focus();
+                return;
+            }
+
+            // If all validation passes, submit the form
+            document.getElementById('addForm').submit();
+        }
+
+        function submitEdit() {
+            document.getElementById('editForm').submit();
+        }
+
+        function validateAndSubmitEdit() {
+            // Get form values
+            const email = document.getElementById('edit-email').value.trim();
+            const firstName = document.getElementById('edit-first-name').value.trim();
+            const lastName = document.getElementById('edit-last-name').value.trim();
+            const country = document.getElementById('edit-country').value.trim();
+
+            // Validate all required fields
+            if (!email) {
+                alert('Email is required.');
+                document.getElementById('edit-email').focus();
+                return;
+            }
+
+            // Basic email validation
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailPattern.test(email)) {
+                alert('Please enter a valid email address.');
+                document.getElementById('edit-email').focus();
+                return;
+            }
+
+            if (!firstName) {
+                alert('First name is required.');
+                document.getElementById('edit-first-name').focus();
+                return;
+            }
+
+            if (!lastName) {
+                alert('Last name is required.');
+                document.getElementById('edit-last-name').focus();
+                return;
+            }
+
+            if (!country) {
+                alert('Country is required.');
+                document.getElementById('edit-country').focus();
+                return;
+            }
+
+            // If all validation passes, submit the form
+            document.getElementById('editForm').submit();
+        }<?php
 session_start();
 require_once 'db_connect.php';
 require_once 'functions.php';
@@ -18,9 +125,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
     $country = trim($_POST['country']);
     $admin = isset($_POST['admin']) ? (int)$_POST['admin'] : 0;
 
-    if (empty($username) || empty($email)) {
-        $error = "Username and email are required.";
-        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_add_failed', 'Empty required fields');
+    // Validate all required fields
+    if (empty($username)) {
+        $error = "Username is required.";
+        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_add_failed', 'Empty username field');
+    } elseif (empty($email)) {
+        $error = "Email is required.";
+        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_add_failed', 'Empty email field');
+    } elseif (empty($first_name)) {
+        $error = "First name is required.";
+        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_add_failed', 'Empty first name field');
+    } elseif (empty($last_name)) {
+        $error = "Last name is required.";
+        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_add_failed', 'Empty last name field');
+    } elseif (empty($country)) {
+        $error = "Country is required.";
+        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_add_failed', 'Empty country field');
     } elseif (strlen($username) > 50) {
         $error = "Username must be 50 characters or less.";
         logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_add_failed', 'Username too long');
@@ -49,7 +169,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     $random_password = bin2hex(random_bytes(8)); // 16 character random password
                     $hashed_password = password_hash($random_password, PASSWORD_DEFAULT);
 
-                    // Insert new user
+                    // Insert new user (all fields are now required so no NULL values)
                     $stmt = $pdo->prepare("
                         INSERT INTO users (username, email, password, first_name, last_name, country, admin, registration_date) 
                         VALUES (:username, :email, :password, :first_name, :last_name, :country, :admin, NOW())
@@ -57,9 +177,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     $stmt->bindValue(':username', $username, PDO::PARAM_STR);
                     $stmt->bindValue(':email', $email, PDO::PARAM_STR);
                     $stmt->bindValue(':password', $hashed_password, PDO::PARAM_STR);
-                    $stmt->bindValue(':first_name', !empty($first_name) ? $first_name : null, PDO::PARAM_STR);
-                    $stmt->bindValue(':last_name', !empty($last_name) ? $last_name : null, PDO::PARAM_STR);
-                    $stmt->bindValue(':country', !empty($country) ? $country : null, PDO::PARAM_STR);
+                    $stmt->bindValue(':first_name', $first_name, PDO::PARAM_STR);
+                    $stmt->bindValue(':last_name', $last_name, PDO::PARAM_STR);
+                    $stmt->bindValue(':country', $country, PDO::PARAM_STR);
                     $stmt->bindValue(':admin', $admin, PDO::PARAM_INT);
                     $stmt->execute();
 
@@ -88,9 +208,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
     $country = trim($_POST['country']);
     $admin = isset($_POST['admin']) ? (int)$_POST['admin'] : 0;
 
+    // Validate all required fields
     if (empty($email)) {
         $error = "Email is required.";
         logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_edit_failed', 'Empty email field');
+    } elseif (empty($first_name)) {
+        $error = "First name is required.";
+        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_edit_failed', 'Empty first name field');
+    } elseif (empty($last_name)) {
+        $error = "Last name is required.";
+        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_edit_failed', 'Empty last name field');
+    } elseif (empty($country)) {
+        $error = "Country is required.";
+        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_edit_failed', 'Empty country field');
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = "Invalid email address.";
         logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_edit_failed', 'Invalid email');
@@ -122,7 +252,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         $error = "You cannot remove your own admin privileges.";
                         logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_user_edit_failed', 'Attempted to remove own admin privileges');
                     } else {
-                        // Update user (excluding username)
+                        // Update user (excluding username, all fields are now required so no NULL values)
                         $stmt = $pdo->prepare("
                             UPDATE users 
                             SET email = :email, first_name = :first_name, 
@@ -130,9 +260,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                             WHERE id = :user_id
                         ");
                         $stmt->bindValue(':email', $email, PDO::PARAM_STR);
-                        $stmt->bindValue(':first_name', !empty($first_name) ? $first_name : null, PDO::PARAM_STR);
-                        $stmt->bindValue(':last_name', !empty($last_name) ? $last_name : null, PDO::PARAM_STR);
-                        $stmt->bindValue(':country', !empty($country) ? $country : null, PDO::PARAM_STR);
+                        $stmt->bindValue(':first_name', $first_name, PDO::PARAM_STR);
+                        $stmt->bindValue(':last_name', $last_name, PDO::PARAM_STR);
+                        $stmt->bindValue(':country', $country, PDO::PARAM_STR);
                         $stmt->bindValue(':admin', $admin, PDO::PARAM_INT);
                         $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
                         $stmt->execute();
@@ -408,24 +538,24 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
             <form id="addForm" method="POST" action="">
                 <input type="hidden" name="action" value="add">
                 <div class="modal-form-group">
-                    <label for="add-username">Username:</label>
-                    <input type="text" id="add-username" name="username" required>
+                    <label for="add-username">Username: <span style="color: red;">*</span></label>
+                    <input type="text" id="add-username" name="username" required maxlength="50">
                 </div>
                 <div class="modal-form-group">
-                    <label for="add-email">Email:</label>
+                    <label for="add-email">Email: <span style="color: red;">*</span></label>
                     <input type="email" id="add-email" name="email" required>
                 </div>
                 <div class="modal-form-group">
-                    <label for="add-first-name">First Name:</label>
-                    <input type="text" id="add-first-name" name="first_name">
+                    <label for="add-first-name">First Name: <span style="color: red;">*</span></label>
+                    <input type="text" id="add-first-name" name="first_name" required>
                 </div>
                 <div class="modal-form-group">
-                    <label for="add-last-name">Last Name:</label>
-                    <input type="text" id="add-last-name" name="last_name">
+                    <label for="add-last-name">Last Name: <span style="color: red;">*</span></label>
+                    <input type="text" id="add-last-name" name="last_name" required>
                 </div>
                 <div class="modal-form-group">
-                    <label for="add-country">Country:</label>
-                    <input type="text" id="add-country" name="country">
+                    <label for="add-country">Country: <span style="color: red;">*</span></label>
+                    <input type="text" id="add-country" name="country" required>
                 </div>
                 <div class="modal-form-group">
                     <label for="add-admin">Admin Privileges:</label>
@@ -436,7 +566,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
                 </div>
                 <div class="modal-buttons">
                     <button type="button" class="modal-btn modal-btn-secondary" onclick="closeAddModal()">Cancel</button>
-                    <button type="button" class="modal-btn modal-btn-primary" onclick="submitAdd()">Add User</button>
+                    <button type="button" class="modal-btn modal-btn-primary" onclick="validateAndSubmitAdd()">Add User</button>
                 </div>
             </form>
         </div>
@@ -458,20 +588,20 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
                     <small style="color: #6c757d; font-style: italic;">Username cannot be changed</small>
                 </div>
                 <div class="modal-form-group">
-                    <label for="edit-email">Email:</label>
+                    <label for="edit-email">Email: <span style="color: red;">*</span></label>
                     <input type="email" id="edit-email" name="email" required>
                 </div>
                 <div class="modal-form-group">
-                    <label for="edit-first-name">First Name:</label>
-                    <input type="text" id="edit-first-name" name="first_name">
+                    <label for="edit-first-name">First Name: <span style="color: red;">*</span></label>
+                    <input type="text" id="edit-first-name" name="first_name" required>
                 </div>
                 <div class="modal-form-group">
-                    <label for="edit-last-name">Last Name:</label>
-                    <input type="text" id="edit-last-name" name="last_name">
+                    <label for="edit-last-name">Last Name: <span style="color: red;">*</span></label>
+                    <input type="text" id="edit-last-name" name="last_name" required>
                 </div>
                 <div class="modal-form-group">
-                    <label for="edit-country">Country:</label>
-                    <input type="text" id="edit-country" name="country">
+                    <label for="edit-country">Country: <span style="color: red;">*</span></label>
+                    <input type="text" id="edit-country" name="country" required>
                 </div>
                 <div class="modal-form-group">
                     <label for="edit-admin">Admin Privileges:</label>
@@ -482,7 +612,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
                 </div>
                 <div class="modal-buttons">
                     <button type="button" class="modal-btn modal-btn-secondary" onclick="closeEditModal()">Cancel</button>
-                    <button type="button" class="modal-btn modal-btn-primary" onclick="submitEdit()">Save Changes</button>
+                    <button type="button" class="modal-btn modal-btn-primary" onclick="validateAndSubmitEdit()">Save Changes</button>
                 </div>
             </form>
         </div>
