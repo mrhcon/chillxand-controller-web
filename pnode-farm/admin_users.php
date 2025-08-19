@@ -1,4 +1,284 @@
-<?php
+// Initialize table sorting when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            const table = document.querySelector('.user-table');
+            if (table) {
+                initializeTableSorting(table);
+            }
+
+            // Add real-time validation for Add form
+            const addUsernameInput = document.getElementById('add-username');
+            const addEmailInput = document.getElementById('add-email');
+            const addFirstNameInput = document.getElementById('add-first-name');
+            const addLastNameInput = document.getElementById('add-last-name');
+            const addCountryInput = document.getElementById('add-country');
+
+            if (addUsernameInput) {
+                addUsernameInput.addEventListener('blur', function() {
+                    const usernameError = validateUsername(this.value.trim());
+                    const errorDiv = document.getElementById('add-username-error');
+
+                    if (usernameError) {
+                        errorDiv.innerHTML = usernameError;
+                        errorDiv.style.display = 'block';
+                        this.classList.add('input-error');
+                        this.classList.remove('input-success');
+                    } else {
+                        errorDiv.style.display = 'none';
+                        this.classList.remove('input-error');
+                        this.classList.add('input-success');
+                    }
+                });
+
+                addUsernameInput.addEventListener('input', function() {
+                    if (this.classList.contains('input-error')) {
+                        const usernameError = validateUsername(this.value.trim());
+                        if (!usernameError) {
+                            document.getElementById('add-username-error').style.display = 'none';
+                            this.classList.remove('input-error');
+                            this.classList.add('input-success');
+                        }
+                    }
+                });
+            }
+
+            if (addEmailInput) {
+                addEmailInput.addEventListener('blur', function() {
+                    const emailError = validateEmail(this.value.trim());
+                    const errorDiv = document.getElementById('add-email-error');
+
+                    if (emailError) {
+                        errorDiv.innerHTML = emailError;
+                        errorDiv.style.display = 'block';
+                        this.classList.add('input-error');
+                        this.classList.remove('input-success');
+                    } else {
+                        errorDiv.style.display = 'none';
+                        this.classList.remove('input-error');
+                        this.classList.add('input-success');
+                    }
+                });
+
+                addEmailInput.addEventListener('input', function() {
+                    if (this.classList.contains('input-error')) {
+                        const emailError = validateEmail(this.value.trim());
+                        if (!emailError) {
+                            document.getElementById('add-email-error').style.display = 'none';
+                            this.classList.remove('input-error');
+                            this.classList.add('input-success');
+                        }
+                    }
+                });
+            }
+
+            if (addFirstNameInput) {
+                addFirstNameInput.addEventListener('blur', function() {
+                    const nameError = validateName(this.value.trim(), 'First name');
+                    const errorDiv = document.getElementById('add-first-name-error');
+
+                    if (nameError) {
+                        errorDiv.innerHTML = nameError;
+                        errorDiv.style.display = 'block';
+                        this.classList.add('input-error');
+                        this.classList.remove('input-success');
+                    } else {
+                        errorDiv.style.display = 'none';
+                        this.classList.remove('input-error');
+                        this.classList.add('input-success');
+                    }
+                });
+
+                addFirstNameInput.addEventListener('input', function() {
+                    if (this.classList.contains('input-error')) {
+                        const nameError = validateName(this.value.trim(), 'First name');
+                        if (!nameError) {
+                            document.getElementById('add-first-name-error').style.display = 'none';
+                            this.classList.remove('input-error');
+                            this.classList.add('input-success');
+                        }
+                    }
+                });
+            }
+
+            if (addLastNameInput) {
+                addLastNameInput.addEventListener('blur', function() {
+                    const nameError = validateName(this.value.trim(), 'Last name');
+                    const errorDiv = document.getElementById('add-last-name-error');
+
+                    if (nameError) {
+                        errorDiv.innerHTML = nameError;
+                        errorDiv.style.display = 'block';
+                        this.classList.add('input-error');
+                        this.classList.remove('input-success');
+                    } else {
+                        errorDiv.style.display = 'none';
+                        this.classList.remove('input-error');
+                        this.classList.add('input-success');
+                    }
+                });
+
+                addLastNameInput.addEventListener('input', function() {
+                    if (this.classList.contains('input-error')) {
+                        const nameError = validateName(this.value.trim(), 'Last name');
+                        if (!nameError) {
+                            document.getElementById('add-last-name-error').style.display = 'none';
+                            this.classList.remove('input-error');
+                            this.classList.add('input-success');
+                        }
+                    }
+                });
+            }
+
+            if (addCountryInput) {
+                addCountryInput.addEventListener('blur', function() {
+                    const countryError = validateCountry(this.value.trim());
+                    const errorDiv = document.getElementById('add-country-error');
+
+                    if (countryError) {
+                        errorDiv.innerHTML = countryError;
+                        errorDiv.style.display = 'block';
+                        this.classList.add('input-error');
+                        this.classList.remove('input-success');
+                    } else {
+                        errorDiv.style.display = 'none';
+                        this.classList.remove('input-error');
+                        this.classList.add('input-success');
+                    }
+                });
+
+                addCountryInput.addEventListener('input', function() {
+                    if (this.classList.contains('input-error')) {
+                        const countryError = validateCountry(this.value.trim());
+                        if (!countryError) {
+                            document.getElementById('add-country-error').style.display = 'none';
+                            this.classList.remove('input-error');
+                            this.classList.add('input-success');
+                        }
+                    }
+                });
+            }
+
+            // Add real-time validation for Edit form
+            const editEmailInput = document.getElementById('edit-email');
+            const editFirstNameInput = document.getElementById('edit-first-name');
+            const editLastNameInput = document.getElementById('edit-last-name');
+            const editCountryInput = document.getElementById('edit-country');
+
+            if (editEmailInput) {
+                editEmailInput.addEventListener('blur', function() {
+                    const emailError = validateEmail(this.value.trim());
+                    const errorDiv = document.getElementById('edit-email-error');
+
+                    if (emailError) {
+                        errorDiv.innerHTML = emailError;
+                        errorDiv.style.display = 'block';
+                        this.classList.add('input-error');
+                        this.classList.remove('input-success');
+                    } else {
+                        errorDiv.style.display = 'none';
+                        this.classList.remove('input-error');
+                        this.classList.add('input-success');
+                    }
+                });
+
+                editEmailInput.addEventListener('input', function() {
+                    if (this.classList.contains('input-error')) {
+                        const emailError = validateEmail(this.value.trim());
+                        if (!emailError) {
+                            document.getElementById('edit-email-error').style.display = 'none';
+                            this.classList.remove('input-error');
+                            this.classList.add('input-success');
+                        }
+                    }
+                });
+            }
+
+            if (editFirstNameInput) {
+                editFirstNameInput.addEventListener('blur', function() {
+                    const nameError = validateName(this.value.trim(), 'First name');
+                    const errorDiv = document.getElementById('edit-first-name-error');
+
+                    if (nameError) {
+                        errorDiv.innerHTML = nameError;
+                        errorDiv.style.display = 'block';
+                        this.classList.add('input-error');
+                        this.classList.remove('input-success');
+                    } else {
+                        errorDiv.style.display = 'none';
+                        this.classList.remove('input-error');
+                        this.classList.add('input-success');
+                    }
+                });
+
+                editFirstNameInput.addEventListener('input', function() {
+                    if (this.classList.contains('input-error')) {
+                        const nameError = validateName(this.value.trim(), 'First name');
+                        if (!nameError) {
+                            document.getElementById('edit-first-name-error').style.display = 'none';
+                            this.classList.remove('input-error');
+                            this.classList.add('input-success');
+                        }
+                    }
+                });
+            }
+
+            if (editLastNameInput) {
+                editLastNameInput.addEventListener('blur', function() {
+                    const nameError = validateName(this.value.trim(), 'Last name');
+                    const errorDiv = document.getElementById('edit-last-name-error');
+
+                    if (nameError) {
+                        errorDiv.innerHTML = nameError;
+                        errorDiv.style.display = 'block';
+                        this.classList.add('input-error');
+                        this.classList.remove('input-success');
+                    } else {
+                        errorDiv.style.display = 'none';
+                        this.classList.remove('input-error');
+                        this.classList.add('input-success');
+                    }
+                });
+
+                editLastNameInput.addEventListener('input', function() {
+                    if (this.classList.contains('input-error')) {
+                        const nameError = validateName(this.value.trim(), 'Last name');
+                        if (!nameError) {
+                            document.getElementById('edit-last-name-error').style.display = 'none';
+                            this.classList.remove('input-error');
+                            this.classList.add('input-success');
+                        }
+                    }
+                });
+            }
+
+            if (editCountryInput) {
+                editCountryInput.addEventListener('blur', function() {
+                    const countryError = validateCountry(this.value.trim());
+                    const errorDiv = document.getElementById('edit-country-error');
+
+                    if (countryError) {
+                        errorDiv.innerHTML = countryError;
+                        errorDiv.style.display = 'block';
+                        this.classList.add('input-error');
+                        this.classList.remove('input-success');
+                    } else {
+                        errorDiv.style.display = 'none';
+                        this.classList.remove('input-error');
+                        this.classList.add('input-success');
+                    }
+                });
+
+                editCountryInput.addEventListener('input', function() {
+                    if (this.classList.contains('input-error')) {
+                        const countryError = validateCountry(this.value.trim());
+                        if (!countryError) {
+                            document.getElementById('edit-country-error').style.display = 'none';
+                            this.classList.remove('input-error');
+                            this.classList.add('input-success');
+                        }
+                    }
+                });
+            }
+        });<?php
 session_start();
 require_once 'db_connect.php';
 require_once 'functions.php';
@@ -430,25 +710,34 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
             </div>
             <form id="addForm" method="POST" action="">
                 <input type="hidden" name="action" value="add">
+                
+                <!-- Error display area -->
+                <div id="addModalError" class="modal-error" style="display: none;"></div>
+                
                 <div class="modal-form-group">
-                    <label for="add-username">Username: <span style="color: red;">*</span></label>
-                    <input type="text" id="add-username" name="username" required maxlength="50">
+                    <label for="add-username">Username: <span class="required">*</span></label>
+                    <input type="text" id="add-username" name="username" required maxlength="50" placeholder="Enter username">
+                    <div class="field-error" id="add-username-error" style="display: none;"></div>
                 </div>
                 <div class="modal-form-group">
-                    <label for="add-email">Email: <span style="color: red;">*</span></label>
-                    <input type="email" id="add-email" name="email" required>
+                    <label for="add-email">Email: <span class="required">*</span></label>
+                    <input type="email" id="add-email" name="email" required placeholder="Enter email address">
+                    <div class="field-error" id="add-email-error" style="display: none;"></div>
                 </div>
                 <div class="modal-form-group">
-                    <label for="add-first-name">First Name: <span style="color: red;">*</span></label>
-                    <input type="text" id="add-first-name" name="first_name" required>
+                    <label for="add-first-name">First Name: <span class="required">*</span></label>
+                    <input type="text" id="add-first-name" name="first_name" required placeholder="Enter first name">
+                    <div class="field-error" id="add-first-name-error" style="display: none;"></div>
                 </div>
                 <div class="modal-form-group">
-                    <label for="add-last-name">Last Name: <span style="color: red;">*</span></label>
-                    <input type="text" id="add-last-name" name="last_name" required>
+                    <label for="add-last-name">Last Name: <span class="required">*</span></label>
+                    <input type="text" id="add-last-name" name="last_name" required placeholder="Enter last name">
+                    <div class="field-error" id="add-last-name-error" style="display: none;"></div>
                 </div>
                 <div class="modal-form-group">
-                    <label for="add-country">Country: <span style="color: red;">*</span></label>
-                    <input type="text" id="add-country" name="country" required>
+                    <label for="add-country">Country: <span class="required">*</span></label>
+                    <input type="text" id="add-country" name="country" required placeholder="Enter country">
+                    <div class="field-error" id="add-country-error" style="display: none;"></div>
                 </div>
                 <div class="modal-form-group">
                     <label for="add-admin">Admin Privileges:</label>
@@ -475,26 +764,34 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
             <form id="editForm" method="POST" action="">
                 <input type="hidden" name="action" value="edit">
                 <input type="hidden" id="edit-user-id" name="user_id">
+                
+                <!-- Error display area -->
+                <div id="editModalError" class="modal-error" style="display: none;"></div>
+                
                 <div class="modal-form-group">
                     <label for="edit-username">Username:</label>
                     <input type="text" id="edit-username" name="username" readonly style="background-color: #f8f9fa; color: #6c757d;">
                     <small style="color: #6c757d; font-style: italic;">Username cannot be changed</small>
                 </div>
                 <div class="modal-form-group">
-                    <label for="edit-email">Email: <span style="color: red;">*</span></label>
+                    <label for="edit-email">Email: <span class="required">*</span></label>
                     <input type="email" id="edit-email" name="email" required>
+                    <div class="field-error" id="edit-email-error" style="display: none;"></div>
                 </div>
                 <div class="modal-form-group">
-                    <label for="edit-first-name">First Name: <span style="color: red;">*</span></label>
+                    <label for="edit-first-name">First Name: <span class="required">*</span></label>
                     <input type="text" id="edit-first-name" name="first_name" required>
+                    <div class="field-error" id="edit-first-name-error" style="display: none;"></div>
                 </div>
                 <div class="modal-form-group">
-                    <label for="edit-last-name">Last Name: <span style="color: red;">*</span></label>
+                    <label for="edit-last-name">Last Name: <span class="required">*</span></label>
                     <input type="text" id="edit-last-name" name="last_name" required>
+                    <div class="field-error" id="edit-last-name-error" style="display: none;"></div>
                 </div>
                 <div class="modal-form-group">
-                    <label for="edit-country">Country: <span style="color: red;">*</span></label>
+                    <label for="edit-country">Country: <span class="required">*</span></label>
                     <input type="text" id="edit-country" name="country" required>
+                    <div class="field-error" id="edit-country-error" style="display: none;"></div>
                 </div>
                 <div class="modal-form-group">
                     <label for="edit-admin">Admin Privileges:</label>
@@ -764,6 +1061,44 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
         .add-device-btn:hover {
             background-color: #218838;
         }
+
+        /* Modal Error Display */
+        .modal-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        /* Field Error Display */
+        .field-error {
+            color: #dc3545;
+            font-size: 12px;
+            margin-top: 5px;
+            padding: 2px 0;
+            min-height: 16px;
+        }
+
+        /* Input Error Styling */
+        .input-error {
+            border-color: #dc3545;
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+        }
+
+        /* Input Success Styling */
+        .input-success {
+            border-color: #28a745;
+            box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+        }
+
+        /* Required Field Indicator */
+        .required {
+            color: #dc3545;
+            font-weight: bold;
+        }
     </style>
 
     <script>
@@ -879,11 +1214,21 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
             document.getElementById('add-last-name').value = '';
             document.getElementById('add-country').value = '';
             document.getElementById('add-admin').value = '0';
+            
+            // Clear any previous errors
+            clearAddModalErrors();
+            
             document.getElementById('addModal').style.display = 'flex';
+            
+            // Focus on first field
+            setTimeout(() => {
+                document.getElementById('add-username').focus();
+            }, 100);
         }
 
         function closeAddModal() {
             document.getElementById('addModal').style.display = 'none';
+            clearAddModalErrors();
         }
 
         function openEditModal(userId, username, email, firstName, lastName, country, isAdmin) {
@@ -894,11 +1239,21 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
             document.getElementById('edit-last-name').value = lastName || '';
             document.getElementById('edit-country').value = country || '';
             document.getElementById('edit-admin').value = isAdmin ? '1' : '0';
+            
+            // Clear any previous errors
+            clearEditModalErrors();
+            
             document.getElementById('editModal').style.display = 'flex';
+            
+            // Focus on first editable field
+            setTimeout(() => {
+                document.getElementById('edit-email').focus();
+            }, 100);
         }
 
         function closeEditModal() {
             document.getElementById('editModal').style.display = 'none';
+            clearEditModalErrors();
         }
 
         function openDeleteModal(userId, username) {
@@ -911,7 +1266,144 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
             document.getElementById('deleteModal').style.display = 'none';
         }
 
+        // Clear error functions
+        function clearAddModalErrors() {
+            // Hide main error area
+            const errorDiv = document.getElementById('addModalError');
+            errorDiv.style.display = 'none';
+            errorDiv.innerHTML = '';
+
+            // Hide field-specific errors
+            const fields = ['username', 'email', 'first-name', 'last-name', 'country'];
+            fields.forEach(field => {
+                const errorElement = document.getElementById(`add-${field}-error`);
+                const inputElement = document.getElementById(`add-${field}`);
+                if (errorElement) {
+                    errorElement.style.display = 'none';
+                    errorElement.innerHTML = '';
+                }
+                if (inputElement) {
+                    inputElement.classList.remove('input-error', 'input-success');
+                }
+            });
+        }
+
+        function clearEditModalErrors() {
+            // Hide main error area
+            const errorDiv = document.getElementById('editModalError');
+            errorDiv.style.display = 'none';
+            errorDiv.innerHTML = '';
+
+            // Hide field-specific errors
+            const fields = ['email', 'first-name', 'last-name', 'country'];
+            fields.forEach(field => {
+                const errorElement = document.getElementById(`edit-${field}-error`);
+                const inputElement = document.getElementById(`edit-${field}`);
+                if (errorElement) {
+                    errorElement.style.display = 'none';
+                    errorElement.innerHTML = '';
+                }
+                if (inputElement) {
+                    inputElement.classList.remove('input-error', 'input-success');
+                }
+            });
+        }
+
+        // Show error functions
+        function showAddModalError(message, fieldId = null) {
+            if (fieldId) {
+                // Show field-specific error
+                const errorDiv = document.getElementById(`add-${fieldId}-error`);
+                const inputElement = document.getElementById(`add-${fieldId}`);
+                if (errorDiv) {
+                    errorDiv.innerHTML = message;
+                    errorDiv.style.display = 'block';
+                }
+                if (inputElement) {
+                    inputElement.classList.add('input-error');
+                    inputElement.classList.remove('input-success');
+                }
+            } else {
+                // Show general error
+                const errorDiv = document.getElementById('addModalError');
+                errorDiv.innerHTML = '<strong>Error:</strong> ' + message;
+                errorDiv.style.display = 'block';
+            }
+        }
+
+        function showEditModalError(message, fieldId = null) {
+            if (fieldId) {
+                // Show field-specific error
+                const errorDiv = document.getElementById(`edit-${fieldId}-error`);
+                const inputElement = document.getElementById(`edit-${fieldId}`);
+                if (errorDiv) {
+                    errorDiv.innerHTML = message;
+                    errorDiv.style.display = 'block';
+                }
+                if (inputElement) {
+                    inputElement.classList.add('input-error');
+                    inputElement.classList.remove('input-success');
+                }
+            } else {
+                // Show general error
+                const errorDiv = document.getElementById('editModalError');
+                errorDiv.innerHTML = '<strong>Error:</strong> ' + message;
+                errorDiv.style.display = 'block';
+            }
+        }
+
+        // Validation functions
+        function validateUsername(username) {
+            if (!username || username.trim() === '') {
+                return 'Username is required.';
+            }
+            if (username.length > 50) {
+                return 'Username must be 50 characters or less.';
+            }
+            // Check for valid characters (letters, numbers, spaces, hyphens, underscores)
+            const validPattern = /^[a-zA-Z0-9\s\-_]+$/;
+            if (!validPattern.test(username)) {
+                return 'Username can only contain letters, numbers, spaces, hyphens, and underscores.';
+            }
+            return null; // Valid
+        }
+
+        function validateEmail(email) {
+            if (!email || email.trim() === '') {
+                return 'Email is required.';
+            }
+            // Basic email pattern
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailPattern.test(email)) {
+                return 'Please enter a valid email address.';
+            }
+            return null; // Valid
+        }
+
+        function validateName(name, fieldName) {
+            if (!name || name.trim() === '') {
+                return `${fieldName} is required.`;
+            }
+            if (name.length > 100) {
+                return `${fieldName} must be 100 characters or less.`;
+            }
+            return null; // Valid
+        }
+
+        function validateCountry(country) {
+            if (!country || country.trim() === '') {
+                return 'Country is required.';
+            }
+            if (country.length > 100) {
+                return 'Country must be 100 characters or less.';
+            }
+            return null; // Valid
+        }
+
         function validateAndSubmitAdd() {
+            // Clear previous errors
+            clearAddModalErrors();
+
             // Get form values
             const username = document.getElementById('add-username').value.trim();
             const email = document.getElementById('add-email').value.trim();
@@ -919,97 +1411,120 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
             const lastName = document.getElementById('add-last-name').value.trim();
             const country = document.getElementById('add-country').value.trim();
 
-            // Validate all required fields
-            if (!username) {
-                alert('Username is required.');
-                document.getElementById('add-username').focus();
-                return;
+            let hasErrors = false;
+
+            // Validate username
+            const usernameError = validateUsername(username);
+            if (usernameError) {
+                showAddModalError(usernameError, 'username');
+                hasErrors = true;
             }
 
-            if (username.length > 50) {
-                alert('Username must be 50 characters or less.');
-                document.getElementById('add-username').focus();
-                return;
+            // Validate email
+            const emailError = validateEmail(email);
+            if (emailError) {
+                showAddModalError(emailError, 'email');
+                hasErrors = true;
             }
 
-            if (!email) {
-                alert('Email is required.');
-                document.getElementById('add-email').focus();
-                return;
+            // Validate first name
+            const firstNameError = validateName(firstName, 'First name');
+            if (firstNameError) {
+                showAddModalError(firstNameError, 'first-name');
+                hasErrors = true;
             }
 
-            // Basic email validation
-            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailPattern.test(email)) {
-                alert('Please enter a valid email address.');
-                document.getElementById('add-email').focus();
-                return;
+            // Validate last name
+            const lastNameError = validateName(lastName, 'Last name');
+            if (lastNameError) {
+                showAddModalError(lastNameError, 'last-name');
+                hasErrors = true;
             }
 
-            if (!firstName) {
-                alert('First name is required.');
-                document.getElementById('add-first-name').focus();
-                return;
+            // Validate country
+            const countryError = validateCountry(country);
+            if (countryError) {
+                showAddModalError(countryError, 'country');
+                hasErrors = true;
             }
 
-            if (!lastName) {
-                alert('Last name is required.');
-                document.getElementById('add-last-name').focus();
-                return;
-            }
+            // If no errors, submit the form
+            if (!hasErrors) {
+                // Update form values with trimmed versions
+                document.getElementById('add-username').value = username;
+                document.getElementById('add-email').value = email;
+                document.getElementById('add-first-name').value = firstName;
+                document.getElementById('add-last-name').value = lastName;
+                document.getElementById('add-country').value = country;
 
-            if (!country) {
-                alert('Country is required.');
-                document.getElementById('add-country').focus();
-                return;
+                // Submit the form
+                document.getElementById('addForm').submit();
+            } else {
+                // Focus on first error field
+                const firstErrorField = document.querySelector('.input-error');
+                if (firstErrorField) {
+                    firstErrorField.focus();
+                }
             }
-
-            // If all validation passes, submit the form
-            document.getElementById('addForm').submit();
         }
 
         function validateAndSubmitEdit() {
+            // Clear previous errors
+            clearEditModalErrors();
+
             // Get form values
             const email = document.getElementById('edit-email').value.trim();
             const firstName = document.getElementById('edit-first-name').value.trim();
             const lastName = document.getElementById('edit-last-name').value.trim();
             const country = document.getElementById('edit-country').value.trim();
 
-            // Validate all required fields
-            if (!email) {
-                alert('Email is required.');
-                document.getElementById('edit-email').focus();
-                return;
+            let hasErrors = false;
+
+            // Validate email
+            const emailError = validateEmail(email);
+            if (emailError) {
+                showEditModalError(emailError, 'email');
+                hasErrors = true;
             }
 
-            // Basic email validation
-            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailPattern.test(email)) {
-                alert('Please enter a valid email address.');
-                document.getElementById('edit-email').focus();
-                return;
+            // Validate first name
+            const firstNameError = validateName(firstName, 'First name');
+            if (firstNameError) {
+                showEditModalError(firstNameError, 'first-name');
+                hasErrors = true;
             }
 
-            if (!firstName) {
-                alert('First name is required.');
-                document.getElementById('edit-first-name').focus();
-                return;
+            // Validate last name
+            const lastNameError = validateName(lastName, 'Last name');
+            if (lastNameError) {
+                showEditModalError(lastNameError, 'last-name');
+                hasErrors = true;
             }
 
-            if (!lastName) {
-                alert('Last name is required.');
-                document.getElementById('edit-last-name').focus();
-                return;
+            // Validate country
+            const countryError = validateCountry(country);
+            if (countryError) {
+                showEditModalError(countryError, 'country');
+                hasErrors = true;
             }
 
-            if (!country) {
-                alert('Country is required.');
-                document.getElementById('edit-country').focus();
-                return;
-            }
+            // If no errors, submit the form
+            if (!hasErrors) {
+                // Update form values with trimmed versions
+                document.getElementById('edit-email').value = email;
+                document.getElementById('edit-first-name').value = firstName;
+                document.getElementById('edit-last-name').value = lastName;
+                document.getElementById('edit-country').value = country;
 
-            // If all validation passes, submit the form
-            document.getElementById('editForm').submit();
+                // Submit the form
+                document.getElementById('editForm').submit();
+            } else {
+                // Focus on first error field
+                const firstErrorField = document.querySelector('.input-error');
+                if (firstErrorField) {
+                    firstErrorField.focus();
+                }
+            }
         }
 
         function submitDelete() {
