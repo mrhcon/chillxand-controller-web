@@ -1400,13 +1400,13 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
             height: 100%;
             background-color: rgba(0, 0, 0, 0.5);
             display: none;
+            justify-content: center;
+            align-items: center;
             z-index: 1000;
         }
 
         .modal.show {
             display: flex;
-            justify-content: center;
-            align-items: center;
         }
 
         .modal-content {
