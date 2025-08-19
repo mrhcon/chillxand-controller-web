@@ -73,6 +73,11 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
                 <?php if (isset($error)): ?>
                     <p class="error"><?php echo htmlspecialchars($error); ?></p>
                 <?php endif; ?>
+
+                <div style="margin-bottom: 20px; text-align: right;">
+                    <button type="button" class="action-btn" id="add-user-btn" onclick="openAddModal()">+ Add New User</button>
+                </div>
+
                 <?php if (empty($users)): ?>
                     <p>No users found.</p>
                 <?php else: ?>
@@ -86,6 +91,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
                                 <th>Country</th>
                                 <th>Admin</th>
                                 <th>Devices</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -98,6 +104,18 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
                                     <td><?php echo htmlspecialchars($user['country'] ?? 'N/A'); ?></td>
                                     <td><?php echo $user['admin'] ? 'Yes' : 'No'; ?></td>
                                     <td><?php echo htmlspecialchars($user['device_count']); ?></td>
+                                    <td>
+                                        <div class="action-buttons-container">
+                                            <div class="action-button-row">
+                                                <button type="button" class="action-button edit"
+                                                        onclick="openEditModal(<?php echo $user['id']; ?>, '<?php echo htmlspecialchars($user['username'], ENT_QUOTES); ?>', '<?php echo htmlspecialchars($user['email'], ENT_QUOTES); ?>', '<?php echo htmlspecialchars($user['first_name'] ?? '', ENT_QUOTES); ?>', '<?php echo htmlspecialchars($user['last_name'] ?? '', ENT_QUOTES); ?>', '<?php echo htmlspecialchars($user['country'] ?? '', ENT_QUOTES); ?>', <?php echo $user['admin'] ? 'true' : 'false'; ?>)">Edit</button>
+                                            </div>
+                                            <div class="action-button-row">
+                                                <button type="button" class="action-button delete"
+                                                        onclick="openDeleteModal(<?php echo $user['id']; ?>, '<?php echo htmlspecialchars($user['username'], ENT_QUOTES); ?>')">Delete</button>
+                                            </div>
+                                        </div>
+                                    </td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
@@ -106,5 +124,204 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
             </div>
         </div>
     </div>
+
+    <!-- Add User Modal -->
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New User</h3>
+                <span class="close" onclick="closeAddModal()">&times;</span>
+            </div>
+            <form id="addForm" method="POST" action="">
+                <input type="hidden" name="action" value="add">
+                <div class="modal-form-group">
+                    <label for="add-username">Username:</label>
+                    <input type="text" id="add-username" name="username" required>
+                </div>
+                <div class="modal-form-group">
+                    <label for="add-email">Email:</label>
+                    <input type="email" id="add-email" name="email" required>
+                </div>
+                <div class="modal-form-group">
+                    <label for="add-first-name">First Name:</label>
+                    <input type="text" id="add-first-name" name="first_name">
+                </div>
+                <div class="modal-form-group">
+                    <label for="add-last-name">Last Name:</label>
+                    <input type="text" id="add-last-name" name="last_name">
+                </div>
+                <div class="modal-form-group">
+                    <label for="add-country">Country:</label>
+                    <input type="text" id="add-country" name="country">
+                </div>
+                <div class="modal-form-group">
+                    <label for="add-password">Password:</label>
+                    <input type="password" id="add-password" name="password" required>
+                </div>
+                <div class="modal-form-group">
+                    <label for="add-admin">Admin Privileges:</label>
+                    <select id="add-admin" name="admin">
+                        <option value="0">No</option>
+                        <option value="1">Yes</option>
+                    </select>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="modal-btn modal-btn-secondary" onclick="closeAddModal()">Cancel</button>
+                    <button type="button" class="modal-btn modal-btn-primary" onclick="submitAdd()">Add User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit User</h3>
+                <span class="close" onclick="closeEditModal()">&times;</span>
+            </div>
+            <form id="editForm" method="POST" action="">
+                <input type="hidden" name="action" value="edit">
+                <input type="hidden" id="edit-user-id" name="user_id">
+                <div class="modal-form-group">
+                    <label for="edit-username">Username:</label>
+                    <input type="text" id="edit-username" name="username" required>
+                </div>
+                <div class="modal-form-group">
+                    <label for="edit-email">Email:</label>
+                    <input type="email" id="edit-email" name="email" required>
+                </div>
+                <div class="modal-form-group">
+                    <label for="edit-first-name">First Name:</label>
+                    <input type="text" id="edit-first-name" name="first_name">
+                </div>
+                <div class="modal-form-group">
+                    <label for="edit-last-name">Last Name:</label>
+                    <input type="text" id="edit-last-name" name="last_name">
+                </div>
+                <div class="modal-form-group">
+                    <label for="edit-country">Country:</label>
+                    <input type="text" id="edit-country" name="country">
+                </div>
+                <div class="modal-form-group">
+                    <label for="edit-password">Password (leave blank to keep current):</label>
+                    <input type="password" id="edit-password" name="password">
+                </div>
+                <div class="modal-form-group">
+                    <label for="edit-admin">Admin Privileges:</label>
+                    <select id="edit-admin" name="admin">
+                        <option value="0">No</option>
+                        <option value="1">Yes</option>
+                    </select>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="modal-btn modal-btn-secondary" onclick="closeEditModal()">Cancel</button>
+                    <button type="button" class="modal-btn modal-btn-primary" onclick="submitEdit()">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete User Modal -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Delete User</h3>
+                <span class="close" onclick="closeDeleteModal()">&times;</span>
+            </div>
+            <form id="deleteForm" method="POST" action="">
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" id="delete-user-id" name="user_id">
+                <p><strong>Are you sure you want to delete the user "<span id="delete-user-name"></span>"?</strong></p>
+                <p style="color: #dc3545; font-weight: bold;">⚠️ This action cannot be undone!</p>
+                <p>This will permanently remove the user and may affect their associated devices.</p>
+                <div class="modal-buttons">
+                    <button type="button" class="modal-btn modal-btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+                    <button type="button" class="modal-btn modal-btn-danger" onclick="submitDelete()">Delete User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openAddModal() {
+            document.getElementById('add-username').value = '';
+            document.getElementById('add-email').value = '';
+            document.getElementById('add-first-name').value = '';
+            document.getElementById('add-last-name').value = '';
+            document.getElementById('add-country').value = '';
+            document.getElementById('add-password').value = '';
+            document.getElementById('add-admin').value = '0';
+            document.getElementById('addModal').style.display = 'block';
+        }
+
+        function closeAddModal() {
+            document.getElementById('addModal').style.display = 'none';
+        }
+
+        function openEditModal(userId, username, email, firstName, lastName, country, isAdmin) {
+            document.getElementById('edit-user-id').value = userId;
+            document.getElementById('edit-username').value = username;
+            document.getElementById('edit-email').value = email;
+            document.getElementById('edit-first-name').value = firstName || '';
+            document.getElementById('edit-last-name').value = lastName || '';
+            document.getElementById('edit-country').value = country || '';
+            document.getElementById('edit-password').value = '';
+            document.getElementById('edit-admin').value = isAdmin ? '1' : '0';
+            document.getElementById('editModal').style.display = 'block';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        function openDeleteModal(userId, username) {
+            document.getElementById('delete-user-id').value = userId;
+            document.getElementById('delete-user-name').textContent = username;
+            document.getElementById('deleteModal').style.display = 'block';
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').style.display = 'none';
+        }
+
+        function submitAdd() {
+            document.getElementById('addForm').submit();
+        }
+
+        function submitEdit() {
+            document.getElementById('editForm').submit();
+        }
+
+        function submitDelete() {
+            document.getElementById('deleteForm').submit();
+        }
+
+        // Close modal when clicking outside of it
+        window.onclick = function(event) {
+            const addModal = document.getElementById('addModal');
+            const editModal = document.getElementById('editModal');
+            const deleteModal = document.getElementById('deleteModal');
+
+            if (event.target == addModal) {
+                closeAddModal();
+            }
+            if (event.target == editModal) {
+                closeEditModal();
+            }
+            if (event.target == deleteModal) {
+                closeDeleteModal();
+            }
+        }
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeAddModal();
+                closeEditModal();
+                closeDeleteModal();
+            }
+        });
+    </script>
 </body>
 </html>
