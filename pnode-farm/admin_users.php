@@ -74,10 +74,10 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
                     <p class="error"><?php echo htmlspecialchars($error); ?></p>
                 <?php endif; ?>
 
-                <div style="margin-bottom: 20px; text-align: right;">
-                    <button type="button" class="action-btn" id="add-user-btn" onclick="openAddModal()">+ Add New User</button>
+                <div class="devices-header">
+                    <h3 class="devices-title">Users</h3>
+                    <button type="button" class="add-device-btn" onclick="openAddModal()" title="Add New User">+</button>
                 </div>
-
                 <?php if (empty($users)): ?>
                     <p>No users found.</p>
                 <?php else: ?>
@@ -290,6 +290,247 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
         }
 
         function submitEdit() {
+            document.getElementById('editForm').submit();
+        }
+
+        function submitDelete() {
+            document.getElementById('deleteForm').submit();
+        }
+
+        // Close modal when clicking outside of it
+        window.onclick = function(event) {
+            const addModal = document.getElementById('addModal');
+            const editModal = document.getElementById('editModal');
+            const deleteModal = document.getElementById('deleteModal');
+
+            if (event.target == addModal) {
+                closeAddModal();
+            }
+            if (event.target == editModal) {
+                closeEditModal();
+            }
+            if (event.target == deleteModal) {
+                closeDeleteModal();
+            }
+        }
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeAddModal();
+                closeEditModal();
+                closeDeleteModal();
+            }
+        });
+    </script>
+    <style>
+        /* Center modals properly on screen */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            color: #333;
+        }
+
+        .close {
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #999;
+            line-height: 1;
+        }
+
+        .close:hover {
+            color: #333;
+        }
+
+        .modal-form-group {
+            margin-bottom: 15px;
+        }
+
+        .modal-form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .modal-form-group input,
+        .modal-form-group select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        .modal-form-group input:focus,
+        .modal-form-group select:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .modal-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .modal-btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .modal-btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+        .modal-btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .modal-btn-secondary:hover {
+            background-color: #545b62;
+        }
+
+        .modal-btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .modal-btn-danger:hover {
+            background-color: #c82333;
+        }
+
+        .action-buttons-container {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .action-button-row {
+            display: flex;
+            justify-content: center;
+        }
+
+        .action-button {
+            padding: 4px 8px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            min-width: 60px;
+            transition: background-color 0.2s;
+        }
+
+        .action-button.edit {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .action-button.edit:hover {
+            background-color: #0056b3;
+        }
+
+        .action-button.delete {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .action-button.delete:hover {
+            background-color: #c82333;
+        }
+
+        /* Make sure devices-header and add-device-btn styles are available */
+        .devices-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .devices-title {
+            margin: 0;
+            color: #333;
+        }
+
+        .add-device-btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .add-device-btn:hover {
+            background-color: #218838;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .add-device-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+    </style> {
             document.getElementById('editForm').submit();
         }
 
