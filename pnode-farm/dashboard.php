@@ -323,7 +323,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                         <li class="admin-section">
                             <strong>Admin</strong>
                             <ul>
-                                <li><button class="menu-button admin-button" onclick="window.location.href='admin_users.php'">Users</button></li>
+                                <li><button class="menu-button admin-button" onclick="window.location.href='admin_users.php'">Manage Users</button></li>
                                 <li><button class="menu-button admin-button" onclick="window.location.href='admin_devices.php'">Manage Devices</button></li>
                             </ul>
                         </li>

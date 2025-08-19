@@ -368,7 +368,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         <li class="admin-section">
                             <strong>Admin</strong>
                             <ul>
-                                <li><button class="menu-button admin-button" onclick="window.location.href='admin_users.php'">Users</button></li>
+                                <li><button class="menu-button admin-button" onclick="window.location.href='admin_users.php'">Manage Users</button></li>
                                 <li><button class="menu-button admin-button active" onclick="window.location.href='admin_devices.php'">Manage Devices</button></li>
                             </ul>
                         </li>

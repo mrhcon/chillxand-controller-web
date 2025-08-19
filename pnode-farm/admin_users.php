@@ -60,8 +60,8 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
                         <li class="admin-section">
                             <strong>Admin</strong>
                             <ul>
-                                <li><button class="menu-button admin-button active" onclick="window.location.href='admin_users.php'">Users</button></li>
-                                <li><button class="menu-button admin-button" onclick="window.location.href='devices.php'">Manage Devices</button></li>
+                                <li><button class="menu-button admin-button active" onclick="window.location.href='admin_users.php'">Manage Users</button></li>
+                                <li><button class="menu-button admin-button" onclick="window.location.href='admin_devices.php'">Manage Devices</button></li>
                             </ul>
                         </li>
                     <?php endif; ?>
@@ -69,7 +69,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
             </div>
             <!-- Right Panel -->
             <div class="info-panel">
-                <h2>Users</h2>
+                <h2>Manage Users</h2>
                 <?php if (isset($error)): ?>
                     <p class="error"><?php echo htmlspecialchars($error); ?></p>
                 <?php endif; ?>
@@ -200,10 +200,6 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
                     <input type="text" id="edit-country" name="country">
                 </div>
                 <div class="modal-form-group">
-                    <label for="edit-password">Password (leave blank to keep current):</label>
-                    <input type="password" id="edit-password" name="password">
-                </div>
-                <div class="modal-form-group">
                     <label for="edit-admin">Admin Privileges:</label>
                     <select id="edit-admin" name="admin">
                         <option value="0">No</option>
@@ -261,7 +257,6 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
             document.getElementById('edit-first-name').value = firstName || '';
             document.getElementById('edit-last-name').value = lastName || '';
             document.getElementById('edit-country').value = country || '';
-            document.getElementById('edit-password').value = '';
             document.getElementById('edit-admin').value = isAdmin ? '1' : '0';
             document.getElementById('editModal').style.display = 'flex';
         }
@@ -285,6 +280,39 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
         }
 
         function submitEdit() {
+            document.getElementById('editForm').submit();
+        }
+
+        function submitDelete() {
+            document.getElementById('deleteForm').submit();
+        }
+
+        // Close modal when clicking outside of it
+        window.onclick = function(event) {
+            const addModal = document.getElementById('addModal');
+            const editModal = document.getElementById('editModal');
+            const deleteModal = document.getElementById('deleteModal');
+
+            if (event.target == addModal) {
+                closeAddModal();
+            }
+            if (event.target == editModal) {
+                closeEditModal();
+            }
+            if (event.target == deleteModal) {
+                closeDeleteModal();
+            }
+        }
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeAddModal();
+                closeEditModal();
+                closeDeleteModal();
+            }
+        });
+    </script>
             document.getElementById('editForm').submit();
         }
 
