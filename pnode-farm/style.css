@@ -2198,7 +2198,7 @@ details summary {
     font-size: 14px;
 }
 
-.installation-card-content > p:first-child {
+.installation-card .installation-card-content > p:first-child {
     min-height: 3em;
     line-height: 1.5;
 }
