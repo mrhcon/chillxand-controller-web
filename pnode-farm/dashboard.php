@@ -524,7 +524,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                     </div>
 
                                     <div class="managed-cta">
-                                        <p style="text-align: center;"><strong>Interested in our fully managed solution?</strong></p>
+                                        <p><strong>Interested in our fully managed solution?</strong></p>
                                         <button class="cta-button" onclick="showManagedContactForm()">
                                             Get Details
                                         </button>

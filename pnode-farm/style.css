@@ -2087,16 +2087,17 @@ details summary {
 
 .managed-cta {
     text-align: center;
-    margin: 25px 0 20px 0;
-    padding: 20px;
+    margin: 20px 0;
+    padding: 15px;
     background: #f8f9fa;
-    border-radius: 8px;
+    border-radius: 6px;
     border: 1px solid #e9ecef;
 }
 
 .managed-cta p {
     margin-bottom: 15px;
     color: #333;
+    text-align: center;
 }
 
 .cta-button {
