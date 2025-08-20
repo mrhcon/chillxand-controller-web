@@ -37,7 +37,29 @@ try {
         logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_details_access_failed', $error);
     } else {
         // Get current device status
-        $current_status = getLatestDeviceStatus($pdo, $device_id);
+        $device_statuses = getLatestDeviceStatuses($pdo, [$device_id]);
+        $current_status = $device_statuses[$device_id] ?? [
+            'status' => 'Not Initialized',
+            'check_time' => null,
+            'response_time' => null,
+            'consecutive_failures' => 0,
+            'health_status' => null,
+            'atlas_registered' => null,
+            'pod_status' => null,
+            'xandminer_status' => null,
+            'xandminerd_status' => null,
+            'cpu_load_avg' => null,
+            'memory_percent' => null,
+            'memory_total_bytes' => null,
+            'memory_used_bytes' => null,
+            'server_ip' => null,
+            'server_hostname' => null,
+            'chillxand_version' => null,
+            'pod_version' => null,
+            'xandminer_version' => null,
+            'xandminerd_version' => null,
+            'error_message' => 'Device has not been checked yet'
+        ];
         $device_summary = parseCachedDeviceHealth($current_status);
     }
 } catch (PDOException $e) {
@@ -284,7 +306,7 @@ try {
             <div class="menu-column">
                 <img src="images/logo.png">
                 <ul>
-                    <li><button class="menu-button" onclick="window.location.href='dashboard.php'">Dashboard</button></li>
+                    <li><button class="menu-button" onclick="window.location.href='user_dashboard.php'">Dashboard</button></li>
                     <li><button class="menu-button active" onclick="window.location.href='device_logs.php'">Device Logs</button></li>
                     <?php if ($_SESSION['admin']): ?>
                         <li class="admin-section">

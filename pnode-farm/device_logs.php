@@ -162,7 +162,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_logs_a
             <div class="menu-column">
             	<img src="images/logo.png">
                 <ul>
-                    <li><button class="menu-button" onclick="window.location.href='dashboard.php'">Dashboard</button></li>
+                    <li><button class="menu-button" onclick="window.location.href='user_dashboard.php'">Dashboard</button></li>
                     <li><button class="menu-button active" onclick="window.location.href='device_logs.php'">Device Logs</button></li>
                     <?php if ($_SESSION['admin']): ?>
                         <li class="admin-section">

@@ -5,7 +5,7 @@ require_once 'functions.php';
 
 // Redirect to dashboard if already logged in
 if (isset($_SESSION['user_id'])) {
-    header("Location: dashboard.php");
+    header("Location: user_dashboard.php");
     exit();
 }
 
@@ -70,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     // Automatically log in the new user
                     $_SESSION['user_id'] = $user_id;
                     $_SESSION['username'] = $username;
-                    header("Location: dashboard.php");
+                    header("Location: user_dashboard.php");
                     exit();
                 }
             }

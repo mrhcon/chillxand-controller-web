@@ -68,7 +68,7 @@ try {
     // ADMIN ACCESS REQUIRED - Redirect non-admins to dashboard
     if (!$_SESSION['admin']) {
         if (PHP_SAPI !== 'cli') {
-            header("Location: dashboard.php");
+            header("Location: user_dashboard.php");
             exit();
         } else {
             echo "Error: Admin access required for device management.\n";
@@ -362,7 +362,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             <div class="menu-column">
                 <img src="images/logo.png">
                 <ul>
-                    <li><button class="menu-button" onclick="window.location.href='dashboard.php'">Dashboard</button></li>
+                    <li><button class="menu-button" onclick="window.location.href='user_dashboard.php'">Dashboard</button></li>
                     <!-- <li><button class="menu-button" onclick="window.location.href='device_logs.php'">Device Logs</button></li> -->
                     <?php if ($_SESSION['admin'] ?? false): ?>
                         <li class="admin-section">
