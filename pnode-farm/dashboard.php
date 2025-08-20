@@ -420,6 +420,14 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                 <div class="installation-card-content">
                                     <p>Set up the ChillXand controller on your own server/VPS:</p>
 
+                                    <div class="managed-features">
+                                        <div class="feature">You provide the server/VPS</div>
+                                        <div class="feature">You install the pNode controller software</div>
+                                        <div class="feature">We provide ongoing support and maintenance</div>
+                                        <div class="feature">24/7 monitoring and support</div>
+                                        <div class="feature">Optimized performance tuning</div>
+                                    </div>
+
                                     <div class="installation-steps">
                                         <div class="step">
                                             <div class="step-number">1</div>
