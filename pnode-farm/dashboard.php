@@ -447,14 +447,14 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                         <div class="step">
                                             <div class="step-number">3</div>
                                             <div class="step-content">
-                                                <strong>Follow the prompts</strong> and wait for installation to complete
+                                                <strong>Wait for installation to complete</strong> - The pNode controller will automatically install
                                             </div>
                                         </div>
 
                                         <div class="step">
                                             <div class="step-number">4</div>
                                             <div class="step-content">
-                                                <strong>Add your device</strong> using the "+" button above with your server's IP
+                                                <strong>Add your device below</strong> - Using the "+" button, add your node name and IP address
                                             </div>
                                         </div>
                                     </div>
