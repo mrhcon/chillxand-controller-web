@@ -423,9 +423,9 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                     <div class="managed-features">
                                         <div class="feature">You provide the server/VPS</div>
                                         <div class="feature">You install the pNode controller software</div>
-                                        <div class="feature">We provide ongoing support and maintenance</div>
-                                        <div class="feature">24/7 monitoring and support</div>
-                                        <div class="feature">Optimized performance tuning</div>
+                                        <div class="feature">We provide ongoing maintenance and updates</div>
+                                        <div class="feature">We provide 24/7 monitoring and support</div>
+                                        <div class="feature">We provide optimized performance tuning</div>
                                     </div>
 
                                     <div class="installation-steps">
@@ -483,11 +483,11 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                     <p>Let us handle everything - hosting, setup, and maintenance:</p>
 
                                     <div class="managed-features">
-                                        <div class="feature">Complete server setup and hosting</div>
-                                        <div class="feature">ChillXand controller installation</div>
-                                        <div class="feature">Ongoing maintenance and updates</div>
-                                        <div class="feature">24/7 monitoring and support</div>
-                                        <div class="feature">Optimized performance tuning</div>
+                                        <div class="feature">We provide complete server setup and hosting</div>
+                                        <div class="feature">We provide ChillXand controller installation</div>
+                                        <div class="feature">We provide ongoing maintenance and updates</div>
+                                        <div class="feature">We provide 24/7 monitoring and support</div>
+                                        <div class="feature">We provide optimized performance tuning</div>
                                     </div>
 
                                     <div class="managed-cta">
