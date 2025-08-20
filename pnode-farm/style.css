@@ -1924,13 +1924,16 @@ details summary {
 .installation-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    padding: 20px;
+    gap: 30px;
+    padding: 30px;
+    align-items: start;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
     .installation-grid {
         grid-template-columns: 1fr;
+        gap: 20px;
+        padding: 20px;
     }
 }
 
@@ -1939,6 +1942,7 @@ details summary {
     border: 1px solid #dee2e6;
     border-radius: 8px;
     overflow: hidden;
+    height: fit-content;
 }
 
 .installation-card-header {
@@ -1948,6 +1952,10 @@ details summary {
     display: flex;
     justify-content: space-between;
     align-items: center;
+}
+
+.installation-card:nth-child(2) .installation-card-header {
+    background: #28a745;
 }
 
 .installation-card-header h4 {
@@ -1973,91 +1981,127 @@ details summary {
 }
 
 .installation-steps {
-    margin: 15px 0;
+    margin: 20px 0;
 }
 
 .step {
     display: flex;
-    margin-bottom: 15px;
+    margin-bottom: 20px;
     align-items: flex-start;
+    gap: 15px;
 }
 
 .step-number {
     background: #007bff;
     color: white;
     border-radius: 50%;
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: bold;
-    margin-right: 15px;
     flex-shrink: 0;
-    margin-top: 2px;
+    margin-top: 3px;
 }
 
 .step-content {
     flex: 1;
+    line-height: 1.5;
+}
+
+.step-content strong {
+    display: block;
+    margin-bottom: 8px;
+    color: #333;
 }
 
 .code-block {
     background: #f8f9fa;
     border: 1px solid #dee2e6;
-    border-radius: 4px;
-    padding: 10px;
+    border-radius: 6px;
+    padding: 12px 15px;
     margin-top: 8px;
     position: relative;
-    font-family: 'Courier New', monospace;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
 }
 
 .code-block code {
-    display: block;
+    flex: 1;
+    font-size: 13px;
+    line-height: 1.4;
+    color: #333;
     word-break: break-all;
-    padding-right: 30px;
 }
 
 .copy-btn {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    background: none;
+    background: #007bff;
+    color: white;
     border: none;
+    border-radius: 4px;
+    padding: 6px 10px;
     cursor: pointer;
-    padding: 2px;
-    font-size: 14px;
-    opacity: 0.7;
-    transition: opacity 0.2s ease;
+    font-size: 11px;
+    font-weight: bold;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    min-width: 50px;
+    text-align: center;
 }
 
 .copy-btn:hover {
-    opacity: 1;
+    background: #0056b3;
+    transform: translateY(-1px);
+}
+
+.copy-btn:active {
+    transform: translateY(0);
 }
 
 .installation-note {
     background: #e7f3ff;
     border-left: 4px solid #007bff;
-    padding: 10px;
-    margin-top: 15px;
+    padding: 12px 15px;
+    margin-top: 20px;
     font-size: 14px;
+    border-radius: 0 4px 4px 0;
 }
 
 .managed-features {
-    margin: 15px 0;
+    margin: 20px 0;
 }
 
 .feature {
-    padding: 5px 0;
+    padding: 8px 0;
     color: #28a745;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.feature:before {
+    content: "✅";
+    font-size: 16px;
 }
 
 .managed-cta {
     text-align: center;
-    margin: 20px 0;
-    padding: 15px;
+    margin: 25px 0 20px 0;
+    padding: 20px;
     background: #f8f9fa;
-    border-radius: 6px;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.managed-cta p {
+    margin-bottom: 15px;
+    color: #333;
 }
 
 .cta-button {
@@ -2068,12 +2112,13 @@ details summary {
     border-radius: 6px;
     cursor: pointer;
     font-weight: bold;
-    transition: background-color 0.2s ease;
-    margin-top: 10px;
+    font-size: 14px;
+    transition: all 0.2s ease;
 }
 
 .cta-button:hover {
     background: #218838;
+    transform: translateY(-1px);
 }
 
 .contact-form .modal-form-group {
