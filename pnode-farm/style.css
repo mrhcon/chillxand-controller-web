@@ -1347,22 +1347,78 @@ button:disabled {
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0,0,0,0.5);
+    background-color: rgba(0, 0, 0, 0.5);
+    
+    /* Add flexbox for perfect centering */
+    justify-content: center;
+    align-items: center;
 }
 
-.modal.show {
-    display: flex;
+/* When modal is shown, use flex display */
+.modal[style*="block"] {
+    display: flex !important;
 }
 
+/* Modal Content - Let it size dynamically and stay centered */
 .modal-content {
     position: relative;
     background-color: #fefefe;
-    margin: 15% auto;
+    margin: 0; /* Remove fixed margin */
     padding: 20px;
     border: 1px solid #888;
     border-radius: 5px;
     width: 400px;
     max-width: 90%;
+    
+    /* Dynamic height with constraints */
+    height: auto;
+    max-height: 90vh;
+    min-height: 200px;
+    
+    /* Enable scrolling for very long content */
+    overflow-y: auto;
+    
+    /* Keep your existing box shadow */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* For longer forms, allow more width */
+.modal-content.wide {
+    width: 500px;
+    max-width: 95%;
+}
+
+/* Ensure modal body can scroll if needed */
+.modal-body {
+    max-height: calc(90vh - 150px); /* Account for header and buttons */
+    overflow-y: auto;
+}
+
+/* For very small screens, adjust accordingly */
+@media (max-height: 600px) {
+    .modal-content {
+        max-height: 95vh;
+        min-height: auto;
+    }
+    
+    .modal-body {
+        max-height: calc(95vh - 120px);
+    }
+}
+
+/* Optional: Add specific classes for different modal types */
+.modal-content.add-user-modal,
+.modal-content.edit-user-modal {
+    width: 450px;
+    max-width: 95%;
+}
+
+.modal-content.delete-modal {
+    width: 350px;
+}
+
+.modal.show {
+    display: flex;
 }
 
 .modal-header {
