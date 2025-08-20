@@ -2029,6 +2029,18 @@ details summary {
     align-items: flex-start;
     justify-content: space-between;
     gap: 10px;
+    min-width: 0;
+}
+
+.code-block code {
+    flex: 1;
+    font-size: 13px;
+    line-height: 1.4;
+    color: #333;
+    white-space: nowrap;
+    overflow-x: auto;
+    padding-right: 10px;
+    min-width: 0;
 }
 
 .copy-btn {
@@ -2036,18 +2048,21 @@ details summary {
     color: white;
     border: none;
     border-radius: 3px;
-    padding: 2px 6px;
+    padding: 2px 4px;
     cursor: pointer;
     font-size: 9px;
     font-weight: bold;
     transition: all 0.2s ease;
     flex-shrink: 0;
-    min-width: 30px;
+    width: 18px;
     height: 18px;
     text-align: center;
     white-space: nowrap;
     line-height: 1;
     margin-top: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .copy-btn:hover {
@@ -2106,16 +2121,6 @@ details summary {
 .contact-form textarea {
     resize: vertical;
     min-height: 80px;
-}
-
-.code-block code {
-    flex: 1;
-    font-size: 13px;
-    line-height: 1.4;
-    color: #333;
-    white-space: nowrap;
-    overflow-x: auto;
-    padding-right: 10px;
 }
 
 .managed-features {
