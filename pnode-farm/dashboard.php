@@ -414,8 +414,8 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                             <!-- Managed pNode Instructions -->
                             <div class="installation-card">
                                 <div class="installation-card-header">
-                                    <h4>🔧 Installing ChillXand Controller</h4>
-                                    <span class="installation-badge">Self-Managed</span>
+                                    <h4>🔧 Self-Hosted pNode Setup</h4>
+                                    <span class="installation-badge">You Provide Server</span>
                                 </div>
                                 <div class="installation-card-content">
                                     <p>Set up the ChillXand controller on your own server/VPS:</p>
@@ -469,7 +469,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                             <div class="installation-card">
                                 <div class="installation-card-header">
                                     <h4>🌟 Fully Managed pNode</h4>
-                                    <span class="installation-badge premium">Premium Service</span>
+                                    <span class="installation-badge premium">We Provide Everything</span>
                                 </div>
                                 <div class="installation-card-content">
                                     <p>Let us handle everything - hosting, setup, and maintenance:</p>
