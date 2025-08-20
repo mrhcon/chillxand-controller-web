@@ -524,9 +524,9 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                     </div>
 
                                     <div class="managed-cta">
-                                        <p><strong>Interested in our fully managed solution?</strong></p>
+                                        <p style="text-align: center;"><strong>Interested in our fully managed solution?</strong></p>
                                         <button class="cta-button" onclick="showManagedContactForm()">
-                                            Get Details & Pricing
+                                            Get Details
                                         </button>
                                     </div>
                                 </div>
@@ -2030,7 +2030,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
 
             <div class="modal-body">
                 <p>Thank you for your interest in our fully managed pNode service!</p>
-                <p>We'll be in touch soon with details about pricing and availability.</p>
+                <p>We'll be in touch soon with details and availability.</p>
 
                 <form id="managedContactForm" class="contact-form">
                     <div class="modal-form-group">
