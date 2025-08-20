@@ -2770,29 +2770,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             console.log(`Finished monitoring ${monitor.updateType} update for ${monitor.deviceName} - reason: ${reason}`);
         }
 
-        window.onclick = function(event) {
-            const addModal = document.getElementById('addModal');
-            const editModal = document.getElementById('editModal');
-            const deleteModal = document.getElementById('deleteModal');
-            const updateControllerModal = document.getElementById('updateControllerModal');
-            const updatePodModal = document.getElementById('updatePodModal');
+        // window.onclick = function(event) {
+        //     const addModal = document.getElementById('addModal');
+        //     const editModal = document.getElementById('editModal');
+        //     const deleteModal = document.getElementById('deleteModal');
+        //     const updateControllerModal = document.getElementById('updateControllerModal');
+        //     const updatePodModal = document.getElementById('updatePodModal');
 
-            if (event.target == addModal) {
-                closeAddModal();
-            }
-            if (event.target == editModal) {
-                closeEditModal();
-            }
-            if (event.target == deleteModal) {
-                closeDeleteModal();
-            }
-            if (event.target == updateControllerModal) {
-                closeUpdateControllerModal();
-            }
-            if (event.target == updatePodModal) {
-                closeUpdatePodModal();
-            }
-        }
+        //     if (event.target == addModal) {
+        //         closeAddModal();
+        //     }
+        //     if (event.target == editModal) {
+        //         closeEditModal();
+        //     }
+        //     if (event.target == deleteModal) {
+        //         closeDeleteModal();
+        //     }
+        //     if (event.target == updateControllerModal) {
+        //         closeUpdateControllerModal();
+        //     }
+        //     if (event.target == updatePodModal) {
+        //         closeUpdatePodModal();
+        //     }
+        // }
 
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
