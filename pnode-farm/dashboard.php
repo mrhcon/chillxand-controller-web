@@ -430,7 +430,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                         <div class="feature">We provide optimized performance tuning</div>
                                     </div>
 
-                                    <p><strong>pNode Controller setup instructions:</strong></p>
+                                    <h4 style="margin-top: 20px; margin-bottom: 15px; color: #333;">pNode Controller Setup Instructions:</h4>
 
                                     <div class="installation-steps">
                                         <div class="step">
