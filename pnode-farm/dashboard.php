@@ -421,7 +421,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                     <p>Set up the ChillXand controller on your own server/VPS:</p>
 
                                     <div class="managed-features">
-                                        <div class="feature">You provide the server/VPS</div>
+                                        <div class="feature">You provide the server/VPS (Ubuntu 24.04 LTS required)</div>
                                         <div class="feature">You install the pNode controller software</div>
                                         <div class="feature">We provide ongoing maintenance and updates</div>
                                         <div class="feature">We provide 24/7 monitoring and support</div>
@@ -466,10 +466,6 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                             </div>
                                         </div>
                                     </div>
-
-                                    <div class="installation-note">
-                                        <strong>Requirements:</strong> Ubuntu/Debian server with root access and internet connection
-                                    </div>
                                 </div>
                             </div>
 
@@ -480,7 +476,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                     <span class="installation-badge premium">We Provide Everything</span>
                                 </div>
                                 <div class="installation-card-content">
-                                    <p>Let us handle everything - hosting, setup, and maintenance:</p>
+                                    <p>Let us handle everything - hosting, setup, and maintenance.  Perfect for Users who want a hassle-free experience without technical setup:</p>
 
                                     <div class="managed-features">
                                         <div class="feature">We provide complete server setup and hosting</div>
@@ -495,10 +491,6 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                         <button class="cta-button" onclick="showManagedContactForm()">
                                             Get Details & Pricing
                                         </button>
-                                    </div>
-
-                                    <div class="installation-note">
-                                        <strong>Perfect for:</strong> Users who want a hassle-free experience without technical setup
                                     </div>
                                 </div>
                             </div>
