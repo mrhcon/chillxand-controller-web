@@ -403,13 +403,13 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                 <div class="installation-section">
                     <div class="installation-header" onclick="toggleInstallationSection()">
                         <h3>
-                            <span id="installation-toggle-icon" class="toggle-icon">▶</span>
+                            <span id="installation-toggle-icon" class="toggle-icon<?php echo empty($devices) ? ' expanded' : ''; ?>"><?php echo empty($devices) ? '▼' : '▶'; ?></span>
                             Installation Instructions
                         </h3>
                         <span class="installation-subtitle">Click to expand setup guides</span>
                     </div>
 
-                    <div id="installation-content" class="installation-content" style="display: none;">
+                    <div id="installation-content" class="installation-content" style="display: <?php echo empty($devices) ? 'block' : 'none'; ?>;">
                         <div class="installation-grid">
                             <!-- Managed pNode Instructions -->
                             <div class="installation-card">
