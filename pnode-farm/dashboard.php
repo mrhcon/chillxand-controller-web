@@ -430,6 +430,18 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                         <div class="feature">We provide optimized performance tuning</div>
                                     </div>
 
+                                    <div class="pricing-info">
+                                        <div class="pricing-section">
+                                            <h4>💰 Pricing</h4>
+                                            <div class="pricing-item">
+                                                <strong>DevNet:</strong> <span class="price">3,000 Xand/month</span>
+                                            </div>
+                                            <div class="pricing-item">
+                                                <strong>MainNet:</strong> <span class="price-coming-soon">Price Coming Soon</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <h3 style="margin-top: 20px; margin-bottom: 15px; color: #333;">pNode Controller Setup Instructions:</h3>
 
                                     <div class="installation-steps">
@@ -497,6 +509,18 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                         <div class="feature">We provide ongoing maintenance and updates</div>
                                         <div class="feature">We provide 24/7 monitoring and support</div>
                                         <div class="feature">We provide optimized performance tuning</div>
+                                    </div>
+
+                                    <div class="pricing-info">
+                                        <div class="pricing-section">
+                                            <h4>💰 Pricing</h4>
+                                            <div class="pricing-item">
+                                                <strong>DevNet:</strong> <span class="price">9,000 Xand/month</span>
+                                            </div>
+                                            <div class="pricing-item">
+                                                <strong>MainNet:</strong> <span class="price-coming-soon">Price Coming Soon</span>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <div class="managed-cta">

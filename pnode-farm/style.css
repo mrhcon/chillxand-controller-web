@@ -2158,3 +2158,41 @@ details summary {
     font-size: 14px;
     flex-shrink: 0;
 }
+
+.pricing-info {
+    margin: 20px 0;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
+.pricing-section h4 {
+    margin: 0 0 10px 0;
+    color: #333;
+    font-size: 16px;
+}
+
+.pricing-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.pricing-item:last-child {
+    border-bottom: none;
+}
+
+.price {
+    color: #28a745;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.price-coming-soon {
+    color: #6c757d;
+    font-style: italic;
+    font-size: 14px;
+}
