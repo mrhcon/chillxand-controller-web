@@ -399,6 +399,106 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                     </div>
                 <?php endif; ?>
 
+                <!-- Installation Instructions Section -->
+                <div class="installation-section">
+                    <div class="installation-header" onclick="toggleInstallationSection()">
+                        <h3>
+                            <span id="installation-toggle-icon" class="toggle-icon">▶</span>
+                            Installation Instructions
+                        </h3>
+                        <span class="installation-subtitle">Click to expand setup guides</span>
+                    </div>
+
+                    <div id="installation-content" class="installation-content" style="display: none;">
+                        <div class="installation-grid">
+                            <!-- Managed pNode Instructions -->
+                            <div class="installation-card">
+                                <div class="installation-card-header">
+                                    <h4>🔧 Installing ChillXand Controller</h4>
+                                    <span class="installation-badge">Self-Managed</span>
+                                </div>
+                                <div class="installation-card-content">
+                                    <p>Set up the ChillXand controller on your own server/VPS:</p>
+
+                                    <div class="installation-steps">
+                                        <div class="step">
+                                            <div class="step-number">1</div>
+                                            <div class="step-content">
+                                                <strong>SSH to your server as root:</strong>
+                                                <div class="code-block">
+                                                    <code>ssh root@your-server-ip</code>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="step">
+                                            <div class="step-number">2</div>
+                                            <div class="step-content">
+                                                <strong>Run the installation script:</strong>
+                                                <div class="code-block">
+                                                    <code id="install-command">wget -O - https://raw.githubusercontent.com/mrhcon/chillxand-controller/main/install-controller-proxy.sh | sudo bash</code>
+                                                    <button class="copy-btn" onclick="copyToClipboard('install-command')" title="Copy to clipboard">
+                                                        📋
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="step">
+                                            <div class="step-number">3</div>
+                                            <div class="step-content">
+                                                <strong>Follow the prompts</strong> and wait for installation to complete
+                                            </div>
+                                        </div>
+
+                                        <div class="step">
+                                            <div class="step-number">4</div>
+                                            <div class="step-content">
+                                                <strong>Add your device</strong> using the "+" button above with your server's IP
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="installation-note">
+                                        <strong>Requirements:</strong> Ubuntu/Debian server with root access and internet connection
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Fully Managed pNode -->
+                            <div class="installation-card">
+                                <div class="installation-card-header">
+                                    <h4>🌟 Fully Managed pNode</h4>
+                                    <span class="installation-badge premium">Premium Service</span>
+                                </div>
+                                <div class="installation-card-content">
+                                    <p>Let us handle everything - hosting, setup, and maintenance:</p>
+
+                                    <div class="managed-features">
+                                        <div class="feature">✅ Complete server setup and hosting</div>
+                                        <div class="feature">✅ ChillXand controller installation</div>
+                                        <div class="feature">✅ Ongoing maintenance and updates</div>
+                                        <div class="feature">✅ 24/7 monitoring and support</div>
+                                        <div class="feature">✅ Optimized performance tuning</div>
+                                    </div>
+
+                                    <div class="managed-cta">
+                                        <p><strong>Interested in our fully managed solution?</strong></p>
+                                        <button class="cta-button" onclick="showManagedContactForm()">
+                                            Get Details & Pricing
+                                        </button>
+                                    </div>
+
+                                    <div class="installation-note">
+                                        <strong>Perfect for:</strong> Users who want a hassle-free experience without technical setup
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
                 <div class="devices-header">
                     <h3 class="devices-title">Your Devices</h3>
                     <button type="button" class="add-device-btn" onclick="openAddModal()" title="Add New Device">+</button>
@@ -631,7 +731,70 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
         </div>
     </div>
 
- <script>
+    <script>
+        function toggleInstallationSection() {
+            const content = document.getElementById('installation-content');
+            const icon = document.getElementById('installation-toggle-icon');
+
+            if (content.style.display === 'none' || content.style.display === '') {
+                content.style.display = 'block';
+                icon.classList.add('expanded');
+                icon.textContent = '▼';
+            } else {
+                content.style.display = 'none';
+                icon.classList.remove('expanded');
+                icon.textContent = '▶';
+            }
+        }
+
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            const text = element.textContent;
+
+            navigator.clipboard.writeText(text).then(function() {
+                // Show temporary feedback
+                const copyBtn = element.parentNode.querySelector('.copy-btn');
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = '✅';
+                copyBtn.style.color = '#28a745';
+
+                setTimeout(() => {
+                    copyBtn.textContent = originalText;
+                    copyBtn.style.color = '';
+                }, 2000);
+            }).catch(function(err) {
+                console.error('Could not copy text: ', err);
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                } catch (err) {
+                    console.error('Fallback copy failed', err);
+                }
+                document.body.removeChild(textArea);
+            });
+        }
+
+        function showManagedContactForm() {
+            document.getElementById('managedContactModal').style.display = 'block';
+        }
+
+        function closeManagedContactModal() {
+            document.getElementById('managedContactModal').style.display = 'none';
+        }
+
+        function submitManagedContactForm() {
+            // For now, just show a success message
+            alert('Thank you for your interest! We will contact you soon with more information about our fully managed pNode service.');
+            closeManagedContactModal();
+
+            // TODO: In the future, you could add actual form submission here
+        }
+
         class DeviceStatusUpdater {
             constructor() {
                 this.devices = [];
@@ -1687,7 +1850,8 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 if (!preventModalCloseDuringLoading(event)) return;
-
+                
+                closeManagedContactModal();
                 closeAddModal();
                 closeEditModal();
                 closeDeleteModal();
@@ -1815,6 +1979,43 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                     <div class="modal-loading-spinner"></div>
                     <div class="modal-loading-text">Deleting device...</div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact Form Modal for Fully Managed -->
+    <div id="managedContactModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Fully Managed pNode Interest</h3>
+                <span class="close" onclick="closeManagedContactModal()">&times;</span>
+            </div>
+
+            <div class="modal-body">
+                <p>Thank you for your interest in our fully managed pNode service!</p>
+                <p>We'll be in touch soon with details about pricing and availability.</p>
+
+                <form id="managedContactForm" class="contact-form">
+                    <div class="modal-form-group">
+                        <label for="contact-name">Name:</label>
+                        <input type="text" id="contact-name" name="name" value="<?php echo htmlspecialchars($user['first_name'] . ' ' . $user['last_name']); ?>" readonly>
+                    </div>
+
+                    <div class="modal-form-group">
+                        <label for="contact-email">Email:</label>
+                        <input type="email" id="contact-email" name="email" value="<?php echo htmlspecialchars($user['email']); ?>" readonly>
+                    </div>
+
+                    <div class="modal-form-group">
+                        <label for="contact-message">Additional Information (optional):</label>
+                        <textarea id="contact-message" name="message" rows="4" placeholder="Let us know about your specific requirements, expected usage, or any questions you have..."></textarea>
+                    </div>
+                </form>
+            </div>
+
+            <div class="modal-buttons">
+                <button type="button" class="modal-btn modal-btn-secondary" onclick="closeManagedContactModal()">Cancel</button>
+                <button type="button" class="modal-btn modal-btn-primary" onclick="submitManagedContactForm()">Submit Interest</button>
             </div>
         </div>
     </div>

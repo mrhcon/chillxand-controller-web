@@ -1867,3 +1867,220 @@ details summary {
 .location-unknown:before {
     content: "⏳ ";
 }
+
+/* Installation Section Styles */
+.installation-section {
+    margin: 30px 0;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    background: #f8f9fa;
+}
+
+.installation-header {
+    padding: 15px 20px;
+    cursor: pointer;
+    user-select: none;
+    border-bottom: 1px solid #dee2e6;
+    transition: background-color 0.2s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.installation-header:hover {
+    background-color: #e9ecef;
+}
+
+.installation-header h3 {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    color: #495057;
+}
+
+.toggle-icon {
+    display: inline-block;
+    margin-right: 10px;
+    transition: transform 0.2s ease;
+    font-size: 14px;
+}
+
+.toggle-icon.expanded {
+    transform: rotate(90deg);
+}
+
+.installation-subtitle {
+    color: #6c757d;
+    font-size: 14px;
+    font-style: italic;
+}
+
+.installation-content {
+    padding: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.installation-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    padding: 20px;
+}
+
+@media (max-width: 768px) {
+    .installation-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.installation-card {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.installation-card-header {
+    background: #007bff;
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.installation-card-header h4 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.installation-badge {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.installation-badge.premium {
+    background: #ffc107;
+    color: #212529;
+}
+
+.installation-card-content {
+    padding: 20px;
+}
+
+.installation-steps {
+    margin: 15px 0;
+}
+
+.step {
+    display: flex;
+    margin-bottom: 15px;
+    align-items: flex-start;
+}
+
+.step-number {
+    background: #007bff;
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    margin-right: 15px;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.step-content {
+    flex: 1;
+}
+
+.code-block {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 10px;
+    margin-top: 8px;
+    position: relative;
+    font-family: 'Courier New', monospace;
+}
+
+.code-block code {
+    display: block;
+    word-break: break-all;
+    padding-right: 30px;
+}
+
+.copy-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px;
+    font-size: 14px;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+
+.copy-btn:hover {
+    opacity: 1;
+}
+
+.installation-note {
+    background: #e7f3ff;
+    border-left: 4px solid #007bff;
+    padding: 10px;
+    margin-top: 15px;
+    font-size: 14px;
+}
+
+.managed-features {
+    margin: 15px 0;
+}
+
+.feature {
+    padding: 5px 0;
+    color: #28a745;
+}
+
+.managed-cta {
+    text-align: center;
+    margin: 20px 0;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 6px;
+}
+
+.cta-button {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s ease;
+    margin-top: 10px;
+}
+
+.cta-button:hover {
+    background: #218838;
+}
+
+.contact-form .modal-form-group {
+    margin-bottom: 15px;
+}
+
+.contact-form textarea {
+    resize: vertical;
+    min-height: 80px;
+}
