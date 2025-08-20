@@ -418,15 +418,19 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                     <span class="installation-badge">You Provide Server</span>
                                 </div>
                                 <div class="installation-card-content">
-                                    <p>Set up the ChillXand controller on your own server/VPS:</p>
+                                    <p>You setup your own server/VPS and install the ChillXand pNode Controller, and we take it from there!</p>
 
                                     <div class="managed-features">
                                         <div class="feature">You provide the server/VPS (Ubuntu 24.04 LTS required)</div>
-                                        <div class="feature">You install the pNode controller software</div>
-                                        <div class="feature">We provide ongoing maintenance and updates</div>
-                                        <div class="feature">We provide 24/7 monitoring and support</div>
+                                        <div class="feature">You handle all connectivity issues with the server provider (we'll notify you if connectivity is an issue)</div>
+                                        <div class="feature">You handle all server/VPS upgrades</div>
+                                        <div class="feature">You install the pNode controller software on your server/VPS</div>
+                                        <div class="feature">We provide ongoing pNode maintenance and updates</div>
+                                        <div class="feature">We provide 24/7 pNode monitoring and support</div>
                                         <div class="feature">We provide optimized performance tuning</div>
                                     </div>
+
+                                    <p>pNode Controller setup instructions:</p>
 
                                     <div class="installation-steps">
                                         <div class="step">
@@ -465,6 +469,13 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                                 <strong>Add your device below</strong> - Using the "+" button, add your node name and IP address
                                             </div>
                                         </div>
+
+                                        <div class="step">
+                                            <div class="step-number">5</div>
+                                            <div class="step-content">
+                                                <strong>All Done!</strong>We take it from here!
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -476,10 +487,12 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                     <span class="installation-badge premium">We Provide Everything</span>
                                 </div>
                                 <div class="installation-card-content">
-                                    <p>Let us handle everything - hosting, setup, and maintenance.  Perfect for Users who want a hassle-free experience without technical setup:</p>
+                                    <p>Let us handle everything - hosting, setup, and maintenance.  Perfect for Users who want a hassle-free experience without technical setup.</p>
 
                                     <div class="managed-features">
                                         <div class="feature">We provide complete server setup and hosting</div>
+                                        <div class="feature">We provide server connectivity monitoring and support</div>
+                                        <div class="feature">We provide all server upgrades</div>
                                         <div class="feature">We provide ChillXand controller installation</div>
                                         <div class="feature">We provide ongoing maintenance and updates</div>
                                         <div class="feature">We provide 24/7 monitoring and support</div>
