@@ -475,11 +475,11 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                     <p>Let us handle everything - hosting, setup, and maintenance:</p>
 
                                     <div class="managed-features">
-                                        <div class="feature">✅ Complete server setup and hosting</div>
-                                        <div class="feature">✅ ChillXand controller installation</div>
-                                        <div class="feature">✅ Ongoing maintenance and updates</div>
-                                        <div class="feature">✅ 24/7 monitoring and support</div>
-                                        <div class="feature">✅ Optimized performance tuning</div>
+                                        <div class="feature">Complete server setup and hosting</div>
+                                        <div class="feature">ChillXand controller installation</div>
+                                        <div class="feature">Ongoing maintenance and updates</div>
+                                        <div class="feature">24/7 monitoring and support</div>
+                                        <div class="feature">Optimized performance tuning</div>
                                     </div>
 
                                     <div class="managed-cta">
@@ -1850,7 +1850,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 if (!preventModalCloseDuringLoading(event)) return;
-                
+
                 closeManagedContactModal();
                 closeAddModal();
                 closeEditModal();

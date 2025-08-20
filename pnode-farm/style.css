@@ -2031,14 +2031,6 @@ details summary {
     gap: 10px;
 }
 
-.code-block code {
-    flex: 1;
-    font-size: 13px;
-    line-height: 1.4;
-    color: #333;
-    word-break: break-all;
-}
-
 .copy-btn {
     background: #007bff;
     color: white;
@@ -2070,24 +2062,6 @@ details summary {
     margin-top: 20px;
     font-size: 14px;
     border-radius: 0 4px 4px 0;
-}
-
-.managed-features {
-    margin: 20px 0;
-}
-
-.feature {
-    padding: 8px 0;
-    color: #28a745;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.feature:before {
-    content: "✅";
-    font-size: 16px;
 }
 
 .managed-cta {
@@ -2128,4 +2102,36 @@ details summary {
 .contact-form textarea {
     resize: vertical;
     min-height: 80px;
+}
+
+.code-block code {
+    flex: 1;
+    font-size: 13px;
+    line-height: 1.4;
+    color: #333;
+    white-space: nowrap;
+    overflow-x: auto;
+    padding-right: 10px;
+}
+
+.managed-features {
+    margin: 20px 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 4px;
+}
+
+.feature {
+    padding: 6px 0;
+    color: #28a745;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.feature:before {
+    content: "✅";
+    font-size: 14px;
+    flex-shrink: 0;
 }
