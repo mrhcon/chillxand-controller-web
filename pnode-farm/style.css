@@ -2116,13 +2116,25 @@ details summary {
     transform: translateY(-1px);
 }
 
+.contact-form textarea {
+    resize: vertical;
+    min-height: 80px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
 .contact-form .modal-form-group {
     margin-bottom: 15px;
 }
 
-.contact-form textarea {
-    resize: vertical;
-    min-height: 80px;
+.contact-form .modal-form-group textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.4;
 }
 
 .managed-features {
