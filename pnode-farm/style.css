@@ -2029,18 +2029,20 @@ details summary {
     align-items: flex-start;
     justify-content: space-between;
     gap: 10px;
-    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .code-block code {
     flex: 1;
-    font-size: 13px;
+    font-size: 12px;
     line-height: 1.4;
     color: #333;
-    white-space: nowrap;
-    overflow-x: auto;
-    padding-right: 10px;
-    min-width: 0;
+    word-break: break-all;
+    overflow-wrap: break-word;
+    white-space: normal;
+    padding-right: 5px;
+    max-width: calc(100% - 28px);
 }
 
 .copy-btn {
