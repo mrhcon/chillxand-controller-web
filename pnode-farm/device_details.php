@@ -68,69 +68,10 @@ try {
     logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_details_access_failed', $error);
 }
 
-// Pagination for user interaction logs
-$user_logs_page = isset($_GET['user_logs_page']) ? (int)$_GET['user_logs_page'] : 1;
-$user_logs_limit = isset($_GET['user_logs_limit']) ? (int)$_GET['user_logs_limit'] : 10;
-$user_logs_offset = ($user_logs_page - 1) * $user_logs_limit;
-
 // Pagination for device status logs
 $device_logs_page = isset($_GET['device_logs_page']) ? (int)$_GET['device_logs_page'] : 1;
 $device_logs_limit = isset($_GET['device_logs_limit']) ? (int)$_GET['device_logs_limit'] : 10;
 $device_logs_offset = ($device_logs_page - 1) * $device_logs_limit;
-
-// Fetch total user interaction log count (ALL interactions, not just device-specific)
-try {
-    $count_sql = "
-        SELECT COUNT(*) 
-        FROM user_interactions ui
-        WHERE ui.user_id = :user_id
-    ";
-    
-    if (!$_SESSION['admin']) {
-        // For non-admin users, only show their own interactions
-        $stmt = $pdo->prepare($count_sql);
-        $stmt->bindValue(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
-    } else {
-        // For admin users, show all interactions
-        $count_sql = "SELECT COUNT(*) FROM user_interactions ui";
-        $stmt = $pdo->prepare($count_sql);
-    }
-    
-    $stmt->execute();
-    $total_user_logs = $stmt->fetchColumn();
-    $total_user_pages = ceil($total_user_logs / $user_logs_limit);
-} catch (PDOException $e) {
-    $error = "Error fetching user log count: " . $e->getMessage();
-    error_log("PDOException in user log count: " . $e->getMessage());
-    logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_logs_count_failed', $error);
-}
-
-// Fetch paginated user interaction logs (ALL actions)
-try {
-    $sql = "
-        SELECT ui.action, ui.timestamp, ui.details, ui.username
-        FROM user_interactions ui
-    ";
-    
-    if (!$_SESSION['admin']) {
-        $sql .= " WHERE ui.user_id = :user_id";
-    }
-    
-    $sql .= " ORDER BY ui.timestamp DESC LIMIT :limit OFFSET :offset";
-
-    $stmt = $pdo->prepare($sql);
-    $stmt->bindValue(':limit', (int)$user_logs_limit, PDO::PARAM_INT);
-    $stmt->bindValue(':offset', (int)$user_logs_offset, PDO::PARAM_INT);
-    if (!$_SESSION['admin']) {
-        $stmt->bindValue(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
-    }
-    $stmt->execute();
-    $user_logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
-} catch (PDOException $e) {
-    $error = "Error fetching user logs: " . $e->getMessage();
-    error_log("PDOException in user log fetch: " . $e->getMessage());
-    logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_logs_fetch_failed', $error);
-}
 
 // Fetch total device status log count
 try {
@@ -145,7 +86,7 @@ try {
     error_log("PDOException in device status log count: " . $e->getMessage());
 }
 
-// Fetch paginated device status logs - REMOVE NODE_VERSION
+// Fetch paginated device status logs
 try {
     $sql = "
         SELECT status, check_time, response_time, check_method, error_message, consecutive_failures,
@@ -180,115 +121,6 @@ try {
     <link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon-16x16.png">    
     <link rel="stylesheet" href="style.css">
-    <style>
-        .summary-container { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; background: #f9f9f9; border-radius: 5px; }
-        .device-info, .logs { margin-bottom: 25px; }
-        .log-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        .log-table th, .log-table td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; }
-        .log-table th { background-color: #f8f9fa; font-weight: bold; }
-        .pagination { margin: 15px 0; display: flex; align-items: center; gap: 10px; }
-        .pagination a, .pagination select { padding: 5px 10px; text-decoration: none; border: 1px solid #ddd; border-radius: 3px; }
-        .pagination a:hover { background-color: #f8f9fa; }
-        .pagination a.disabled { color: #ccc; pointer-events: none; }
-        .status-online { color: #28a745; font-weight: bold; }
-        .status-offline { color: #dc3545; font-weight: bold; }
-        .status-error { color: #ffc107; font-weight: bold; }
-        .health-pass { color: #28a745; }
-        .health-fail { color: #dc3545; }
-        .atlas-yes { color: #28a745; }
-        .atlas-no { color: #dc3545; }
-        .service-active { color: #28a745; }
-        .service-inactive { color: #dc3545; }
-        .metrics { font-size: 11px; color: #666; }
-        .error-msg { color: #dc3545; font-size: 11px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
-        .tab-buttons { margin-bottom: 15px; }
-        .tab-button { padding: 8px 16px; margin-right: 5px; border: 1px solid #ddd; background: #f8f9fa; cursor: pointer; border-radius: 3px 3px 0 0; }
-        .tab-button.active { background: #007bff; color: white; border-bottom: 1px solid #007bff; }
-        /* REMOVED TAB CONTENT HIDING - Show all content now */
-        .tab-content { display: block !important; }
-        .tab-content.active { display: block !important; }
-        .version-info { font-family: 'Courier New', monospace; font-size: 11px; }
-        
-        /* Fix for status button text visibility - FORCE TEXT TO SHOW */
-        .status-btn {
-            display: inline-block !important;
-            padding: 4px 8px !important;
-            border-radius: 3px !important;
-            font-size: 11px !important;
-            font-weight: bold !important;
-            color: white !important;
-            text-decoration: none !important;
-            border: none !important;
-            min-width: 60px !important;
-            text-align: center !important;
-            line-height: 1.2 !important;
-        }
-        
-        .status-btn.status-online { 
-            background-color: #28a745 !important; 
-            color: white !important; 
-        }
-        
-        .status-btn.status-offline { 
-            background-color: #dc3545 !important; 
-            color: white !important; 
-        }
-        
-        .status-btn.status-error,
-        .status-btn.status-unknown { 
-            background-color: #ffc107 !important; 
-            color: #212529 !important; 
-            font-weight: bold !important;
-        }
-        
-        .status-btn.status-not-initialized { 
-            background-color: #6c757d !important; 
-            color: white !important; 
-        }
-        
-        .status-btn.status-healthy { 
-            background-color: #28a745 !important; 
-            color: white !important; 
-        }
-        
-        .status-btn.status-online-issues { 
-            background-color: #ffc107 !important; 
-            color: #212529 !important; 
-            font-weight: bold !important;
-        }
-        
-        /* FORCE text visibility on ALL status indicators regardless of inline styles */
-        span[class*="status-btn"],
-        .status-btn[style],
-        .status-btn * {
-            color: inherit !important;
-            font-weight: bold !important;
-            text-shadow: none !important;
-        }
-        
-        /* Fix for health status indicators */
-        .health-status-indicator {
-            display: inline-block !important;
-            padding: 2px 8px !important;
-            border-radius: 3px !important;
-            font-size: 10px !important;
-            font-weight: bold !important;
-            color: white !important;
-            min-width: 40px !important;
-            text-align: center !important;
-            line-height: 1.2 !important;
-        }
-        
-        .health-status-indicator.status-online { 
-            background-color: #28a745 !important; 
-            color: white !important;
-        }
-        
-        .health-status-indicator.status-offline { 
-            background-color: #dc3545 !important; 
-            color: white !important;
-        }
-    </style>
 </head>
 <body>
     <div class="console-container">
@@ -307,7 +139,6 @@ try {
                 <img src="images/logo.png">
                 <ul>
                     <li><button class="menu-button" onclick="window.location.href='user_dashboard.php'">Dashboard</button></li>
-                    <li><button class="menu-button active" onclick="window.location.href='device_logs.php'">Device Logs</button></li>
                     <?php if ($_SESSION['admin']): ?>
                         <li class="admin-section">
                             <strong>Admin</strong>
@@ -424,176 +255,127 @@ try {
                     </div>
                     <?php endif; ?>
 
-                    <!-- Tabbed Logs Section -->
+                    <!-- Device Status Logs -->
                     <div class="logs">
-                        <h3>Logs</h3>
-                        <div class="tab-buttons">
-                            <button class="tab-button active" onclick="showTab('device-status')">Device Status Logs (<?php echo $total_device_logs; ?>)</button>
-                            <button class="tab-button" onclick="showTab('user-actions')">All User Actions (<?php echo $total_user_logs; ?>)</button>
-                        </div>
-
-                        <!-- Device Status Logs Tab (Now First/Default) -->
-                        <div id="device-status" class="tab-content active">
-                            <?php if (empty($device_status_logs)): ?>
-                                <p>No device status logs available.</p>
-                            <?php else: ?>
-                                <table class="log-table">
-                                    <thead>
+                        <h3>Device Status Logs (<?php echo $total_device_logs; ?>)</h3>
+                        <?php if (empty($device_status_logs)): ?>
+                            <p>No device status logs available.</p>
+                        <?php else: ?>
+                            <table class="log-table">
+                                <thead>
+                                    <tr>
+                                        <th>Status</th>
+                                        <th>Check Time</th>
+                                        <th>Response</th>
+                                        <th>Method</th>
+                                        <th>Health</th>
+                                        <th>Atlas</th>
+                                        <th>Services</th>
+                                        <th>System Metrics</th>
+                                        <th>Versions</th>
+                                        <th>Errors</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($device_status_logs as $log): ?>
                                         <tr>
-                                            <th>Status</th>
-                                            <th>Check Time</th>
-                                            <th>Response</th>
-                                            <th>Method</th>
-                                            <th>Health</th>
-                                            <th>Atlas</th>
-                                            <th>Services</th>
-                                            <th>System Metrics</th>
-                                            <th>Versions</th>
-                                            <th>Errors</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php foreach ($device_status_logs as $log): ?>
-                                            <tr>
-                                                <td>
-                                                    <span class="status-<?php echo strtolower($log['status']); ?>">
-                                                        <?php echo htmlspecialchars($log['status']); ?>
+                                            <td>
+                                                <span class="status-<?php echo strtolower($log['status']); ?>">
+                                                    <?php echo htmlspecialchars($log['status']); ?>
+                                                </span>
+                                                <?php if ($log['consecutive_failures'] > 0): ?>
+                                                    <br><small style="color: #dc3545;">Fails: <?php echo $log['consecutive_failures']; ?></small>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td><?php echo htmlspecialchars($log['check_time']); ?></td>
+                                            <td>
+                                                <?php if ($log['response_time']): ?>
+                                                    <?php echo round($log['response_time'] * 1000, 1); ?>ms
+                                                <?php else: ?>
+                                                    N/A
+                                                <?php endif; ?>
+                                            </td>
+                                            <td><?php echo htmlspecialchars($log['check_method'] ?? 'N/A'); ?></td>
+                                            <td>
+                                                <?php if ($log['health_status']): ?>
+                                                    <span class="health-<?php echo $log['health_status']; ?>"><?php echo ucfirst($log['health_status']); ?></span>
+                                                <?php else: ?>
+                                                    N/A
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <?php if (isset($log['atlas_registered'])): ?>
+                                                    <span class="atlas-<?php echo $log['atlas_registered'] ? 'yes' : 'no'; ?>"><?php echo $log['atlas_registered'] ? 'Yes' : 'No'; ?></span>
+                                                <?php else: ?>
+                                                    N/A
+                                                <?php endif; ?>
+                                            </td>
+                                            <td class="metrics">
+                                                <?php 
+                                                $services = [];
+                                                if ($log['pod_status']) $services[] = 'Pod: <span class="service-' . $log['pod_status'] . '">' . ucfirst($log['pod_status']) . '</span>';
+                                                if ($log['xandminer_status']) $services[] = 'XM: <span class="service-' . $log['xandminer_status'] . '">' . ucfirst($log['xandminer_status']) . '</span>';
+                                                if ($log['xandminerd_status']) $services[] = 'XMD: <span class="service-' . $log['xandminerd_status'] . '">' . ucfirst($log['xandminerd_status']) . '</span>';
+                                                echo $services ? implode('<br>', $services) : 'N/A';
+                                                ?>
+                                            </td>
+                                            <td class="metrics">
+                                                <?php 
+                                                $metrics = [];
+                                                if ($log['cpu_load_avg'] !== null) $metrics[] = 'CPU: ' . number_format($log['cpu_load_avg'], 2);
+                                                if ($log['memory_percent'] !== null) $metrics[] = 'Mem: ' . number_format($log['memory_percent'], 1) . '%';
+                                                if ($log['server_hostname']) $metrics[] = 'Host: ' . htmlspecialchars($log['server_hostname']);
+                                                echo $metrics ? implode('<br>', $metrics) : 'N/A';
+                                                ?>
+                                            </td>
+                                            <td class="version-info">
+                                                <?php 
+                                                $versions = [];
+                                                if ($log['chillxand_version']) $versions[] = 'CX: ' . htmlspecialchars($log['chillxand_version']);
+                                                if ($log['pod_version']) $versions[] = 'Pod: ' . htmlspecialchars($log['pod_version']);
+                                                if ($log['xandminer_version']) $versions[] = 'XM: ' . htmlspecialchars($log['xandminer_version']);
+                                                if ($log['xandminerd_version']) $versions[] = 'XMD: ' . htmlspecialchars($log['xandminerd_version']);
+                                                echo $versions ? implode('<br>', $versions) : 'N/A';
+                                                ?>
+                                            </td>
+                                            <td>
+                                                <?php if ($log['error_message']): ?>
+                                                    <span class="error-msg" title="<?php echo htmlspecialchars($log['error_message']); ?>">
+                                                        <?php echo htmlspecialchars(strlen($log['error_message']) > 50 ? substr($log['error_message'], 0, 50) . '...' : $log['error_message']); ?>
                                                     </span>
-                                                    <?php if ($log['consecutive_failures'] > 0): ?>
-                                                        <br><small style="color: #dc3545;">Fails: <?php echo $log['consecutive_failures']; ?></small>
-                                                    <?php endif; ?>
-                                                </td>
-                                                <td><?php echo htmlspecialchars($log['check_time']); ?></td>
-                                                <td>
-                                                    <?php if ($log['response_time']): ?>
-                                                        <?php echo round($log['response_time'] * 1000, 1); ?>ms
-                                                    <?php else: ?>
-                                                        N/A
-                                                    <?php endif; ?>
-                                                </td>
-                                                <td><?php echo htmlspecialchars($log['check_method'] ?? 'N/A'); ?></td>
-                                                <td>
-                                                    <?php if ($log['health_status']): ?>
-                                                        <span class="health-<?php echo $log['health_status']; ?>"><?php echo ucfirst($log['health_status']); ?></span>
-                                                    <?php else: ?>
-                                                        N/A
-                                                    <?php endif; ?>
-                                                </td>
-                                                <td>
-                                                    <?php if (isset($log['atlas_registered'])): ?>
-                                                        <span class="atlas-<?php echo $log['atlas_registered'] ? 'yes' : 'no'; ?>"><?php echo $log['atlas_registered'] ? 'Yes' : 'No'; ?></span>
-                                                    <?php else: ?>
-                                                        N/A
-                                                    <?php endif; ?>
-                                                </td>
-                                                <td class="metrics">
-                                                    <?php 
-                                                    $services = [];
-                                                    if ($log['pod_status']) $services[] = 'Pod: <span class="service-' . $log['pod_status'] . '">' . ucfirst($log['pod_status']) . '</span>';
-                                                    if ($log['xandminer_status']) $services[] = 'XM: <span class="service-' . $log['xandminer_status'] . '">' . ucfirst($log['xandminer_status']) . '</span>';
-                                                    if ($log['xandminerd_status']) $services[] = 'XMD: <span class="service-' . $log['xandminerd_status'] . '">' . ucfirst($log['xandminerd_status']) . '</span>';
-                                                    echo $services ? implode('<br>', $services) : 'N/A';
-                                                    ?>
-                                                </td>
-                                                <td class="metrics">
-                                                    <?php 
-                                                    $metrics = [];
-                                                    if ($log['cpu_load_avg'] !== null) $metrics[] = 'CPU: ' . number_format($log['cpu_load_avg'], 2);
-                                                    if ($log['memory_percent'] !== null) $metrics[] = 'Mem: ' . number_format($log['memory_percent'], 1) . '%';
-                                                    if ($log['server_hostname']) $metrics[] = 'Host: ' . htmlspecialchars($log['server_hostname']);
-                                                    echo $metrics ? implode('<br>', $metrics) : 'N/A';
-                                                    ?>
-                                                </td>
-                                                <td class="version-info">
-                                                    <?php 
-                                                    $versions = [];
-                                                    if ($log['chillxand_version']) $versions[] = 'CX: ' . htmlspecialchars($log['chillxand_version']);
-                                                    if ($log['pod_version']) $versions[] = 'Pod: ' . htmlspecialchars($log['pod_version']);
-                                                    if ($log['xandminer_version']) $versions[] = 'XM: ' . htmlspecialchars($log['xandminer_version']);
-                                                    if ($log['xandminerd_version']) $versions[] = 'XMD: ' . htmlspecialchars($log['xandminerd_version']);
-                                                    echo $versions ? implode('<br>', $versions) : 'N/A';
-                                                    ?>
-                                                </td>
-                                                <td>
-                                                    <?php if ($log['error_message']): ?>
-                                                        <span class="error-msg" title="<?php echo htmlspecialchars($log['error_message']); ?>">
-                                                            <?php echo htmlspecialchars(strlen($log['error_message']) > 50 ? substr($log['error_message'], 0, 50) . '...' : $log['error_message']); ?>
-                                                        </span>
-                                                    <?php else: ?>
-                                                        None
-                                                    <?php endif; ?>
-                                                </td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                                <!-- Device Status Logs Pagination -->
-                                <?php if ($total_device_pages > 1): ?>
-                                    <div class="pagination">
-                                        <?php if ($device_logs_page > 1): ?>
-                                            <a href="?device_id=<?php echo $device_id; ?>&user_logs_page=<?php echo $user_logs_page; ?>&user_logs_limit=<?php echo $user_logs_limit; ?>&device_logs_page=<?php echo $total_device_pages; ?>&device_logs_limit=<?php echo $device_logs_limit; ?>">Last</a>
-                                        <?php endif; ?>
-                                        <select onchange="window.location.href='?device_id=<?php echo $device_id; ?>&user_logs_page=<?php echo $user_logs_page; ?>&user_logs_limit=<?php echo $user_logs_limit; ?>&device_logs_page=1&device_logs_limit=' + this.value">
-                                            <?php foreach ([5, 10, 20, 50] as $l): ?>
-                                                <option value="<?php echo $l; ?>" <?php echo $l === $device_logs_limit ? 'selected' : ''; ?>><?php echo $l; ?></option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    </div>
-                                <?php endif; ?>
-                            <?php endif; ?>
-                        </div>
-
-                        <!-- User Actions Tab (Now Second) -->
-                        <div id="user-actions" class="tab-content">
-                            <?php if (empty($user_logs)): ?>
-                                <p>No user action logs available.</p>
-                            <?php else: ?>
-                                <table class="log-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Action</th>
-                                            <th>Timestamp</th>
-                                            <th>User</th>
-                                            <th>Details</th>
+                                                <?php else: ?>
+                                                    None
+                                                <?php endif; ?>
+                                            </td>
                                         </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php foreach ($user_logs as $log): ?>
-                                            <tr>
-                                                <td><?php echo htmlspecialchars($log['action']); ?></td>
-                                                <td><?php echo htmlspecialchars($log['timestamp']); ?></td>
-                                                <td><?php echo htmlspecialchars($log['username']); ?></td>
-                                                <td><?php echo htmlspecialchars($log['details'] ?? 'N/A'); ?></td>
-                                            </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                            <!-- Device Status Logs Pagination -->
+                            <?php if ($total_device_pages > 1): ?>
+                                <div class="pagination">
+                                    <?php if ($device_logs_page > 1): ?>
+                                        <a href="?device_id=<?php echo $device_id; ?>&device_logs_page=1&device_logs_limit=<?php echo $device_logs_limit; ?>">First</a>
+                                        <a href="?device_id=<?php echo $device_id; ?>&device_logs_page=<?php echo $device_logs_page - 1; ?>&device_logs_limit=<?php echo $device_logs_limit; ?>">Previous</a>
+                                    <?php endif; ?>
+                                    <select onchange="window.location.href='?device_id=<?php echo $device_id; ?>&device_logs_page=' + this.value + '&device_logs_limit=<?php echo $device_logs_limit; ?>'">
+                                        <?php for ($i = 1; $i <= $total_device_pages; $i++): ?>
+                                            <option value="<?php echo $i; ?>" <?php echo $i === $device_logs_page ? 'selected' : ''; ?>><?php echo $i; ?></option>
+                                        <?php endfor; ?>
+                                    </select>
+                                    <span>of <?php echo $total_device_pages; ?></span>
+                                    <?php if ($device_logs_page < $total_device_pages): ?>
+                                        <a href="?device_id=<?php echo $device_id; ?>&device_logs_page=<?php echo $device_logs_page + 1; ?>&device_logs_limit=<?php echo $device_logs_limit; ?>">Next</a>
+                                        <a href="?device_id=<?php echo $device_id; ?>&device_logs_page=<?php echo $total_device_pages; ?>&device_logs_limit=<?php echo $device_logs_limit; ?>">Last</a>
+                                    <?php endif; ?>
+                                    <select onchange="window.location.href='?device_id=<?php echo $device_id; ?>&device_logs_page=1&device_logs_limit=' + this.value">
+                                        <?php foreach ([5, 10, 20, 50] as $l): ?>
+                                            <option value="<?php echo $l; ?>" <?php echo $l === $device_logs_limit ? 'selected' : ''; ?>><?php echo $l; ?></option>
                                         <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                                <!-- User Actions Pagination -->
-                                <?php if ($total_user_pages > 1): ?>
-                                    <div class="pagination">
-                                        <?php if ($user_logs_page > 1): ?>
-                                            <a href="?device_id=<?php echo $device_id; ?>&user_logs_page=1&user_logs_limit=<?php echo $user_logs_limit; ?>&device_logs_page=<?php echo $device_logs_page; ?>&device_logs_limit=<?php echo $device_logs_limit; ?>">First</a>
-                                            <a href="?device_id=<?php echo $device_id; ?>&user_logs_page=<?php echo $user_logs_page - 1; ?>&user_logs_limit=<?php echo $user_logs_limit; ?>&device_logs_page=<?php echo $device_logs_page; ?>&device_logs_limit=<?php echo $device_logs_limit; ?>">Previous</a>
-                                        <?php endif; ?>
-                                        <select onchange="window.location.href='?device_id=<?php echo $device_id; ?>&user_logs_page=' + this.value + '&user_logs_limit=<?php echo $user_logs_limit; ?>&device_logs_page=<?php echo $device_logs_page; ?>&device_logs_limit=<?php echo $device_logs_limit; ?>'">
-                                            <?php for ($i = 1; $i <= $total_user_pages; $i++): ?>
-                                                <option value="<?php echo $i; ?>" <?php echo $i === $user_logs_page ? 'selected' : ''; ?>><?php echo $i; ?></option>
-                                            <?php endfor; ?>
-                                        </select>
-                                        <span>of <?php echo $total_user_pages; ?></span>
-                                        <?php if ($user_logs_page < $total_user_pages): ?>
-                                            <a href="?device_id=<?php echo $device_id; ?>&user_logs_page=<?php echo $user_logs_page + 1; ?>&user_logs_limit=<?php echo $user_logs_limit; ?>&device_logs_page=<?php echo $device_logs_page; ?>&device_logs_limit=<?php echo $device_logs_limit; ?>">Next</a>
-                                            <a href="?device_id=<?php echo $device_id; ?>&user_logs_page=<?php echo $total_user_pages; ?>&user_logs_limit=<?php echo $user_logs_limit; ?>&device_logs_page=<?php echo $device_logs_page; ?>&device_logs_limit=<?php echo $device_logs_limit; ?>">Last</a>
-                                        <?php endif; ?>
-                                        <select onchange="window.location.href='?device_id=<?php echo $device_id; ?>&user_logs_page=1&user_logs_limit=' + this.value + '&device_logs_page=<?php echo $device_logs_page; ?>&device_logs_limit=<?php echo $device_logs_limit; ?>'">
-                                            <?php foreach ([5, 10, 20, 50] as $l): ?>
-                                                <option value="<?php echo $l; ?>" <?php echo $l === $user_logs_limit ? 'selected' : ''; ?>><?php echo $l; ?></option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    </div>
-                                <?php endif; ?>
+                                    </select>
+                                </div>
                             <?php endif; ?>
-                        </div>
+                        <?php endif; ?>
                     </div>
                 <?php endif; ?>
             </div>

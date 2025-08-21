@@ -2261,4 +2261,108 @@ details summary {
         gap: 20px;
         padding: 20px;
     }
+
+    /* Device Details*/
+    .summary-container { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; background: #f9f9f9; border-radius: 5px; }
+    .device-info, .logs { margin-bottom: 25px; }
+    .log-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    .log-table th, .log-table td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; }
+    .log-table th { background-color: #f8f9fa; font-weight: bold; }
+    .pagination { margin: 15px 0; display: flex; align-items: center; gap: 10px; }
+    .pagination a, .pagination select { padding: 5px 10px; text-decoration: none; border: 1px solid #ddd; border-radius: 3px; }
+    .pagination a:hover { background-color: #f8f9fa; }
+    .pagination a.disabled { color: #ccc; pointer-events: none; }
+    .status-online { color: #28a745; font-weight: bold; }
+    .status-offline { color: #dc3545; font-weight: bold; }
+    .status-error { color: #ffc107; font-weight: bold; }
+    .health-pass { color: #28a745; }
+    .health-fail { color: #dc3545; }
+    .atlas-yes { color: #28a745; }
+    .atlas-no { color: #dc3545; }
+    .service-active { color: #28a745; }
+    .service-inactive { color: #dc3545; }
+    .metrics { font-size: 11px; color: #666; }
+    .error-msg { color: #dc3545; font-size: 11px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
+    .version-info { font-family: 'Courier New', monospace; font-size: 11px; }
+    
+    /* Fix for status button text visibility - FORCE TEXT TO SHOW */
+    .status-btn {
+        display: inline-block !important;
+        padding: 4px 8px !important;
+        border-radius: 3px !important;
+        font-size: 11px !important;
+        font-weight: bold !important;
+        color: white !important;
+        text-decoration: none !important;
+        border: none !important;
+        min-width: 60px !important;
+        text-align: center !important;
+        line-height: 1.2 !important;
+    }
+    
+    .status-btn.status-online { 
+        background-color: #28a745 !important; 
+        color: white !important; 
+    }
+    
+    .status-btn.status-offline { 
+        background-color: #dc3545 !important; 
+        color: white !important; 
+    }
+    
+    .status-btn.status-error,
+    .status-btn.status-unknown { 
+        background-color: #ffc107 !important; 
+        color: #212529 !important; 
+        font-weight: bold !important;
+    }
+    
+    .status-btn.status-not-initialized { 
+        background-color: #6c757d !important; 
+        color: white !important; 
+    }
+    
+    .status-btn.status-healthy { 
+        background-color: #28a745 !important; 
+        color: white !important; 
+    }
+    
+    .status-btn.status-online-issues { 
+        background-color: #ffc107 !important; 
+        color: #212529 !important; 
+        font-weight: bold !important;
+    }
+    
+    /* FORCE text visibility on ALL status indicators regardless of inline styles */
+    span[class*="status-btn"],
+    .status-btn[style],
+    .status-btn * {
+        color: inherit !important;
+        font-weight: bold !important;
+        text-shadow: none !important;
+    }
+    
+    /* Fix for health status indicators */
+    .health-status-indicator {
+        display: inline-block !important;
+        padding: 2px 8px !important;
+        border-radius: 3px !important;
+        font-size: 10px !important;
+        font-weight: bold !important;
+        color: white !important;
+        min-width: 40px !important;
+        text-align: center !important;
+        line-height: 1.2 !important;
+    }
+    
+    .health-status-indicator.status-online { 
+        background-color: #28a745 !important; 
+        color: white !important;
+    }
+    
+    .health-status-indicator.status-offline { 
+        background-color: #dc3545 !important; 
+        color: white !important;
+    }
 }
+
