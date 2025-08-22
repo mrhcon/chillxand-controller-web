@@ -414,7 +414,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                             <!-- Managed pNode Instructions -->
                             <div class="installation-card">
                                 <div class="installation-card-header">
-                                    <h4>🔧 Self-Hosted pNode Setup</h4>
+                                    <h4>🔧 Self-Hosted pNode</h4>
                                     <span class="installation-badge">You Provide Server</span>
                                 </div>
                                 <div class="installation-card-content">
@@ -524,7 +524,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                     </div>
 
                                     <div class="managed-cta">
-                                        <p><strong>Interested in our fully managed solution?</strong></p>
+                                        <p><strong>Interested in our fully managed pNode?</strong></p>
                                         <button class="cta-button" onclick="showManagedContactForm()">
                                             Get Details
                                         </button>
