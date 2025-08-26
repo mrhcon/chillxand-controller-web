@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChillXand pNode Farm - Professional pNode Management Service</title>
+    <meta name="description" content="Professional pNode (Provider Node) management service for Xandeum's decentralized storage network. We manage your storage provider nodes so you don't have to.">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            color: #2d3748;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo img {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+        }
+
+        .mascot-img {
+            width: 40px;
+            height: 40px;
+            margin-left: 8px;
+        }
+
+        .logo h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1a202c;
+        }
+
+        .nav {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav a {
+            text-decoration: none;
+            color: #4a5568;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .nav a:hover {
+            color: #667eea;
+        }
+
+        .cta-button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 4rem 0;
+            text-align: center;
+            color: white;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #fff, #e2e8f0);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .hero-button {
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .hero-button.primary {
+            background: white;
+            color: #667eea;
+        }
+
+        .hero-button.primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(255, 255, 255, 0.3);
+        }
+
+        .hero-button.secondary {
+            background: transparent;
+            color: white;
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .hero-button.secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Main Content */
+        .main-content {
+            background: white;
+            margin-top: -2rem;
+            border-radius: 24px 24px 0 0;
+            position: relative;
+            z-index: 10;
+        }
+
+        .section {
+            padding: 4rem 0;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #1a202c;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            font-size: 1.125rem;
+            color: #718096;
+            margin-bottom: 3rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Service Cards */
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .service-card {
+            background: #f7fafc;
+            border-radius: 16px;
+            padding: 2rem;
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .service-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            border-color: #667eea;
+        }
+
+        .service-card.premium {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+        }
+
+        .service-card.premium .service-title,
+        .service-card.premium .feature-title {
+            color: white;
+        }
+
+        .service-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .service-card.premium::before {
+            background: linear-gradient(135deg, #fff, #e2e8f0);
+        }
+
+        .service-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .service-icon {
+            font-size: 2rem;
+        }
+
+        .service-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1a202c;
+        }
+
+        .service-badge {
+            background: #667eea;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-left: auto;
+        }
+
+        .service-card.premium .service-badge {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .service-description {
+            margin-bottom: 2rem;
+            font-size: 1.125rem;
+            opacity: 0.8;
+        }
+
+        .features-list {
+            margin-bottom: 2rem;
+        }
+
+        .feature-title {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #2d3748;
+        }
+
+        .feature {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+            padding: 0.5rem 0;
+        }
+
+        .feature-icon {
+            color: #48bb78;
+            font-weight: bold;
+            margin-top: 0.125rem;
+        }
+
+        .service-card.premium .feature-icon {
+            color: #90cdf4;
+        }
+
+        .pricing-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .service-card.premium .pricing-section {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .pricing-title {
+            font-weight: 700;
+            margin-bottom: 1rem;
+            font-size: 1.125rem;
+        }
+
+        .pricing-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .price {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .service-card.premium .price {
+            color: #90cdf4;
+        }
+
+        .price-coming-soon {
+            color: #ed8936;
+            font-style: italic;
+        }
+
+        .service-action {
+            text-align: center;
+        }
+
+        .service-button {
+            display: inline-block;
+            padding: 0.875rem 2rem;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .service-button:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+
+        .service-card.premium .service-button {
+            background: white;
+            color: #667eea;
+        }
+
+        .service-card.premium .service-button:hover {
+            background: #f7fafc;
+        }
+
+        /* Features Section */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-card {
+            text-align: center;
+            padding: 2rem;
+            background: #f7fafc;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .feature-card-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-card-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #1a202c;
+        }
+
+        /* Stats Section */
+        .stats-section {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            text-align: center;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+        }
+
+        .stat-item {
+            padding: 1rem;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: white;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            opacity: 0.8;
+        }
+
+        /* Footer */
+        .footer {
+            background: #1a202c;
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .footer-links a {
+            color: #a0aec0;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: white;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .services-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .service-card {
+                padding: 1.5rem;
+            }
+
+            .hero-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .nav {
+                display: none;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 0.8s ease forwards;
+        }
+
+        /* Snow animation from original */
+        #snow {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <img src="./pnode-farm/images/logo.png" alt="ChillXand Mascot" class="mascot-img">
+                <h1>ChillXand</h1>
+            </div>
+            <nav class="nav">
+                <a href="#services">Services</a>
+                <a href="#features">Features</a>
+                <a href="https://control.chillxand.com/pnode-farm/user_dashboard.php">Login</a>
+            </nav>
+            <a href="#contact" class="cta-button">Get Started</a>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h1 class="fade-in-up">Professional pNode Management Service</h1>
+            <p class="fade-in-up">You own the pNode license, we manage the technical operations. Capitalize on Xandeum STOINC without the complexity.</p>
+            <div class="hero-buttons fade-in-up">
+                <a href="#services" class="hero-button primary">View Services</a>
+                <a href="#features" class="hero-button secondary">Learn More</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Services Section -->
+        <section id="services" class="section">
+            <div class="container">
+                <h2 class="section-title">Choose Your pNode Management Plan</h2>
+                <p class="section-subtitle">ChillXand is the “set it and forget it” solution for managing pNodes. Our name says it all: you chill out, we handle the stress.  We position ourselves as the trusted partner that removes technical headaches, maximizes uptime, and ensures pNode owners earn without worry.</p>
+
+                <div class="services-grid">
+                    <!-- Self-Hosted Service -->
+                    <div class="service-card">
+                        <div class="service-header">
+                            <span class="service-icon">🔧</span>
+                            <h3 class="service-title">Self-Hosted pNode</h3>
+                            <span class="service-badge">You Provide Server</span>
+                        </div>
+                        <p class="service-description">You provide the server and own the pNode license, we take care of all the technical work.</p>
+
+                        <div class="features-list">
+                            <div class="feature-title">What You Handle:</div>
+                            <div class="feature">
+                                <span class="feature-icon">•</span>
+                                <span>Provide Ubuntu 24.04 LTS server/VPS</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-icon">•</span>
+                                <span>Handle server connectivity issues</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-icon">•</span>
+                                <span>Manage server/VPS upgrades</span>
+                            </div>
+
+                            <div class="feature-title" style="margin-top: 1.5rem;">What We Handle:</div>
+                            <div class="feature">
+                                <span class="feature-icon">✓</span>
+                                <span>pNode controller installation & setup</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-icon">✓</span>
+                                <span>24/7 pNode monitoring & support</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-icon">✓</span>
+                                <span>Ongoing maintenance & updates</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-icon">✓</span>
+                                <span>Performance optimization & tuning</span>
+                            </div>
+                        </div>
+
+                        <div class="pricing-section">
+                            <div class="pricing-title">Pricing</div>
+                            <div class="pricing-item">
+                                <strong>DevNet:</strong>
+                                <span class="price">3,000 Xand/month</span>
+                            </div>
+                            <div class="pricing-item">
+                                <strong>MainNet:</strong>
+                                <span class="price-coming-soon">Coming Soon</span>
+                            </div>
+                        </div>
+
+                        <div class="service-action">
+                            <a href="#contact" class="service-button">Get Started</a>
+                        </div>
+                    </div>
+
+                    <!-- Fully Managed Service -->
+                    <div class="service-card premium">
+                        <div class="service-header">
+                            <span class="service-icon">🌟</span>
+                            <h3 class="service-title">Fully Managed pNode</h3>
+                            <span class="service-badge">We Handle Everything</span>
+                        </div>
+                        <p class="service-description">Complete hands-off solution. You own the license, we provide and manage everything - no technical headaches for you.</p>
+
+                        <div class="features-list">
+                            <div class="feature-title">Complete Solution Includes:</div>
+                            <div class="feature">
+                                <span class="feature-icon">✓</span>
+                                <span>Complete server setup & hosting</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-icon">✓</span>
+                                <span>Server connectivity monitoring</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-icon">✓</span>
+                                <span>All server upgrades & maintenance</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-icon">✓</span>
+                                <span>ChillXand controller installation</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-icon">✓</span>
+                                <span>24/7 monitoring & support</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-icon">✓</span>
+                                <span>Performance optimization & tuning</span>
+                            </div>
+                            <div class="feature">
+                                <span class="feature-icon">✓</span>
+                                <span>Priority technical support</span>
+                            </div>
+                        </div>
+
+                        <div class="pricing-section">
+                            <div class="pricing-title">Pricing</div>
+                            <div class="pricing-item">
+                                <strong>DevNet:</strong>
+                                <span class="price">9,000 Xand/month</span>
+                            </div>
+                            <div class="pricing-item">
+                                <strong>MainNet:</strong>
+                                <span class="price-coming-soon">Coming Soon</span>
+                            </div>
+                        </div>
+
+                        <div class="service-action">
+                            <a href="#contact" class="service-button">Contact Us</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section id="features" class="section">
+            <div class="container">
+                <h2 class="section-title">Why Choose ChillXand pNode Management?</h2>
+                <p class="section-subtitle">Don’t waste hours babysitting your PNode.  With ChillXand, you relax—we monitor, update, and optimize.  Whether you run your own VPS or want full hands-off management, we’ve got the plan for you.  Chill Out. We’ve Got it..</p>
+
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-card-icon">📊</div>
+                        <h3 class="feature-card-title">Real-Time Monitoring</h3>
+                        <p>Comprehensive monitoring dashboard with live status updates, performance metrics, and instant alerts for any Provider Node issues.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-card-icon">🔧</div>
+                        <h3 class="feature-card-title">Automated Updates</h3>
+                        <p>Keep your Provider Nodes running the latest versions with automated updates and security patches applied seamlessly.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-card-icon">⚡</div>
+                        <h3 class="feature-card-title">Optimized Performance</h3>
+                        <p>Fine-tuned configurations and continuous optimization to ensure maximum performance and efficiency.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-card-icon">🛡️</div>
+                        <h3 class="feature-card-title">24/7 Support</h3>
+                        <p>Round-the-clock monitoring and support to ensure your Provider Nodes stay online and performing at their best.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-card-icon">🌍</div>
+                        <h3 class="feature-card-title">Global Infrastructure</h3>
+                        <p>Distributed across multiple geographic locations for optimal connectivity and reduced latency.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-card-icon">📈</div>
+                        <h3 class="feature-card-title">Detailed Analytics</h3>
+                        <p>In-depth performance analytics and reporting to help you understand and optimize your Provider Node operations.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Stats Section -->
+        <section class="stats-section section">
+            <div class="container">
+                <h2 class="section-title">Trusted pNode Management Service</h2>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-number">99.9%</span>
+                        <span class="stat-label">Uptime Guarantee</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">24/7</span>
+                        <span class="stat-label">Monitoring & Support</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">Global</span>
+                        <span class="stat-label">Infrastructure</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">Expert</span>
+                        <span class="stat-label">Management Team</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="contact" class="section">
+            <div class="container">
+                <h2 class="section-title">Capitalize on Xandeum STOINC Without the Headaches</h2>
+                <p class="section-subtitle">Professional management means no late-night alerts, no technical troubleshooting, no disruption to your personal life. We handle it all.</p>
+
+                <div style="text-align: center; margin-top: 2rem;">
+                    <a href="mailto:contact@chillxand.com" class="cta-button">Contact Us</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-links">
+                <a href="/legal-notice/index.html">Legal Notice</a>
+                <a href="/privacy/index.html">Privacy Policy</a>
+                <a href="mailto:support@chillxand.com">Support</a>
+            </div>
+            <p>&copy; 2025 ChillXand. Independent pNode management service for Xandeum storage provider nodes.</p>
+        </div>
+    </footer>
+
+    <!-- Snow Effect (keeping from original) -->
+    <canvas id="snow"></canvas>
+
+    <script>
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Animation on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // Observe elements for animation
+        document.querySelectorAll('.service-card, .feature-card, .stat-item').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(30px)';
+            el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(el);
+        });
+
+        // Simple snow effect (keeping from original design)
+        const canvas = document.getElementById('snow');
+        const ctx = canvas.getContext('2d');
+
+        // Set canvas size
+        function setCanvasSize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        setCanvasSize();
+        window.addEventListener('resize', setCanvasSize);
+
+        // Snow particles
+        const snowflakes = [];
+        const numberOfSnowflakes = 50;
+
+        for (let i = 0; i < numberOfSnowflakes; i++) {
+            snowflakes.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                radius: Math.random() * 3 + 1,
+                speed: Math.random() * 2 + 0.5,
+                opacity: Math.random() * 0.8 + 0.2
+            });
+        }
+
+        function animateSnow() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            snowflakes.forEach(snowflake => {
+                ctx.beginPath();
+                ctx.arc(snowflake.x, snowflake.y, snowflake.radius, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 255, 255, ${snowflake.opacity})`;
+                ctx.fill();
+
+                snowflake.y += snowflake.speed;
+                snowflake.x += Math.sin(snowflake.y / 100) * 0.5;
+
+                if (snowflake.y > canvas.height) {
+                    snowflake.y = -10;
+                    snowflake.x = Math.random() * canvas.width;
+                }
+            });
+
+            requestAnimationFrame(animateSnow);
+        }
+
+        animateSnow();
+    </script>
+</body>
+</html>
