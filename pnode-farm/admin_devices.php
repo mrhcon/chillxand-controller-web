@@ -363,7 +363,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 <img src="images/logo.png">
                 <ul>
                     <li><button class="menu-button" onclick="window.location.href='user_dashboard.php'">Dashboard</button></li>
-                    <!-- <li><button class="menu-button" onclick="window.location.href='device_logs.php'">Device Logs</button></li> -->
                     <?php if ($_SESSION['admin'] ?? false): ?>
                         <li class="admin-section">
                             <strong>Admin</strong>

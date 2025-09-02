@@ -327,7 +327,6 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
             <div class="menu-column">
                 <ul>
                     <li><button class="menu-button" onclick="window.location.href='user_dashboard.php'">Dashboard</button></li>
-                    <!-- <li><button class="menu-button" onclick="window.location.href='device_logs.php'">Device Logs</button></li> -->
                     <?php if ($_SESSION['admin']): ?>
                         <li class="admin-section">
                             <strong>Admin</strong>
