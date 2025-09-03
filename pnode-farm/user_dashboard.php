@@ -39,39 +39,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             try {
                 echo "<div style='background: #d1ecf1; border: 1px solid #bee5eb; padding: 10px; margin: 10px 0;'>✅ VALIDATION PASSED - CHECKING DUPLICATES</div>";
 
-                // Check for duplicate name system-wide
-                $stmt = $pdo->prepare("SELECT COUNT(*) FROM devices WHERE pnode_name = :pnode_name");
+                $stmt = $pdo->prepare("SELECT COUNT(*) FROM devices WHERE username = :username AND pnode_name = :pnode_name");
+                $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
                 $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
                 $stmt->execute();
                 if ($stmt->fetchColumn() > 0) {
-                    $error = "Device name already registered in the system.";
+                    $error = "Device name already registered.";
                     echo "<div style='background: #f8d7da; border: 1px solid #f5c6cb; padding: 10px; margin: 10px 0;'>❌ DUPLICATE NAME</div>";
                     logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Duplicate device name');
                 } else {
-                    // Check for duplicate IP address system-wide
-                    $stmt = $pdo->prepare("SELECT COUNT(*) FROM devices WHERE pnode_ip = :pnode_ip");
+                    echo "<div style='background: #d4edda; border: 1px solid #c3e6cb; padding: 10px; margin: 10px 0;'>✅ INSERTING DEVICE</div>";
+
+                    // Add device
+                    $stmt = $pdo->prepare("INSERT INTO devices (username, pnode_name, pnode_ip, registration_date) VALUES (:username, :pnode_name, :pnode_ip, NOW())");
+                    $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
+                    $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
                     $stmt->bindValue(':pnode_ip', $pnode_ip, PDO::PARAM_STR);
                     $stmt->execute();
-                    if ($stmt->fetchColumn() > 0) {
-                        $error = "IP address already registered in the system.";
-                        echo "<div style='background: #f8d7da; border: 1px solid #f5c6cb; padding: 10px; margin: 10px 0;'>❌ DUPLICATE IP</div>";
-                        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Duplicate IP address');
-                    } else {
-                        echo "<div style='background: #d4edda; border: 1px solid #c3e6cb; padding: 10px; margin: 10px 0;'>✅ INSERTING DEVICE</div>";
 
-                        // Add device
-                        $stmt = $pdo->prepare("INSERT INTO devices (username, pnode_name, pnode_ip, registration_date) VALUES (:username, :pnode_name, :pnode_ip, NOW())");
-                        $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
-                        $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
-                        $stmt->bindValue(':pnode_ip', $pnode_ip, PDO::PARAM_STR);
-                        $stmt->execute();
+                    echo "<div style='background: #d4edda; border: 1px solid #c3e6cb; padding: 10px; margin: 10px 0;'>✅ DEVICE INSERTED - REDIRECTING</div>";
 
-                        echo "<div style='background: #d4edda; border: 1px solid #c3e6cb; padding: 10px; margin: 10px 0;'>✅ DEVICE INSERTED - REDIRECTING</div>";
-
-                        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_success', "Device: $pnode_name, IP: $pnode_ip");
-                        header("Location: user_dashboard.php");
-                        exit();
-                    }
+                    logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_success', "Device: $pnode_name, IP: $pnode_ip");
+                    header("Location: user_dashboard.php");
+                    exit();
                 }
             } catch (PDOException $e) {
                 $error = "Error adding device: " . $e->getMessage();
@@ -1384,60 +1374,80 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
             // Clear previous errors
             clearEditModalErrors();
 
-            // Get form references
             const form = document.getElementById('editForm');
             const nameField = document.getElementById('edit-pnode-name');
             const ipField = document.getElementById('edit-pnode-ip');
+            const deviceId = document.getElementById('edit-device-id').value;
 
-            // Debug: Check if form elements exist
             if (!form || !nameField || !ipField) {
-                console.error('Edit form elements not found:', { form, nameField, ipField });
                 showEditModalError('Form elements not found. Please refresh the page and try again.');
                 return;
             }
 
-            // Get form values
             const nodeName = nameField.value.trim();
             const ipAddress = ipField.value.trim();
 
-            // Debug log
-            console.log('Edit form validation:', { nodeName, ipAddress });
-
             let hasErrors = false;
 
-            // Validate node name
+            // Client-side validation
             const nameError = validateNodeName(nodeName);
             if (nameError) {
                 showEditModalError(nameError, 'name');
                 hasErrors = true;
             }
 
-            // Validate IP address
             const ipError = validateIPAddress(ipAddress);
             if (ipError) {
                 showEditModalError(ipError, 'ip');
                 hasErrors = true;
             }
 
-            // If no errors, show loading and submit the form
-            if (!hasErrors) {
-                // Update form values with trimmed versions
-                nameField.value = nodeName;
-                ipField.value = ipAddress;
-
-                // Debug: Log form data before submission
-                const formData = new FormData(form);
-                console.log('Edit form data being submitted:');
-                for (let [key, value] of formData.entries()) {
-                    console.log(key + ': ' + value);
-                }
-
-                // Show loading state
-                showModalLoading('editModal', 'editModalLoading');
-
-                // Submit the form
-                form.submit();
+            if (hasErrors) {
+                return;
             }
+
+            // Show loading state
+            showModalLoading('editModal', 'editModalLoading');
+
+            // Server-side validation via AJAX
+            fetch('validate_device.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `action=edit&device_id=${encodeURIComponent(deviceId)}&pnode_name=${encodeURIComponent(nodeName)}&pnode_ip=${encodeURIComponent(ipAddress)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update form values with trimmed versions
+                    nameField.value = nodeName;
+                    ipField.value = ipAddress;
+                    
+                    // Submit the form
+                    form.submit();
+                } else {
+                    // Hide loading state
+                    hideModalLoading('editModal', 'editModalLoading');
+                    
+                    // Show server-side validation errors
+                    if (data.errors) {
+                        if (data.errors.name) {
+                            showEditModalError(data.errors.name, 'name');
+                        }
+                        if (data.errors.ip) {
+                            showEditModalError(data.errors.ip, 'ip');
+                        }
+                    } else if (data.error) {
+                        showEditModalError(data.error);
+                    }
+                }
+            })
+            .catch(error => {
+                hideModalLoading('editModal', 'editModalLoading');
+                showEditModalError('Network error occurred. Please try again.');
+                console.error('Validation error:', error);
+            });
         }
 
         function clearEditModalErrors() {
@@ -1779,32 +1789,65 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
 
             let hasErrors = false;
 
-            // Validate node name
+            // Client-side validation first
             const nameError = validateNodeName(nodeName);
             if (nameError) {
                 showModalError(nameError, 'name');
                 hasErrors = true;
             }
 
-            // Validate IP address
             const ipError = validateIPAddress(ipAddress);
             if (ipError) {
                 showModalError(ipError, 'ip');
                 hasErrors = true;
             }
 
-            // If no errors, submit the form
-            if (!hasErrors) {
-                // Update form values with trimmed versions
-                document.getElementById('add-pnode-name').value = nodeName;
-                document.getElementById('add-pnode-ip').value = ipAddress;
-
-                // Show loading state AFTER setting the values but BEFORE submit
-                showModalLoading('addModal', 'addModalLoading');
-
-                // Submit the form immediately
-                document.getElementById('addForm').submit();
+            if (hasErrors) {
+                return;
             }
+
+            // Show loading state
+            showModalLoading('addModal', 'addModalLoading');
+
+            // Server-side validation via AJAX
+            fetch('validate_device.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `action=add&pnode_name=${encodeURIComponent(nodeName)}&pnode_ip=${encodeURIComponent(ipAddress)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update form values with trimmed versions
+                    document.getElementById('add-pnode-name').value = nodeName;
+                    document.getElementById('add-pnode-ip').value = ipAddress;
+                    
+                    // Submit the form
+                    document.getElementById('addForm').submit();
+                } else {
+                    // Hide loading state
+                    hideModalLoading('addModal', 'addModalLoading');
+                    
+                    // Show server-side validation errors
+                    if (data.errors) {
+                        if (data.errors.name) {
+                            showModalError(data.errors.name, 'name');
+                        }
+                        if (data.errors.ip) {
+                            showModalError(data.errors.ip, 'ip');
+                        }
+                    } else if (data.error) {
+                        showModalError(data.error);
+                    }
+                }
+            })
+            .catch(error => {
+                hideModalLoading('addModal', 'addModalLoading');
+                showModalError('Network error occurred. Please try again.');
+                console.error('Validation error:', error);
+            });
         }
 
         // Prevent multiple modal opens during loading
