@@ -198,8 +198,10 @@ try {
 // Fetch user's devices with enhanced status and order by node name
 try {
     $stmt = $pdo->prepare("
-        SELECT d.id, d.pnode_name, d.pnode_ip, d.location, d.registration_date
+        SELECT d.id, d.pnode_name, d.pnode_ip, d.location, d.registration_date, 
+            d.manage_type_id, d.staking_farm, mt.type_name as management_type_name
         FROM devices d
+        LEFT JOIN management_types mt ON d.manage_type_id = mt.id
         WHERE d.username = ?
         ORDER BY d.pnode_name ASC
     ");
@@ -545,7 +547,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                     IP Address
                                     <span class="sort-indicator"></span>
                                 </th>
-                                <th>Registration Date</th>
+                                <th>Details</th>
                                 <th class="sortable-header" data-sort="connectivity">
                                     Connectivity
                                     <span class="sort-indicator"></span>
@@ -574,7 +576,15 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                             <?php endif; ?>
                                         </div>
                                     </td>
-                                    <td><?php echo htmlspecialchars($device['registration_date']); ?></td>
+                                    <td>
+                                        <div><?php echo htmlspecialchars($device['registration_date']); ?></div>
+                                        <?php if ($device['management_type_name']): ?>
+                                            <div style="color: #6c757d; font-size: 0.85em;">Type: <?php echo htmlspecialchars($device['management_type_name']); ?></div>
+                                        <?php endif; ?>
+                                        <?php if ($device['staking_farm']): ?>
+                                            <div style="color: #28a745; font-size: 0.85em; font-weight: bold;">Staking Farm</div>
+                                        <?php endif; ?>
+                                    </td>
                                     <td id="status-<?php echo $device['id']; ?>">
                                         <span class="status-btn status-<?php echo strtolower(str_replace(' ', '-', $device['status'])); ?>">
                                             <?php echo htmlspecialchars($device['status']); ?>
