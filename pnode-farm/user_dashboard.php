@@ -48,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Duplicate IP address');
                     } else {
                         // Add device with audit trail
-                        $stmt = $pdo->prepare("INSERT INTO devices (username, pnode_name, pnode_ip, created, last_modified_by, created_by) VALUES (:username, :pnode_name, :pnode_ip, NOW(), :modified_by, :created_by)");
+                        $stmt = $pdo->prepare("INSERT INTO devices (username, pnode_name, pnode_ip, created, last_modified, last_modified_by, created_by) VALUES (:username, :pnode_name, :pnode_ip, NOW(), NOW(), :modified_by, :created_by)");
                         $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
                         $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
                         $stmt->bindValue(':pnode_ip', $pnode_ip, PDO::PARAM_STR);
