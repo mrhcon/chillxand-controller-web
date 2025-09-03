@@ -58,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 } else {
                     // Create new user
                     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-                    $stmt = $pdo->prepare("INSERT INTO users (username, email, first_name, last_name, country, password) VALUES (?, ?, ?, ?, ?, ?)");
+                    $stmt = $pdo->prepare("INSERT INTO users (username, email, first_name, last_name, country, password, created, created_by) VALUES (?, ?, ?, ?, ?, ?, NOW(), NULL)");
                     $stmt->execute([$username, $email, $first_name, $last_name, $country, $hashed_password]);
                     
                     // Get the new user's ID
