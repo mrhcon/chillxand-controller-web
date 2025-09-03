@@ -86,7 +86,7 @@ try {
 // Fetch ALL devices (admin only page)
 try {
     $stmt = $pdo->prepare("
-        SELECT d.id, d.pnode_name, d.pnode_ip, d.location, d.registration_date, d.username
+        SELECT d.id, d.pnode_name, d.pnode_ip, d.location, d.registration_date, d.username, d.manage_type_id, d.staking_farm
         FROM devices d
         ORDER BY d.pnode_name ASC
     ");
@@ -201,8 +201,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
     $pnode_name = trim($_POST['pnode_name']);
     $pnode_ip = trim($_POST['pnode_ip']);
     $assign_user = trim($_POST['assign_user'] ?? '');
+    $manage_type_id = $_POST['manage_type_id'] ?? null;
+    $staking_farm = isset($_POST['staking_farm']) ? 1 : 0;
 
-    if (empty($pnode_name) || empty($pnode_ip) || empty($assign_user)) {
+    if (empty($pnode_name) || empty($pnode_ip) || empty($assign_user) || empty($manage_type_id)) {
         $error = "Please fill in all fields.";
         logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Empty fields');
     } elseif (strlen($pnode_name) > 100) {
@@ -237,10 +239,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Duplicate IP address');
                     } else {
                         // Add device with assigned user
-                        $stmt = $pdo->prepare("INSERT INTO devices (username, pnode_name, pnode_ip, registration_date) VALUES (:username, :pnode_name, :pnode_ip, NOW())");
+                        $stmt = $pdo->prepare("INSERT INTO devices (username, pnode_name, pnode_ip, registration_date, manage_type_id, staking_farm) VALUES (:username, :pnode_name, :pnode_ip, NOW(), :manage_type_id, :staking_farm)");
                         $stmt->bindValue(':username', $assign_user, PDO::PARAM_STR);
                         $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
                         $stmt->bindValue(':pnode_ip', $pnode_ip, PDO::PARAM_STR);
+                        $stmt->bindValue(':manage_type_id', $manage_type_id, PDO::PARAM_INT);
+                        $stmt->bindValue(':staking_farm', $staking_farm, PDO::PARAM_INT);                        
                         $stmt->execute();
 
                         $new_device_id = $pdo->lastInsertId();
@@ -269,8 +273,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
     $pnode_name = trim($_POST['pnode_name']);
     $pnode_ip = trim($_POST['pnode_ip']);
     $assign_user = trim($_POST['assign_user'] ?? '');
+    $manage_type_id = $_POST['manage_type_id'] ?? null;
+    $staking_farm = isset($_POST['staking_farm']) ? 1 : 0;
 
-    if (empty($pnode_name) || empty($pnode_ip) || empty($assign_user)) {
+    if (empty($pnode_name) || empty($pnode_ip) || empty($assign_user) || empty($manage_type_id)) {
         $error = "Please fill in all fields.";
         logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_edit_failed', 'Empty fields');
     } elseif (strlen($pnode_name) > 100) {
@@ -313,10 +319,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                             $error = "IP address already registered in the system.";
                             logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_edit_failed', 'Duplicate IP address');
                         } else {
-                            $stmt = $pdo->prepare("UPDATE devices SET pnode_name = :pnode_name, pnode_ip = :pnode_ip, username = :username WHERE id = :device_id");
+                            $stmt = $pdo->prepare("UPDATE devices SET pnode_name = :pnode_name, pnode_ip = :pnode_ip, username = :username, manage_type_id = :manage_type_id, staking_farm = :staking_farm WHERE id = :device_id");
                             $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
                             $stmt->bindValue(':pnode_ip', $pnode_ip, PDO::PARAM_STR);
                             $stmt->bindValue(':username', $assign_user, PDO::PARAM_STR);
+                            $stmt->bindValue(':manage_type_id', $manage_type_id, PDO::PARAM_INT);
+                            $stmt->bindValue(':staking_farm', $staking_farm, PDO::PARAM_INT);
                             $stmt->bindValue(':device_id', $device_id, PDO::PARAM_INT);
                             $stmt->execute();
 
@@ -811,11 +819,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
 
                                             <div class="update-button-row">
                                                 <button type="button" class="action-button edit"
-                                                        data-device-id="<?php echo $device['id']; ?>"
-                                                        data-device-name="<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>"
-                                                        data-device-ip="<?php echo htmlspecialchars($device['pnode_ip']); ?>"
-                                                        data-device-user="<?php echo htmlspecialchars($device['username']); ?>"
-                                                        onclick="openEditModalFromData(this)">Edit</button>        
+                                                    data-device-id="<?php echo $device['id']; ?>"
+                                                    data-device-name="<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>"
+                                                    data-device-ip="<?php echo htmlspecialchars($device['pnode_ip']); ?>"
+                                                    data-device-user="<?php echo htmlspecialchars($device['username']); ?>"
+                                                    data-manage-type-id="<?php echo $device['manage_type_id'] ?? ''; ?>"
+                                                    data-staking-farm="<?php echo $device['staking_farm'] ?? '0'; ?>"
+                                                    onclick="openEditModalFromData(this)">Edit</button>     
                                             </div>                                    
                                             <div class="update-button-row">
                                                 <button type="button" class="action-button delete"
@@ -954,6 +964,36 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     </select>
                     <div class="field-error" id="user-error" style="display: none;"></div>
                 </div>
+                <div class="modal-form-group">
+                    <label for="add-manage-type">Management Type: <span class="required">*</span></label>
+                    <select id="add-manage-type" name="manage_type_id" required>
+                        <option value="">Select management type...</option>
+                        <?php
+                        try {
+                            $stmt = $pdo->prepare("SELECT id, type_name, description FROM management_types ORDER BY id ASC");
+                            $stmt->execute();
+                            $management_types = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                            foreach ($management_types as $type) {
+                                echo '<option value="' . htmlspecialchars($type['id']) . '">' . 
+                                    htmlspecialchars($type['type_name']) . ' - ' . 
+                                    htmlspecialchars($type['description']) . '</option>';
+                            }
+                        } catch (PDOException $e) {
+                            echo '<option value="">Error loading management types</option>';
+                        }
+                        ?>
+                    </select>
+                    <div class="field-error" id="manage-type-error" style="display: none;"></div>
+                </div>
+                <div class="modal-form-group">
+                    <label for="add-staking-farm">
+                        <input type="checkbox" id="add-staking-farm" name="staking_farm" value="1">
+                        Staking Farm
+                    </label>
+                    <small style="display: block; color: #666; margin-top: 5px;">
+                        Check this if this device is used for staking operations
+                    </small>
+                </div>                
                 <div class="modal-buttons">
                     <button type="button" class="modal-btn modal-btn-secondary" onclick="closeAddModal()">Cancel</button>
                     <button type="button" class="modal-btn modal-btn-primary" onclick="submitAdd()">Add Device</button>
@@ -1013,6 +1053,32 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         ?>
                     </select>
                     <div class="field-error" id="edit-user-error" style="display: none;"></div>
+                </div>
+                <div class="modal-form-group">
+                    <label for="edit-manage-type">Management Type: <span class="required">*</span></label>
+                    <select id="edit-manage-type" name="manage_type_id" required>
+                        <option value="">Select management type...</option>
+                        <?php
+                        if (isset($management_types)) {
+                            foreach ($management_types as $type) {
+                                echo '<option value="' . htmlspecialchars($type['id']) . '">' . 
+                                    htmlspecialchars($type['type_name']) . ' - ' . 
+                                    htmlspecialchars($type['description']) . '</option>';
+                            }
+                        }
+                        ?>
+                    </select>
+                    <div class="field-error" id="edit-manage-type-error" style="display: none;"></div>
+                </div>
+
+                <div class="modal-form-group">
+                    <label for="edit-staking-farm">
+                        <input type="checkbox" id="edit-staking-farm" name="staking_farm" value="1">
+                        Staking Farm
+                    </label>
+                    <small style="display: block; color: #666; margin-top: 5px;">
+                        Check this if this device is used for staking operations
+                    </small>
                 </div>
                 <div class="modal-buttons">
                     <button type="button" class="modal-btn modal-btn-secondary" onclick="closeEditModal()">Cancel</button>
@@ -3258,6 +3324,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             const deviceName = button.getAttribute('data-device-name');
             const deviceIp = button.getAttribute('data-device-ip');
             const deviceUser = button.getAttribute('data-device-user');
+            const manageTypeId = button.getAttribute('data-manage-type-id');
+            const stakingFarm = button.getAttribute('data-staking-farm');
             
             document.getElementById('edit-device-id').value = deviceId;
             document.getElementById('edit-pnode-name').value = deviceName;
@@ -3267,6 +3335,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             const userSelect = document.getElementById('edit-assign-user');
             if (userSelect && deviceUser) {
                 userSelect.value = deviceUser;
+            }
+
+            // Set the management type
+            const manageTypeSelect = document.getElementById('edit-manage-type');
+            if (manageTypeSelect && manageTypeId) {
+                manageTypeSelect.value = manageTypeId;
+            }
+
+            // Set the staking farm checkbox
+            const stakingFarmCheckbox = document.getElementById('edit-staking-farm');
+            if (stakingFarmCheckbox) {
+                stakingFarmCheckbox.checked = (stakingFarm === '1');
             }
 
             // Clear any previous errors and show modal
