@@ -527,7 +527,6 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                     </div>
                 </div>
 
-
                 <div class="devices-header">
                     <h3 class="devices-title">Your Devices</h3>
                     <button type="button" class="add-device-btn" onclick="openAddModal()" title="Add New Device">+</button>
@@ -750,11 +749,32 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                     </table>
                 <?php endif; ?>
 
-                <div style="margin-top: 20px; padding: 10px; background-color: #e9ecef; border-radius: 4px;">
+                <div style="margin-top: 20px; padding: 15px; background-color: #e9ecef; border-radius: 4px;">
                     <h4>Dashboard Information</h4>
-                    <p><small>This dashboard provides a read-only view of your devices and their current status.
-                    Device health status is automatically updated every 30 seconds per device. Click on any device
-                    name to view detailed logs and status history.</small></p>
+                    <div style="font-size: 14px; line-height: 1.5;">
+                        <p><strong>Device Management:</strong> This dashboard provides real-time monitoring and management of your pNode devices. Device health status is automatically updated every 60 seconds per device to ensure current information.</p>
+                        
+                        <p><strong>Interactive Features:</strong></p>
+                        <ul style="margin: 8px 0; padding-left: 20px;">
+                            <li><strong>Sortable Columns:</strong> Click on column headers (Node Name, IP Address, Connectivity, Health Status) to sort devices in ascending or descending order</li>
+                            <li><strong>Device Details:</strong> Click on any device name to view detailed logs, status history, and comprehensive device information</li>
+                            <li><strong>Live Updates:</strong> The dashboard automatically refreshes device status, statistics, and health information without requiring page reloads</li>
+                            <li><strong>Device Actions:</strong> Use the Edit and Delete buttons to modify device configurations or remove devices from your account</li>
+                            <li><strong>Installation Guide:</strong> Expand the Installation Instructions section above for detailed setup guides for both self-hosted and fully managed pNodes</li>
+                        </ul>
+                        
+                        <p><strong>Status Indicators:</strong></p>
+                        <ul style="margin: 8px 0; padding-left: 20px;">
+                            <li><strong>Connectivity:</strong> Shows Online/Offline status based on network reachability</li>
+                            <li><strong>Health Status:</strong> Displays Pass/Fail for Atlas registration, Pod status, XandMiner, and XandMinerD services</li>
+                            <li><strong>pNode Stats:</strong> Real-time CPU, RAM usage, data transfer statistics, and uptime information</li>
+                            <li><strong>Version Info:</strong> Current software versions for Controller, Pod, XandMiner, and XandMinerD components</li>
+                        </ul>
+                        
+                        <p><strong>Data Updates:</strong> Status checks are staggered across all devices to optimize performance. Recently updated information is highlighted with a brief color change. Response times and consecutive failure counts are tracked for troubleshooting purposes.</p>
+                        
+                        <p style="margin-top: 10px; font-style: italic; color: #666;">Need help? Device issues are automatically logged and can be viewed in the detailed device pages. Contact support if you encounter persistent connectivity or health status problems.</p>
+                    </div>
                 </div>
             </div>
         </div>
