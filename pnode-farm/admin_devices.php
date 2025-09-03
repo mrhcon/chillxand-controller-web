@@ -826,7 +826,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                             <div class="button-gap"></div>
 
                                             <div class="update-button-row">
-                                                        <button type="button" class="action-button update-controller"
+                                                Device Status: <?php echo $device['status']; ?>
+                                                Should be disabled: <?php echo ($device['status'] !== 'Online') ? 'YES' : 'NO'; ?>
+                                                <button type="button" class="action-button update-controller"
                                                         data-device-id="<?php echo $device['id']; ?>"
                                                         data-device-ip="<?php echo htmlspecialchars($device['pnode_ip']); ?>"
                                                         data-device-name="<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>"
