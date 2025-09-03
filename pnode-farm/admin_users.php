@@ -157,7 +157,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         $stmt->bindValue(':last_name', $last_name, PDO::PARAM_STR);
                         $stmt->bindValue(':country', $country, PDO::PARAM_STR);
                         $stmt->bindValue(':admin', $admin, PDO::PARAM_INT);
-                        $stmt->bindValue(':last_modified_by', $user_id, PDO::PARAM_INT);
+                        $stmt->bindValue(':last_modified_by', $_SESSION['user_id'], PDO::PARAM_INT);
                         $stmt->bindValue(':username', $username, PDO::PARAM_STR);
                         $stmt->execute();
 
