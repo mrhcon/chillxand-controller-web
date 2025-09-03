@@ -507,7 +507,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                         <div class="pricing-section">
                                             <h4>💰 Pricing</h4>
                                             <div class="pricing-item">
-                                                <strong>DevNet:</strong> <span class="price">9,000 Xand/month</span>
+                                                <strong>DevNet:</strong> <span class="price">8,000 Xand/month</span>
                                             </div>
                                             <div class="pricing-item">
                                                 <strong>MainNet:</strong> <span class="price-coming-soon">Price Coming Soon</span>
