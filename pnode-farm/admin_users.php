@@ -64,8 +64,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
 
                     // Insert new user (all fields are now required so no NULL values)
                     $stmt = $pdo->prepare("
-                        INSERT INTO users (username, email, password, first_name, last_name, country, admin, created) 
-                        VALUES (:username, :email, :password, :first_name, :last_name, :country, :admin, NOW())
+                        INSERT INTO users (username, email, password, first_name, last_name, country, admin, created, created_by) 
+                        VALUES (:username, :email, :password, :first_name, :last_name, :country, :admin, NOW(), :user_id)
                     ");
                     $stmt->bindValue(':username', $username, PDO::PARAM_STR);
                     $stmt->bindValue(':email', $email, PDO::PARAM_STR);
@@ -74,6 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     $stmt->bindValue(':last_name', $last_name, PDO::PARAM_STR);
                     $stmt->bindValue(':country', $country, PDO::PARAM_STR);
                     $stmt->bindValue(':admin', $admin, PDO::PARAM_INT);
+                    $stmt->bindValue(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
                     $stmt->execute();
 
                     $success = "User '$username' has been successfully created with temporary password: $random_password";
@@ -148,8 +149,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         // Update user (excluding username, all fields are now required so no NULL values)
                         $stmt = $pdo->prepare("
                             UPDATE users 
-                            SET email = :email, first_name = :first_name, 
-                                last_name = :last_name, country = :country, admin = :admin 
+                            SET email = :email, first_name = :first_name, last_name = :last_name, country = :country, admin = :admin , last_modified_by = :user_id, last_modified = NOW()
                             WHERE id = :user_id
                         ");
                         $stmt->bindValue(':email', $email, PDO::PARAM_STR);
@@ -214,21 +214,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
 
                     if ($device_count > 0) {
                         // Delete all devices owned by this user first
-                        $stmt = $pdo->prepare("DELETE FROM devices WHERE username = :username");
-                        $stmt->bindValue(':username', $user_to_delete['username'], PDO::PARAM_STR);
+                        // Soft delete device with audit trail
+                        $stmt = $pdo->prepare("UPDATE devices SET logically_deleted = 1, deleted_at = NOW(), deleted_by = :user_id WHERE username = :username");
+                        $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
+                        $stmt->bindValue(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
                         $stmt->execute();
                         
                         logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_devices_deleted_with_user', "Deleted $device_count devices for user: {$user_to_delete['username']}");
                     }
 
-                    // Delete user interactions/logs for this user
-                    $stmt = $pdo->prepare("DELETE FROM user_interactions WHERE user_id = :user_id");
-                    $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
-                    $stmt->execute();
-
                     // Finally, delete the user
-                    $stmt = $pdo->prepare("DELETE FROM users WHERE id = :user_id");
-                    $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+                    $stmt = $pdo->prepare("UPDATE users SET logically_deleted = 1, deleted_at = NOW(), deleted_by = :user_id WHERE username = :username");
+                    $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
+                    $stmt->bindValue(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
                     $stmt->execute();
 
                     // Commit transaction

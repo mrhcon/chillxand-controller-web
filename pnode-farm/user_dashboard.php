@@ -110,7 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_edit_failed', 'Duplicate IP address');
                     } else {
                         // Update device with audit trail
-                        $stmt = $pdo->prepare("UPDATE devices SET pnode_name = :pnode_name, pnode_ip = :pnode_ip, last_modified_by = :user_id WHERE id = :device_id AND username = :username AND logically_deleted = 0");
+                        $stmt = $pdo->prepare("UPDATE devices SET pnode_name = :pnode_name, pnode_ip = :pnode_ip, last_modified_by = :user_id, last_modified = NOW() WHERE id = :device_id AND username = :username AND logically_deleted = 0");
                         $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
                         $stmt->bindValue(':pnode_ip', $pnode_ip, PDO::PARAM_STR);
                         $stmt->bindValue(':device_id', $device_id, PDO::PARAM_INT);
