@@ -212,30 +212,38 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Invalid IP address');
     } else {
         try {
-            $stmt = $pdo->prepare("SELECT COUNT(*) FROM devices WHERE username = :username AND pnode_name = :pnode_name");
-            $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
+            $stmt = $pdo->prepare("SELECT COUNT(*) FROM devices WHERE pnode_name = :pnode_name");
             $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
             $stmt->execute();
             if ($stmt->fetchColumn() > 0) {
-                $error = "Device name already registered.";
+                $error = "Device name already registered in the system.";
                 logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Duplicate device name');
             } else {
-                // Add device (no seeding required)
-                $stmt = $pdo->prepare("INSERT INTO devices (username, pnode_name, pnode_ip, registration_date) VALUES (:username, :pnode_name, :pnode_ip, NOW())");
-                $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
-                $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
+                // Check for duplicate IP address system-wide
+                $stmt = $pdo->prepare("SELECT COUNT(*) FROM devices WHERE pnode_ip = :pnode_ip");
                 $stmt->bindValue(':pnode_ip', $pnode_ip, PDO::PARAM_STR);
                 $stmt->execute();
-
-                // Get the new device ID (no seeding required - system handles gracefully)
-                $new_device_id = $pdo->lastInsertId();
-
-                logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_success', "Device: $pnode_name, IP: $pnode_ip");
-                if (PHP_SAPI !== 'cli') {
-                    header("Location: admin_devices.php");
-                    exit();
+                if ($stmt->fetchColumn() > 0) {
+                    $error = "IP address already registered in the system.";
+                    logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Duplicate IP address');
                 } else {
-                    echo "Device added successfully: $pnode_name, $pnode_ip\n";
+                    // Add device (no seeding required)
+                    $stmt = $pdo->prepare("INSERT INTO devices (username, pnode_name, pnode_ip, registration_date) VALUES (:username, :pnode_name, :pnode_ip, NOW())");
+                    $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
+                    $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
+                    $stmt->bindValue(':pnode_ip', $pnode_ip, PDO::PARAM_STR);
+                    $stmt->execute();
+
+                    // Get the new device ID (no seeding required - system handles gracefully)
+                    $new_device_id = $pdo->lastInsertId();
+
+                    logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_success', "Device: $pnode_name, IP: $pnode_ip");
+                    if (PHP_SAPI !== 'cli') {
+                        header("Location: admin_devices.php");
+                        exit();
+                    } else {
+                        echo "Device added successfully: $pnode_name, $pnode_ip\n";
+                    }
                 }
             }
         } catch (PDOException $e) {
