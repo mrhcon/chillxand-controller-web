@@ -200,8 +200,9 @@ try {
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['action'] == 'add') {
     $pnode_name = trim($_POST['pnode_name']);
     $pnode_ip = trim($_POST['pnode_ip']);
+    $assign_user = trim($_POST['assign_user'] ?? '');
 
-    if (empty($pnode_name) || empty($pnode_ip)) {
+    if (empty($pnode_name) || empty($pnode_ip) || empty($assign_user)) {
         $error = "Please fill in all fields.";
         logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Empty fields');
     } elseif (strlen($pnode_name) > 100) {
@@ -212,37 +213,45 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Invalid IP address');
     } else {
         try {
-            $stmt = $pdo->prepare("SELECT COUNT(*) FROM devices WHERE pnode_name = :pnode_name");
-            $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
+            // Verify the assigned user exists
+            $stmt = $pdo->prepare("SELECT id FROM users WHERE username = :username");
+            $stmt->bindValue(':username', $assign_user, PDO::PARAM_STR);
             $stmt->execute();
-            if ($stmt->fetchColumn() > 0) {
-                $error = "Device name already registered in the system.";
-                logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Duplicate device name');
+            if (!$stmt->fetch()) {
+                $error = "Selected user does not exist.";
+                logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Invalid user assignment');
             } else {
-                // Check for duplicate IP address system-wide
-                $stmt = $pdo->prepare("SELECT COUNT(*) FROM devices WHERE pnode_ip = :pnode_ip");
-                $stmt->bindValue(':pnode_ip', $pnode_ip, PDO::PARAM_STR);
+                $stmt = $pdo->prepare("SELECT COUNT(*) FROM devices WHERE pnode_name = :pnode_name");
+                $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
                 $stmt->execute();
                 if ($stmt->fetchColumn() > 0) {
-                    $error = "IP address already registered in the system.";
-                    logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Duplicate IP address');
+                    $error = "Device name already registered in the system.";
+                    logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Duplicate device name');
                 } else {
-                    // Add device (no seeding required)
-                    $stmt = $pdo->prepare("INSERT INTO devices (username, pnode_name, pnode_ip, registration_date) VALUES (:username, :pnode_name, :pnode_ip, NOW())");
-                    $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
-                    $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
+                    // Check for duplicate IP address system-wide
+                    $stmt = $pdo->prepare("SELECT COUNT(*) FROM devices WHERE pnode_ip = :pnode_ip");
                     $stmt->bindValue(':pnode_ip', $pnode_ip, PDO::PARAM_STR);
                     $stmt->execute();
-
-                    // Get the new device ID (no seeding required - system handles gracefully)
-                    $new_device_id = $pdo->lastInsertId();
-
-                    logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_success', "Device: $pnode_name, IP: $pnode_ip");
-                    if (PHP_SAPI !== 'cli') {
-                        header("Location: admin_devices.php");
-                        exit();
+                    if ($stmt->fetchColumn() > 0) {
+                        $error = "IP address already registered in the system.";
+                        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Duplicate IP address');
                     } else {
-                        echo "Device added successfully: $pnode_name, $pnode_ip\n";
+                        // Add device with assigned user
+                        $stmt = $pdo->prepare("INSERT INTO devices (username, pnode_name, pnode_ip, registration_date) VALUES (:username, :pnode_name, :pnode_ip, NOW())");
+                        $stmt->bindValue(':username', $assign_user, PDO::PARAM_STR);
+                        $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
+                        $stmt->bindValue(':pnode_ip', $pnode_ip, PDO::PARAM_STR);
+                        $stmt->execute();
+
+                        $new_device_id = $pdo->lastInsertId();
+
+                        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_success', "Device: $pnode_name, IP: $pnode_ip, Assigned to: $assign_user");
+                        if (PHP_SAPI !== 'cli') {
+                            header("Location: admin_devices.php");
+                            exit();
+                        } else {
+                            echo "Device added successfully: $pnode_name, $pnode_ip, assigned to $assign_user\n";
+                        }
                     }
                 }
             }
@@ -259,8 +268,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
     $device_id = $_POST['device_id'];
     $pnode_name = trim($_POST['pnode_name']);
     $pnode_ip = trim($_POST['pnode_ip']);
+    $assign_user = trim($_POST['assign_user'] ?? '');
 
-    if (empty($pnode_name) || empty($pnode_ip)) {
+    if (empty($pnode_name) || empty($pnode_ip) || empty($assign_user)) {
         $error = "Please fill in all fields.";
         logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_edit_failed', 'Empty fields');
     } elseif (strlen($pnode_name) > 100) {
@@ -271,46 +281,52 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_edit_failed', 'Invalid IP address');
     } else {
         try {
-            $stmt = $pdo->prepare("SELECT COUNT(*) FROM devices WHERE id = :device_id AND (username = :username OR :admin = 1)");
-            $stmt->bindValue(':device_id', $device_id, PDO::PARAM_INT);
-            $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
-            $stmt->bindValue(':admin', $_SESSION['admin'], PDO::PARAM_INT);
+            // Verify the assigned user exists
+            $stmt = $pdo->prepare("SELECT id FROM users WHERE username = :username");
+            $stmt->bindValue(':username', $assign_user, PDO::PARAM_STR);
             $stmt->execute();
-            if ($stmt->fetchColumn() == 0) {
-                $error = "Device not found or not authorized.";
-                logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_edit_failed', 'Unauthorized device access');
+            if (!$stmt->fetch()) {
+                $error = "Selected user does not exist.";
+                logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_edit_failed', 'Invalid user assignment');
             } else {
-                $stmt = $pdo->prepare("SELECT COUNT(*) FROM devices WHERE pnode_name = :pnode_name AND id != :device_id");
-                $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
+                $stmt = $pdo->prepare("SELECT COUNT(*) FROM devices WHERE id = :device_id");
                 $stmt->bindValue(':device_id', $device_id, PDO::PARAM_INT);
                 $stmt->execute();
-                if ($stmt->fetchColumn() > 0) {
-                    $error = "Device name already registered in the system.";
-                    logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_edit_failed', 'Duplicate device name');
+                if ($stmt->fetchColumn() == 0) {
+                    $error = "Device not found.";
+                    logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_edit_failed', 'Device not found');
                 } else {
-                    // Check for duplicate IP address system-wide (excluding current device)
-                    $stmt = $pdo->prepare("SELECT COUNT(*) FROM devices WHERE pnode_ip = :pnode_ip AND id != :device_id");
-                    $stmt->bindValue(':pnode_ip', $pnode_ip, PDO::PARAM_STR);
+                    $stmt = $pdo->prepare("SELECT COUNT(*) FROM devices WHERE pnode_name = :pnode_name AND id != :device_id");
+                    $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
                     $stmt->bindValue(':device_id', $device_id, PDO::PARAM_INT);
                     $stmt->execute();
                     if ($stmt->fetchColumn() > 0) {
-                        $error = "IP address already registered in the system.";
-                        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_edit_failed', 'Duplicate IP address');
+                        $error = "Device name already registered in the system.";
+                        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_edit_failed', 'Duplicate device name');
                     } else {
-                        $stmt = $pdo->prepare("UPDATE devices SET pnode_name = :pnode_name, pnode_ip = :pnode_ip WHERE id = :device_id AND (username = :username OR :admin = 1)");
-                        $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
+                        // Check for duplicate IP address system-wide (excluding current device)
+                        $stmt = $pdo->prepare("SELECT COUNT(*) FROM devices WHERE pnode_ip = :pnode_ip AND id != :device_id");
                         $stmt->bindValue(':pnode_ip', $pnode_ip, PDO::PARAM_STR);
                         $stmt->bindValue(':device_id', $device_id, PDO::PARAM_INT);
-                        $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
-                        $stmt->bindValue(':admin', $_SESSION['admin'], PDO::PARAM_INT);
                         $stmt->execute();
-
-                        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_edit_success', "Device ID: $device_id, New Name: $pnode_name, New IP: $pnode_ip");
-                        if (PHP_SAPI !== 'cli') {
-                            header("Location: admin_devices.php");
-                            exit();
+                        if ($stmt->fetchColumn() > 0) {
+                            $error = "IP address already registered in the system.";
+                            logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_edit_failed', 'Duplicate IP address');
                         } else {
-                            echo "Device edited successfully: ID=$device_id, $pnode_name, $pnode_ip\n";
+                            $stmt = $pdo->prepare("UPDATE devices SET pnode_name = :pnode_name, pnode_ip = :pnode_ip, username = :username WHERE id = :device_id");
+                            $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
+                            $stmt->bindValue(':pnode_ip', $pnode_ip, PDO::PARAM_STR);
+                            $stmt->bindValue(':username', $assign_user, PDO::PARAM_STR);
+                            $stmt->bindValue(':device_id', $device_id, PDO::PARAM_INT);
+                            $stmt->execute();
+
+                            logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_edit_success', "Device ID: $device_id, New Name: $pnode_name, New IP: $pnode_ip, Assigned to: $assign_user");
+                            if (PHP_SAPI !== 'cli') {
+                                header("Location: admin_devices.php");
+                                exit();
+                            } else {
+                                echo "Device edited successfully: ID=$device_id, $pnode_name, $pnode_ip, assigned to $assign_user\n";
+                            }
                         }
                     }
                 }
@@ -575,7 +591,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     </div>
                 <?php endif; ?>
 
-                <h3>Devices</h3>
+                <div class="devices-header">
+                    <h3 class="devices-title">Devices</h3>
+                    <button type="button" class="add-device-btn" onclick="openAddModal()" title="Add New Device">+</button>
+                </div>
                 <?php if (empty($devices)): ?>
                     <p>No devices registered.</p>
                 <?php else: ?>
@@ -792,9 +811,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
 
                                             <div class="update-button-row">
                                                 <button type="button" class="action-button edit"
-                                                        onclick="openEditModal(<?php echo $device['id']; ?>, '<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>', '<?php echo htmlspecialchars($device['pnode_ip']); ?>')">Edit</button>
-                                            </div>
-                                            <div class="update-button-row">
+                                                        data-device-id="<?php echo $device['id']; ?>"
+                                                        data-device-name="<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>"
+                                                        data-device-ip="<?php echo htmlspecialchars($device['pnode_ip']); ?>"
+                                                        data-device-user="<?php echo htmlspecialchars($device['username']); ?>"
+                                                        onclick="openEditModalFromData(this)">Edit</button>                                            <div class="update-button-row">
                                                 <button type="button" class="action-button delete"
                                                         onclick="openDeleteModal(<?php echo $device['id']; ?>, '<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>')">Delete</button>
                                             </div>
@@ -887,28 +908,63 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 <span class="close" onclick="closeAddModal()">&times;</span>
             </div>
 
-            <!-- Add this error display area -->
+            <!-- Error display area -->
             <div id="addModalError" class="modal-error" style="display: none;"></div>
 
             <form id="addForm" method="POST" action="">
                 <input type="hidden" name="action" value="add">
                 <div class="modal-form-group">
-                    <label for="add-pnode-name">Node Name:</label>
-                    <input type="text" id="add-pnode-name" name="pnode_name" required>
-                    <!-- Add this field error div -->
+                    <label for="add-pnode-name">Node Name: <span class="required">*</span></label>
+                    <input type="text"
+                        id="add-pnode-name"
+                        name="pnode_name"
+                        required
+                        maxlength="100"
+                        placeholder="Enter device name">
                     <div class="field-error" id="name-error" style="display: none;"></div>
                 </div>
                 <div class="modal-form-group">
-                    <label for="add-pnode-ip">IP Address:</label>
-                    <input type="text" id="add-pnode-ip" name="pnode_ip" required>
-                    <!-- Add this field error div -->
+                    <label for="add-pnode-ip">IP Address: <span class="required">*</span></label>
+                    <input type="text"
+                        id="add-pnode-ip"
+                        name="pnode_ip"
+                        required
+                        placeholder="e.g., 192.168.1.100">
                     <div class="field-error" id="ip-error" style="display: none;"></div>
+                </div>
+                <div class="modal-form-group">
+                    <label for="add-assign-user">Assign to User: <span class="required">*</span></label>
+                    <select id="add-assign-user" name="assign_user" required>
+                        <option value="">Select a user...</option>
+                        <?php
+                        try {
+                            $stmt = $pdo->prepare("SELECT id, username, first_name, last_name, email FROM users ORDER BY username ASC");
+                            $stmt->execute();
+                            $all_users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                            foreach ($all_users as $user_option) {
+                                $display_name = $user_option['username'] . ' (' . $user_option['first_name'] . ' ' . $user_option['last_name'] . ')';
+                                echo '<option value="' . htmlspecialchars($user_option['username']) . '">' . htmlspecialchars($display_name) . '</option>';
+                            }
+                        } catch (PDOException $e) {
+                            echo '<option value="">Error loading users</option>';
+                        }
+                        ?>
+                    </select>
+                    <div class="field-error" id="user-error" style="display: none;"></div>
                 </div>
                 <div class="modal-buttons">
                     <button type="button" class="modal-btn modal-btn-secondary" onclick="closeAddModal()">Cancel</button>
                     <button type="button" class="modal-btn modal-btn-primary" onclick="submitAdd()">Add Device</button>
                 </div>
             </form>
+
+            <!-- Loading overlay -->
+            <div class="modal-loading-overlay" id="addModalLoading">
+                <div class="modal-loading-content">
+                    <div class="modal-loading-spinner"></div>
+                    <div class="modal-loading-text">Adding device...</div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -920,29 +976,55 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 <span class="close" onclick="closeEditModal()">&times;</span>
             </div>
 
-            <!-- Add this error display area -->
+            <!-- Error display area -->
             <div id="editModalError" class="modal-error" style="display: none;"></div>
 
             <form id="editForm" method="POST" action="">
                 <input type="hidden" name="action" value="edit">
                 <input type="hidden" id="edit-device-id" name="device_id">
                 <div class="modal-form-group">
-                    <label for="edit-pnode-name">Node Name:</label>
-                    <input type="text" id="edit-pnode-name" name="pnode_name" required>
-                    <!-- Add this field error div -->
+                    <label for="edit-pnode-name">Node Name: <span class="required">*</span></label>
+                    <input type="text"
+                        id="edit-pnode-name"
+                        name="pnode_name"
+                        required
+                        maxlength="100">
                     <div class="field-error" id="edit-name-error" style="display: none;"></div>
                 </div>
                 <div class="modal-form-group">
-                    <label for="edit-pnode-ip">IP Address:</label>
-                    <input type="text" id="edit-pnode-ip" name="pnode_ip" required>
-                    <!-- Add this field error div -->
+                    <label for="edit-pnode-ip">IP Address: <span class="required">*</span></label>
+                    <input type="text"
+                        id="edit-pnode-ip"
+                        name="pnode_ip"
+                        required>
                     <div class="field-error" id="edit-ip-error" style="display: none;"></div>
+                </div>
+                <div class="modal-form-group">
+                    <label for="edit-assign-user">Assign to User: <span class="required">*</span></label>
+                    <select id="edit-assign-user" name="assign_user" required>
+                        <option value="">Select a user...</option>
+                        <?php
+                        foreach ($all_users as $user_option) {
+                            $display_name = $user_option['username'] . ' (' . $user_option['first_name'] . ' ' . $user_option['last_name'] . ')';
+                            echo '<option value="' . htmlspecialchars($user_option['username']) . '">' . htmlspecialchars($display_name) . '</option>';
+                        }
+                        ?>
+                    </select>
+                    <div class="field-error" id="edit-user-error" style="display: none;"></div>
                 </div>
                 <div class="modal-buttons">
                     <button type="button" class="modal-btn modal-btn-secondary" onclick="closeEditModal()">Cancel</button>
                     <button type="button" class="modal-btn modal-btn-primary" onclick="submitEdit()">Save Changes</button>
                 </div>
             </form>
+
+            <!-- Loading overlay -->
+            <div class="modal-loading-overlay" id="editModalLoading">
+                <div class="modal-loading-content">
+                    <div class="modal-loading-spinner"></div>
+                    <div class="modal-loading-text">Saving changes...</div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -2034,15 +2116,42 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             document.getElementById('addModal').style.display = 'none';
         }
 
-        function openEditModal(deviceId, currentName, currentIp) {
+        // Add user assignment validation
+        function validateUserAssignment(userId) {
+            if (!userId || userId.trim() === '') {
+                return 'Please select a user to assign this device to.';
+            }
+            return null;
+        }
+
+        // Update the openEditModal function
+        function openEditModal(deviceId, currentName, currentIp, currentUser) {
             document.getElementById('edit-device-id').value = deviceId;
             document.getElementById('edit-pnode-name').value = currentName;
             document.getElementById('edit-pnode-ip').value = currentIp;
+            
+            // Set the current user in the dropdown
+            const userSelect = document.getElementById('edit-assign-user');
+            if (userSelect && currentUser) {
+                userSelect.value = currentUser;
+            }
+
+            // Clear any previous errors
+            clearEditModalErrors();
+            hideModalLoading('editModal', 'editModalLoading');
+
             document.getElementById('editModal').style.display = 'block';
+
+            // Focus on first field
+            setTimeout(() => {
+                document.getElementById('edit-pnode-name').focus();
+            }, 100);
         }
 
         function closeEditModal() {
             document.getElementById('editModal').style.display = 'none';
+            clearEditModalErrors();
+            hideModalLoading('editModal', 'editModalLoading');
         }
 
         function openDeleteModal(deviceId, deviceName) {
@@ -2080,130 +2189,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         }
 
         function submitAdd() {
-            // Clear previous errors
-            clearModalErrors();
-
-            const form = document.getElementById('addForm');
-            const nameField = document.getElementById('add-pnode-name');
-            const ipField = document.getElementById('add-pnode-ip');
-
-            const nodeName = nameField.value.trim();
-            const ipAddress = ipField.value.trim();
-
-            let hasErrors = false;
-
-            // Client-side validation
-            const nameError = validateNodeName(nodeName);
-            if (nameError) {
-                showModalError(nameError, 'name');
-                hasErrors = true;
-            }
-
-            const ipError = validateIPAddress(ipAddress);
-            if (ipError) {
-                showModalError(ipError, 'ip');
-                hasErrors = true;
-            }
-
-            if (hasErrors) {
-                return;
-            }
-
-            // Server-side validation via AJAX
-            fetch('validate_device.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: `action=add&pnode_name=${encodeURIComponent(nodeName)}&pnode_ip=${encodeURIComponent(ipAddress)}`
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    nameField.value = nodeName;
-                    ipField.value = ipAddress;
-                    form.submit();
-                } else {
-                    if (data.errors) {
-                        if (data.errors.name) {
-                            showModalError(data.errors.name, 'name');
-                        }
-                        if (data.errors.ip) {
-                            showModalError(data.errors.ip, 'ip');
-                        }
-                    } else if (data.error) {
-                        showModalError(data.error);
-                    }
-                }
-            })
-            .catch(error => {
-                showModalError('Network error occurred. Please try again.');
-                console.error('Validation error:', error);
-            });
+            validateAndSubmit();
         }
 
         function submitEdit() {
-            // Clear previous errors
-            clearEditModalErrors();
-
-            const form = document.getElementById('editForm');
-            const nameField = document.getElementById('edit-pnode-name');
-            const ipField = document.getElementById('edit-pnode-ip');
-            const deviceId = document.getElementById('edit-device-id').value;
-
-            const nodeName = nameField.value.trim();
-            const ipAddress = ipField.value.trim();
-
-            let hasErrors = false;
-
-            // Client-side validation
-            const nameError = validateNodeName(nodeName);
-            if (nameError) {
-                showEditModalError(nameError, 'name');
-                hasErrors = true;
-            }
-
-            const ipError = validateIPAddress(ipAddress);
-            if (ipError) {
-                showEditModalError(ipError, 'ip');
-                hasErrors = true;
-            }
-
-            if (hasErrors) {
-                return;
-            }
-
-            // Server-side validation via AJAX
-            fetch('validate_device.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: `action=edit&device_id=${encodeURIComponent(deviceId)}&pnode_name=${encodeURIComponent(nodeName)}&pnode_ip=${encodeURIComponent(ipAddress)}`
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    nameField.value = nodeName;
-                    ipField.value = ipAddress;
-                    form.submit();
-                } else {
-                    if (data.errors) {
-                        if (data.errors.name) {
-                            showEditModalError(data.errors.name, 'name');
-                        }
-                        if (data.errors.ip) {
-                            showEditModalError(data.errors.ip, 'ip');
-                        }
-                    } else if (data.error) {
-                        showEditModalError(data.error);
-                    }
-                }
-            })
-            .catch(error => {
-                showEditModalError('Network error occurred. Please try again.');
-                console.error('Validation error:', error);
-            });
+            validateAndSubmitEdit();
         }
 
         // Add the helper functions from user_dashboard.php
@@ -3220,6 +3210,235 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             }
             return 0;
         }
+
+        function showModalLoading(modalId, loadingId) {
+            document.getElementById(loadingId).style.display = 'flex';
+
+            // Disable all buttons in the modal
+            const modal = document.getElementById(modalId);
+            const buttons = modal.querySelectorAll('button');
+            const closeBtn = modal.querySelector('.close');
+
+            buttons.forEach(btn => btn.disabled = true);
+            if (closeBtn) closeBtn.style.pointerEvents = 'none';
+
+            // Make form inputs readonly
+            const inputs = modal.querySelectorAll('input[type="text"]');
+            inputs.forEach(input => {
+                input.readOnly = true;
+                input.style.backgroundColor = '#f8f9fa';
+                input.style.cursor = 'not-allowed';
+            });
+        }
+
+        function hideModalLoading(modalId, loadingId) {
+            document.getElementById(loadingId).style.display = 'none';
+
+            // Re-enable all buttons
+            const modal = document.getElementById(modalId);
+            const buttons = modal.querySelectorAll('button');
+            const closeBtn = modal.querySelector('.close');
+
+            buttons.forEach(btn => btn.disabled = false);
+            if (closeBtn) closeBtn.style.pointerEvents = 'auto';
+
+            // Remove readonly from inputs
+            const inputs = modal.querySelectorAll('input[type="text"]');
+            inputs.forEach(input => {
+                input.readOnly = false;
+                input.style.backgroundColor = '';
+                input.style.cursor = '';
+            });
+        }
+
+        function openEditModalFromData(button) {
+            const deviceId = button.getAttribute('data-device-id');
+            const deviceName = button.getAttribute('data-device-name');
+            const deviceIp = button.getAttribute('data-device-ip');
+            const deviceUser = button.getAttribute('data-device-user');
+            
+            document.getElementById('edit-device-id').value = deviceId;
+            document.getElementById('edit-pnode-name').value = deviceName;
+            document.getElementById('edit-pnode-ip').value = deviceIp;
+            
+            // Set the current user in the dropdown
+            const userSelect = document.getElementById('edit-assign-user');
+            if (userSelect && deviceUser) {
+                userSelect.value = deviceUser;
+            }
+
+            // Clear any previous errors and show modal
+            clearEditModalErrors();
+            hideModalLoading('editModal', 'editModalLoading');
+            document.getElementById('editModal').style.display = 'block';
+
+            setTimeout(() => {
+                document.getElementById('edit-pnode-name').focus();
+            }, 100);
+        }        
+
+        function validateAndSubmit() {
+            clearModalErrors();
+
+            const nodeName = document.getElementById('add-pnode-name').value.trim();
+            const ipAddress = document.getElementById('add-pnode-ip').value.trim();
+            const assignUser = document.getElementById('add-assign-user').value.trim();
+
+            let hasErrors = false;
+
+            // Client-side validation
+            const nameError = validateNodeName(nodeName);
+            if (nameError) {
+                showModalError(nameError, 'name');
+                hasErrors = true;
+            }
+
+            const ipError = validateIPAddress(ipAddress);
+            if (ipError) {
+                showModalError(ipError, 'ip');
+                hasErrors = true;
+            }
+
+            const userError = validateUserAssignment(assignUser);
+            if (userError) {
+                showModalError(userError, 'user');
+                hasErrors = true;
+            }
+
+            if (hasErrors) {
+                return;
+            }
+
+            // Show loading state
+            showModalLoading('addModal', 'addModalLoading');
+
+            // Server-side validation via AJAX
+            fetch('validate_device.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `action=add&pnode_name=${encodeURIComponent(nodeName)}&pnode_ip=${encodeURIComponent(ipAddress)}&assign_user=${encodeURIComponent(assignUser)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('add-pnode-name').value = nodeName;
+                    document.getElementById('add-pnode-ip').value = ipAddress;
+                    document.getElementById('add-assign-user').value = assignUser;
+                    
+                    document.getElementById('addForm').submit();
+                } else {
+                    hideModalLoading('addModal', 'addModalLoading');
+                    
+                    if (data.errors) {
+                        if (data.errors.name) {
+                            showModalError(data.errors.name, 'name');
+                        }
+                        if (data.errors.ip) {
+                            showModalError(data.errors.ip, 'ip');
+                        }
+                        if (data.errors.user) {
+                            showModalError(data.errors.user, 'user');
+                        }
+                    } else if (data.error) {
+                        showModalError(data.error);
+                    }
+                }
+            })
+            .catch(error => {
+                hideModalLoading('addModal', 'addModalLoading');
+                showModalError('Network error occurred. Please try again.');
+                console.error('Validation error:', error);
+            });
+        }
+
+        function validateAndSubmitEdit() {
+            clearEditModalErrors();
+
+            const form = document.getElementById('editForm');
+            const nameField = document.getElementById('edit-pnode-name');
+            const ipField = document.getElementById('edit-pnode-ip');
+            const userField = document.getElementById('edit-assign-user');
+            const deviceId = document.getElementById('edit-device-id').value;
+
+            if (!form || !nameField || !ipField || !userField) {
+                showEditModalError('Form elements not found. Please refresh the page and try again.');
+                return;
+            }
+
+            const nodeName = nameField.value.trim();
+            const ipAddress = ipField.value.trim();
+            const assignUser = userField.value.trim();
+
+            let hasErrors = false;
+
+            // Client-side validation
+            const nameError = validateNodeName(nodeName);
+            if (nameError) {
+                showEditModalError(nameError, 'name');
+                hasErrors = true;
+            }
+
+            const ipError = validateIPAddress(ipAddress);
+            if (ipError) {
+                showEditModalError(ipError, 'ip');
+                hasErrors = true;
+            }
+
+            const userError = validateUserAssignment(assignUser);
+            if (userError) {
+                showEditModalError(userError, 'user');
+                hasErrors = true;
+            }
+
+            if (hasErrors) {
+                return;
+            }
+
+            // Show loading state
+            showModalLoading('editModal', 'editModalLoading');
+
+            // Server-side validation via AJAX
+            fetch('validate_device.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `action=edit&device_id=${encodeURIComponent(deviceId)}&pnode_name=${encodeURIComponent(nodeName)}&pnode_ip=${encodeURIComponent(ipAddress)}&assign_user=${encodeURIComponent(assignUser)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    nameField.value = nodeName;
+                    ipField.value = ipAddress;
+                    userField.value = assignUser;
+                    
+                    form.submit();
+                } else {
+                    hideModalLoading('editModal', 'editModalLoading');
+                    
+                    if (data.errors) {
+                        if (data.errors.name) {
+                            showEditModalError(data.errors.name, 'name');
+                        }
+                        if (data.errors.ip) {
+                            showEditModalError(data.errors.ip, 'ip');
+                        }
+                        if (data.errors.user) {
+                            showEditModalError(data.errors.user, 'user');
+                        }
+                    } else if (data.error) {
+                        showEditModalError(data.error);
+                    }
+                }
+            })
+            .catch(error => {
+                hideModalLoading('editModal', 'editModalLoading');
+                showEditModalError('Network error occurred. Please try again.');
+                console.error('Validation error:', error);
+            });
+        }        
     </script>
 </body>
 </html>
