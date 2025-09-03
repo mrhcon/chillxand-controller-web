@@ -86,7 +86,7 @@ try {
 // Fetch ALL devices (admin only page)
 try {
     $stmt = $pdo->prepare("
-        SELECT d.id, d.pnode_name, d.pnode_ip, d.location, d.registration_date, d.username, 
+        SELECT d.id, d.pnode_name, d.pnode_ip, d.location, d.created, d.username, 
             d.manage_type_id, d.staking_farm, mt.type_name as management_type_name
         FROM devices d
         LEFT JOIN management_types mt ON d.manage_type_id = mt.id
@@ -241,7 +241,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Duplicate IP address');
                     } else {
                         // Add device with assigned user
-                        $stmt = $pdo->prepare("INSERT INTO devices (username, pnode_name, pnode_ip, registration_date, manage_type_id, staking_farm) VALUES (:username, :pnode_name, :pnode_ip, NOW(), :manage_type_id, :staking_farm)");
+                        $stmt = $pdo->prepare("INSERT INTO devices (username, pnode_name, pnode_ip, created, manage_type_id, staking_farm) VALUES (:username, :pnode_name, :pnode_ip, NOW(), :manage_type_id, :staking_farm)");
                         $stmt->bindValue(':username', $assign_user, PDO::PARAM_STR);
                         $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
                         $stmt->bindValue(':pnode_ip', $pnode_ip, PDO::PARAM_STR);
@@ -649,7 +649,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                         </div>
                                     </td>
                                     <td>
-                                        <div><?php echo htmlspecialchars($device['registration_date']); ?></div>
+                                        <div><?php echo htmlspecialchars($device['created']); ?></div>
                                         <div style="color: #666; font-size: 0.9em;">Owner: <?php echo htmlspecialchars($device['username']); ?></div>
                                         <?php if ($device['management_type_name']): ?>
                                             <div style="color: #6c757d; font-size: 0.85em;">Type: <?php echo htmlspecialchars($device['management_type_name']); ?></div>

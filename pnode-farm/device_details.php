@@ -24,7 +24,7 @@ if ($device_id <= 0) {
 
 // Fetch device details
 try {
-    $stmt = $pdo->prepare("SELECT pnode_name, pnode_ip, username, registration_date FROM devices WHERE id = :device_id");
+    $stmt = $pdo->prepare("SELECT pnode_name, pnode_ip, username, created FROM devices WHERE id = :device_id");
     $stmt->bindValue(':device_id', $device_id, PDO::PARAM_INT);
     $stmt->execute();
     $device = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -165,7 +165,7 @@ try {
                                     <p><strong>Node Name:</strong> <?php echo htmlspecialchars($device['pnode_name']); ?></p>
                                     <p><strong>IP Address:</strong> <?php echo htmlspecialchars($device['pnode_ip']); ?></p>
                                     <p><strong>Owner:</strong> <?php echo htmlspecialchars($device['username']); ?></p>
-                                    <p><strong>Registration Date:</strong> <?php echo htmlspecialchars($device['registration_date']); ?></p>
+                                    <p><strong>Registration Date:</strong> <?php echo htmlspecialchars($device['created']); ?></p>
                                 </div>
                                 <div>
                                     <p><strong>Current Status:</strong> 

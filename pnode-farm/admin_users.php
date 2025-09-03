@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
 
                     // Insert new user (all fields are now required so no NULL values)
                     $stmt = $pdo->prepare("
-                        INSERT INTO users (username, email, password, first_name, last_name, country, admin, registration_date) 
+                        INSERT INTO users (username, email, password, first_name, last_name, country, admin, created) 
                         VALUES (:username, :email, :password, :first_name, :last_name, :country, :admin, NOW())
                     ");
                     $stmt->bindValue(':username', $username, PDO::PARAM_STR);
@@ -284,7 +284,7 @@ if (isset($_GET['deleted']) && $_GET['deleted'] == '1') {
 // Fetch all users and their device counts
 try {
     $stmt = $pdo->prepare("
-        SELECT u.id, u.username, u.email, u.first_name, u.last_name, u.country, u.admin, u.registration_date,
+        SELECT u.id, u.username, u.email, u.first_name, u.last_name, u.country, u.admin, u.created,
             (SELECT COUNT(*) FROM devices d WHERE d.username = u.username) AS device_count
         FROM users u
         ORDER BY u.username
@@ -387,7 +387,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
                                     Device Count
                                     <span class="sort-indicator"></span>
                                 </th>
-                                <th class="sortable-header" data-sort="registration_date">
+                                <th class="sortable-header" data-sort="created">
                                     Registration Date
                                     <span class="sort-indicator"></span>
                                 </th>
@@ -404,7 +404,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
                                     <td><?php echo htmlspecialchars($user['country'] ?? 'N/A'); ?></td>
                                     <td style="text-align: center;"><?php echo $user['admin'] ? '✓' : ''; ?></td>
                                     <td style="text-align: center;"><?php echo htmlspecialchars($user['device_count']); ?></td>
-                                    <td><?php echo htmlspecialchars(date('Y-m-d H:i', strtotime($user['registration_date']))); ?></td>
+                                    <td><?php echo htmlspecialchars(date('Y-m-d H:i', strtotime($user['created']))); ?></td>
                                     <td>
                                         <div class="action-buttons-container">
                                             <div class="action-button-row">
@@ -517,7 +517,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
                         bValue = parseInt(b.cells[6].textContent.trim()) || 0;
                         return direction === 'asc' ? aValue - bValue : bValue - aValue;
 
-                    case 'registration_date':
+                    case 'created':
                         aValue = new Date(a.cells[7].textContent.trim());
                         bValue = new Date(b.cells[7].textContent.trim());
                         return direction === 'asc' ? aValue - bValue : bValue - aValue;

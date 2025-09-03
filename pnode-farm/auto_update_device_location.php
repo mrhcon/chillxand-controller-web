@@ -124,7 +124,7 @@ try {
         AND pnode_ip != '0.0.0.0'
         AND pnode_ip != '127.0.0.1'
         AND (location IS NULL OR location = '' OR location = 'Unknown')
-        ORDER BY registration_date DESC
+        ORDER BY created DESC
     ");
     
     $stmt->execute();
