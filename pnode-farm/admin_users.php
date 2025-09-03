@@ -325,6 +325,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
         <div class="main-content">
             <!-- Left Menu -->
             <div class="menu-column">
+                <img src="images/logo.png">
                 <ul>
                     <li><button class="menu-button" onclick="window.location.href='user_dashboard.php'">Dashboard</button></li>
                     <?php if ($_SESSION['admin']): ?>

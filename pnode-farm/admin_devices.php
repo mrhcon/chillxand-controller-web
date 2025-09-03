@@ -351,6 +351,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
 </head>
 <body>
     <div class="console-container">
+        <!-- Top Bar Header -->
         <div class="top-bar">
             <h1>ChillXand - pNode Management Console</h1>
             <div class="user-info">
