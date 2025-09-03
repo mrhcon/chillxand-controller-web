@@ -815,7 +815,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                                         data-device-name="<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>"
                                                         data-device-ip="<?php echo htmlspecialchars($device['pnode_ip']); ?>"
                                                         data-device-user="<?php echo htmlspecialchars($device['username']); ?>"
-                                                        onclick="openEditModalFromData(this)">Edit</button>                                            <div class="update-button-row">
+                                                        onclick="openEditModalFromData(this)">Edit</button>        
+                                            </div>                                    
+                                            <div class="update-button-row">
                                                 <button type="button" class="action-button delete"
                                                         onclick="openDeleteModal(<?php echo $device['id']; ?>, '<?php echo htmlspecialchars($device['pnode_name'], ENT_QUOTES); ?>')">Delete</button>
                                             </div>
