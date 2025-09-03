@@ -975,8 +975,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                             $management_types = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             foreach ($management_types as $type) {
                                 echo '<option value="' . htmlspecialchars($type['id']) . '">' . 
-                                    htmlspecialchars($type['type_name']) . ' - ' . 
-                                    htmlspecialchars($type['description']) . '</option>';
+                                    htmlspecialchars($type['type_name']) . '</option>';
                             }
                         } catch (PDOException $e) {
                             echo '<option value="">Error loading management types</option>';
@@ -985,15 +984,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     </select>
                     <div class="field-error" id="manage-type-error" style="display: none;"></div>
                 </div>
-                <div class="modal-form-group">
+                <div class="modal-form-group checkbox-group">
                     <label for="add-staking-farm">
                         <input type="checkbox" id="add-staking-farm" name="staking_farm" value="1">
-                        Staking Farm
+                        <span class="checkbox-label-text">Staking Farm</span>
                     </label>
-                    <small style="display: block; color: #666; margin-top: 5px;">
-                        Check this if this device is used for staking operations
-                    </small>
-                </div>                
+                    <small>Check this if this device is used for staking operations</small>
+                </div>               
                 <div class="modal-buttons">
                     <button type="button" class="modal-btn modal-btn-secondary" onclick="closeAddModal()">Cancel</button>
                     <button type="button" class="modal-btn modal-btn-primary" onclick="submitAdd()">Add Device</button>
@@ -1062,23 +1059,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         if (isset($management_types)) {
                             foreach ($management_types as $type) {
                                 echo '<option value="' . htmlspecialchars($type['id']) . '">' . 
-                                    htmlspecialchars($type['type_name']) . ' - ' . 
-                                    htmlspecialchars($type['description']) . '</option>';
+                                    htmlspecialchars($type['type_name']) . '</option>';
                             }
                         }
                         ?>
                     </select>
                     <div class="field-error" id="edit-manage-type-error" style="display: none;"></div>
                 </div>
-
-                <div class="modal-form-group">
+                <div class="modal-form-group checkbox-group">
                     <label for="edit-staking-farm">
                         <input type="checkbox" id="edit-staking-farm" name="staking_farm" value="1">
-                        Staking Farm
+                        <span class="checkbox-label-text">Staking Farm</span>
                     </label>
-                    <small style="display: block; color: #666; margin-top: 5px;">
-                        Check this if this device is used for staking operations
-                    </small>
+                    <small>Check this if this device is used for staking operations</small>
                 </div>
                 <div class="modal-buttons">
                     <button type="button" class="modal-btn modal-btn-secondary" onclick="closeEditModal()">Cancel</button>
