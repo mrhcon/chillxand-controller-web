@@ -9,6 +9,7 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
+
 // Handle add device
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['action'] == 'add') {
     // Check if required POST variables exist
@@ -68,7 +69,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
     }
 }
 
-// Handle edit device
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['action'] == 'delete') {
     // Check if required POST variable exists
     if (!isset($_POST['device_id'])) {
@@ -90,6 +90,44 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 $stmt->bindValue(':device_id', $device_id, PDO::PARAM_INT);
                 $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
                 $stmt->bindValue(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
+                $stmt->execute();
+
+                logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_delete_success', "Device: {$device['pnode_name']}, IP: {$device['pnode_ip']}");
+                header("Location: user_dashboard.php");
+                exit();
+            } else {
+                $error = "Device not found or not authorized.";
+                logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_delete_failed', 'Device not found or unauthorized');
+            }
+        } catch (PDOException $e) {
+            $error = "Error deleting device: " . $e->getMessage();
+            error_log($error);
+            logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_delete_failed', $error);
+        }
+    }
+}
+
+// Handle delete device 
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['action'] == 'delete') {
+    // Check if required POST variable exists
+    if (!isset($_POST['device_id'])) {
+        $error = "Missing device ID.";
+        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_delete_failed', 'Missing device ID');
+    } else {
+        $device_id = $_POST['device_id'];
+        try {
+            // Get device details and verify ownership
+            $stmt = $pdo->prepare("SELECT pnode_name, pnode_ip FROM devices WHERE id = :device_id AND username = :username");
+            $stmt->bindValue(':device_id', $device_id, PDO::PARAM_INT);
+            $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
+            $stmt->execute();
+            $device = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($device) {
+                // Delete device (cascade will handle device_status_log)
+                $stmt = $pdo->prepare("DELETE FROM devices WHERE id = :device_id AND username = :username");
+                $stmt->bindValue(':device_id', $device_id, PDO::PARAM_INT);
+                $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
                 $stmt->execute();
 
                 logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_delete_success', "Device: {$device['pnode_name']}, IP: {$device['pnode_ip']}");
