@@ -284,8 +284,9 @@ if (isset($_GET['deleted']) && $_GET['deleted'] == '1') {
 try {
     $stmt = $pdo->prepare("
         SELECT u.id, u.username, u.email, u.first_name, u.last_name, u.country, u.admin, u.created,
-            (SELECT COUNT(*) FROM devices d WHERE d.username = u.username) AS device_count
+            (SELECT COUNT(*) FROM devices d WHERE d.username = u.username AND d.logically_deleted = 0) AS device_count
         FROM users u
+        WHERE u.logically_deleted = 0
         ORDER BY u.username
     ");
     $stmt->execute();
