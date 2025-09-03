@@ -10,63 +10,59 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 // Handle add device
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['action'] == 'edit') {
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['action'] == 'add') {
     // Check if required POST variables exist
-    if (!isset($_POST['device_id']) || !isset($_POST['pnode_name']) || !isset($_POST['pnode_ip'])) {
+    if (!isset($_POST['pnode_name']) || !isset($_POST['pnode_ip'])) {
         $error = "Missing required form data.";
-        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_edit_failed', 'Missing form data');
+        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Missing form data');
     } else {
-        $device_id = $_POST['device_id'];
         $pnode_name = trim($_POST['pnode_name']);
         $pnode_ip = trim($_POST['pnode_ip']);
 
         if (empty($pnode_name) || empty($pnode_ip)) {
             $error = "Please fill in all fields.";
-            logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_edit_failed', 'Empty fields');
+            logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Empty fields');
         } elseif (strlen($pnode_name) > 100) {
             $error = "Node name must be 100 characters or less.";
-            logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_edit_failed', 'Invalid node name length');
+            logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Invalid node name length');
         } elseif (!filter_var($pnode_ip, FILTER_VALIDATE_IP)) {
             $error = "Invalid IP address.";
-            logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_edit_failed', 'Invalid IP address');
+            logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Invalid IP address');
         } else {
             try {
-                // Check for duplicate name system-wide (excluding current device and logically deleted)
-                $stmt = $pdo->prepare("SELECT COUNT(*) FROM devices WHERE pnode_name = :pnode_name AND id != :device_id AND logically_deleted = 0");
+                // Check for duplicate name system-wide (exclude logically deleted)
+                $stmt = $pdo->prepare("SELECT COUNT(*) FROM devices WHERE pnode_name = :pnode_name AND logically_deleted = 0");
                 $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
-                $stmt->bindValue(':device_id', $device_id, PDO::PARAM_INT);
                 $stmt->execute();
                 if ($stmt->fetchColumn() > 0) {
                     $error = "Device name already registered in the system.";
-                    logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_edit_failed', 'Duplicate device name');
+                    logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Duplicate device name');
                 } else {
-                    // Check for duplicate IP address system-wide (excluding current device and logically deleted)
-                    $stmt = $pdo->prepare("SELECT COUNT(*) FROM devices WHERE pnode_ip = :pnode_ip AND id != :device_id AND logically_deleted = 0");
+                    // Check for duplicate IP address system-wide (exclude logically deleted)
+                    $stmt = $pdo->prepare("SELECT COUNT(*) FROM devices WHERE pnode_ip = :pnode_ip AND logically_deleted = 0");
                     $stmt->bindValue(':pnode_ip', $pnode_ip, PDO::PARAM_STR);
-                    $stmt->bindValue(':device_id', $device_id, PDO::PARAM_INT);
                     $stmt->execute();
                     if ($stmt->fetchColumn() > 0) {
                         $error = "IP address already registered in the system.";
-                        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_edit_failed', 'Duplicate IP address');
+                        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Duplicate IP address');
                     } else {
-                        // Update device with audit trail
-                        $stmt = $pdo->prepare("UPDATE devices SET pnode_name = :pnode_name, pnode_ip = :pnode_ip, last_modified_by = :user_id WHERE id = :device_id AND username = :username AND logically_deleted = 0");
+                        // Add device with audit trail
+                        $stmt = $pdo->prepare("INSERT INTO devices (username, pnode_name, pnode_ip, registration_date, last_modified_by) VALUES (:username, :pnode_name, :pnode_ip, NOW(), :user_id)");
+                        $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
                         $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
                         $stmt->bindValue(':pnode_ip', $pnode_ip, PDO::PARAM_STR);
-                        $stmt->bindValue(':device_id', $device_id, PDO::PARAM_INT);
-                        $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
                         $stmt->bindValue(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
                         $stmt->execute();
 
-                        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_edit_success', "Device ID: $device_id, New Name: $pnode_name, New IP: $pnode_ip");
+                        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_success', "Device: $pnode_name, IP: $pnode_ip");
                         header("Location: user_dashboard.php");
                         exit();
                     }
                 }
             } catch (PDOException $e) {
-                $error = "Error editing device: " . $e->getMessage();
+                $error = "Error adding device: " . $e->getMessage();
                 error_log($error);
-                logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_edit_failed', $error);
+                logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', $error);
             }
         }
     }
