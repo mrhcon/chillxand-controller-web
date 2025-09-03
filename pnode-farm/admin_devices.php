@@ -651,11 +651,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                                     <td>
                                         <div><?php echo htmlspecialchars($device['registration_date']); ?></div>
                                         <div style="color: #666; font-size: 0.9em;">Owner: <?php echo htmlspecialchars($device['username']); ?></div>
-                                        <?php if ($device['staking_farm']): ?>
-                                            <div style="color: #28a745; font-size: 0.85em; font-weight: bold;">Staking Farm</div>
-                                        <?php endif; ?>
                                         <?php if ($device['management_type_name']): ?>
                                             <div style="color: #6c757d; font-size: 0.85em;">Type: <?php echo htmlspecialchars($device['management_type_name']); ?></div>
+                                        <?php endif; ?>
+                                        <?php if ($device['staking_farm']): ?>
+                                            <div style="color: #28a745; font-size: 0.85em; font-weight: bold;">Staking Farm</div>
                                         <?php endif; ?>
                                     </td>
                                     <td id="status-<?php echo $device['id']; ?>">
