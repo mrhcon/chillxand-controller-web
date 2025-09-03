@@ -90,6 +90,7 @@ try {
             d.manage_type_id, d.staking_farm, mt.type_name as management_type_name
         FROM devices d
         LEFT JOIN management_types mt ON d.manage_type_id = mt.id
+        WHERE d.logically_deleted = 0
         ORDER BY d.pnode_name ASC
     ");
     $stmt->execute();
@@ -241,10 +242,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Duplicate IP address');
                     } else {
                         // Add device with assigned user
-                        $stmt = $pdo->prepare("INSERT INTO devices (username, pnode_name, pnode_ip, created, manage_type_id, staking_farm) VALUES (:username, :pnode_name, :pnode_ip, NOW(), :manage_type_id, :staking_farm)");
+                        $stmt = $pdo->prepare("INSERT INTO devices (username, pnode_name, pnode_ip, created, created_by, manage_type_id, staking_farm) VALUES (:username, :pnode_name, :pnode_ip, NOW(), :created_by, :manage_type_id, :staking_farm)");
                         $stmt->bindValue(':username', $assign_user, PDO::PARAM_STR);
                         $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
                         $stmt->bindValue(':pnode_ip', $pnode_ip, PDO::PARAM_STR);
+                        $stmt->bindValue(':created_by', $_SESSION['user_id'], PDO::PARAM_INT);
                         $stmt->bindValue(':manage_type_id', $manage_type_id, PDO::PARAM_INT);
                         $stmt->bindValue(':staking_farm', $staking_farm, PDO::PARAM_INT);                        
                         $stmt->execute();
@@ -321,13 +323,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                             $error = "IP address already registered in the system.";
                             logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_edit_failed', 'Duplicate IP address');
                         } else {
-                            $stmt = $pdo->prepare("UPDATE devices SET pnode_name = :pnode_name, pnode_ip = :pnode_ip, username = :username, manage_type_id = :manage_type_id, staking_farm = :staking_farm WHERE id = :device_id");
+                            $stmt = $pdo->prepare("UPDATE devices SET pnode_name = :pnode_name, pnode_ip = :pnode_ip, username = :username, manage_type_id = :manage_type_id, staking_farm = :staking_farm, last_modified = NOW(), last_modified_by = :last_modified_by WHERE id = :device_id");
                             $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
                             $stmt->bindValue(':pnode_ip', $pnode_ip, PDO::PARAM_STR);
                             $stmt->bindValue(':username', $assign_user, PDO::PARAM_STR);
                             $stmt->bindValue(':manage_type_id', $manage_type_id, PDO::PARAM_INT);
                             $stmt->bindValue(':staking_farm', $staking_farm, PDO::PARAM_INT);
                             $stmt->bindValue(':device_id', $device_id, PDO::PARAM_INT);
+                            $stmt->bindValue(':last_modified_by', $_SESSION['user_id'], PDO::PARAM_INT);
                             $stmt->execute();
 
                             logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_edit_success', "Device ID: $device_id, New Name: $pnode_name, New IP: $pnode_ip, Assigned to: $assign_user");
@@ -359,8 +362,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         $device = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($device) {
             // Delete device (cascade will handle device_status_log)
-            $stmt = $pdo->prepare("DELETE FROM devices WHERE id = :device_id");
+            $stmt = $pdo->prepare("UPDATE devices SET logically_deleted = 1, deleted_at = NOW(), deleted_by = :deleted_by WHERE id = :device_id AND logically_deleted = 0");
             $stmt->bindValue(':device_id', $device_id, PDO::PARAM_INT);
+            $stmt->bindValue(':deleted_by', $_SESSION['user_id'], PDO::PARAM_INT);
             $stmt->execute();
             logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_delete_success', "Device: {$device['pnode_name']}, IP: {$device['pnode_ip']}, Owner: {$device['username']}");
             if (PHP_SAPI !== 'cli') {

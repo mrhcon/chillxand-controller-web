@@ -65,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     // Insert new user (all fields are now required so no NULL values)
                     $stmt = $pdo->prepare("
                         INSERT INTO users (username, email, password, first_name, last_name, country, admin, created, created_by) 
-                        VALUES (:username, :email, :password, :first_name, :last_name, :country, :admin, NOW(), :user_id)
+                        VALUES (:username, :email, :password, :first_name, :last_name, :country, :admin, NOW(), :created_by)
                     ");
                     $stmt->bindValue(':username', $username, PDO::PARAM_STR);
                     $stmt->bindValue(':email', $email, PDO::PARAM_STR);
@@ -74,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     $stmt->bindValue(':last_name', $last_name, PDO::PARAM_STR);
                     $stmt->bindValue(':country', $country, PDO::PARAM_STR);
                     $stmt->bindValue(':admin', $admin, PDO::PARAM_INT);
-                    $stmt->bindValue(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
+                    $stmt->bindValue(':created_by', $_SESSION['user_id'], PDO::PARAM_INT);
                     $stmt->execute();
 
                     $success = "User '$username' has been successfully created with temporary password: $random_password";
