@@ -879,56 +879,72 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
        </div>
    </div>
 
-   <!-- Add Device Modal -->
-   <div id="addModal" class="modal">
-       <div class="modal-content">
-           <div class="modal-header">
-               <h3>Add New Device</h3>
-               <span class="close" onclick="closeAddModal()">&times;</span>
-           </div>
-           <form id="addForm" method="POST" action="">
-               <input type="hidden" name="action" value="add">
-               <div class="modal-form-group">
-                   <label for="add-pnode-name">Node Name:</label>
-                   <input type="text" id="add-pnode-name" name="pnode_name" required>
-               </div>
-               <div class="modal-form-group">
-                   <label for="add-pnode-ip">IP Address:</label>
-                   <input type="text" id="add-pnode-ip" name="pnode_ip" required>
-               </div>
-               <div class="modal-buttons">
-                   <button type="button" class="modal-btn modal-btn-secondary" onclick="closeAddModal()">Cancel</button>
-                   <button type="button" class="modal-btn modal-btn-primary" onclick="submitAdd()">Add Device</button>
-               </div>
-           </form>
-       </div>
-   </div>
+    <!-- Add Device Modal -->
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Device</h3>
+                <span class="close" onclick="closeAddModal()">&times;</span>
+            </div>
 
-   <!-- Edit Device Modal -->
-   <div id="editModal" class="modal">
-       <div class="modal-content">
-           <div class="modal-header">
-               <h3>Edit Device</h3>
-               <span class="close" onclick="closeEditModal()">&times;</span>
-           </div>
-           <form id="editForm" method="POST" action="">
-               <input type="hidden" name="action" value="edit">
-               <input type="hidden" id="edit-device-id" name="device_id">
-               <div class="modal-form-group">
-                   <label for="edit-pnode-name">Node Name:</label>
-                   <input type="text" id="edit-pnode-name" name="pnode_name" required>
-               </div>
-               <div class="modal-form-group">
-                   <label for="edit-pnode-ip">IP Address:</label>
-                   <input type="text" id="edit-pnode-ip" name="pnode_ip" required>
-               </div>
-               <div class="modal-buttons">
-                   <button type="button" class="modal-btn modal-btn-secondary" onclick="closeEditModal()">Cancel</button>
-                   <button type="button" class="modal-btn modal-btn-primary" onclick="submitEdit()">Save Changes</button>
-               </div>
-           </form>
-       </div>
-   </div>
+            <!-- Add this error display area -->
+            <div id="addModalError" class="modal-error" style="display: none;"></div>
+
+            <form id="addForm" method="POST" action="">
+                <input type="hidden" name="action" value="add">
+                <div class="modal-form-group">
+                    <label for="add-pnode-name">Node Name:</label>
+                    <input type="text" id="add-pnode-name" name="pnode_name" required>
+                    <!-- Add this field error div -->
+                    <div class="field-error" id="name-error" style="display: none;"></div>
+                </div>
+                <div class="modal-form-group">
+                    <label for="add-pnode-ip">IP Address:</label>
+                    <input type="text" id="add-pnode-ip" name="pnode_ip" required>
+                    <!-- Add this field error div -->
+                    <div class="field-error" id="ip-error" style="display: none;"></div>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="modal-btn modal-btn-secondary" onclick="closeAddModal()">Cancel</button>
+                    <button type="button" class="modal-btn modal-btn-primary" onclick="submitAdd()">Add Device</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Device Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Device</h3>
+                <span class="close" onclick="closeEditModal()">&times;</span>
+            </div>
+
+            <!-- Add this error display area -->
+            <div id="editModalError" class="modal-error" style="display: none;"></div>
+
+            <form id="editForm" method="POST" action="">
+                <input type="hidden" name="action" value="edit">
+                <input type="hidden" id="edit-device-id" name="device_id">
+                <div class="modal-form-group">
+                    <label for="edit-pnode-name">Node Name:</label>
+                    <input type="text" id="edit-pnode-name" name="pnode_name" required>
+                    <!-- Add this field error div -->
+                    <div class="field-error" id="edit-name-error" style="display: none;"></div>
+                </div>
+                <div class="modal-form-group">
+                    <label for="edit-pnode-ip">IP Address:</label>
+                    <input type="text" id="edit-pnode-ip" name="pnode_ip" required>
+                    <!-- Add this field error div -->
+                    <div class="field-error" id="edit-ip-error" style="display: none;"></div>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="modal-btn modal-btn-secondary" onclick="closeEditModal()">Cancel</button>
+                    <button type="button" class="modal-btn modal-btn-primary" onclick="submitEdit()">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
    <!-- Delete Device Modal -->
    <div id="deleteModal" class="modal">
@@ -1965,6 +1981,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
 
         function submitAdd() {
             // Clear previous errors
+            clearModalErrors();
+
             const form = document.getElementById('addForm');
             const nameField = document.getElementById('add-pnode-name');
             const ipField = document.getElementById('add-pnode-ip');
@@ -1972,19 +1990,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             const nodeName = nameField.value.trim();
             const ipAddress = ipField.value.trim();
 
-            // Basic client-side validation
-            if (!nodeName || !ipAddress) {
-                alert('Please fill in all fields.');
-                return;
+            let hasErrors = false;
+
+            // Client-side validation
+            const nameError = validateNodeName(nodeName);
+            if (nameError) {
+                showModalError(nameError, 'name');
+                hasErrors = true;
             }
 
-            if (nodeName.length > 100) {
-                alert('Node name must be 100 characters or less.');
-                return;
+            const ipError = validateIPAddress(ipAddress);
+            if (ipError) {
+                showModalError(ipError, 'ip');
+                hasErrors = true;
             }
 
-            if (!/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.test(ipAddress)) {
-                alert('Please enter a valid IP address.');
+            if (hasErrors) {
                 return;
             }
 
@@ -1999,36 +2020,32 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Update form values with trimmed versions
                     nameField.value = nodeName;
                     ipField.value = ipAddress;
-                    
-                    // Submit the form
                     form.submit();
                 } else {
-                    // Show server-side validation errors
-                    let errorMessage = 'Validation failed:\n\n';
                     if (data.errors) {
                         if (data.errors.name) {
-                            errorMessage += '• ' + data.errors.name + '\n';
+                            showModalError(data.errors.name, 'name');
                         }
                         if (data.errors.ip) {
-                            errorMessage += '• ' + data.errors.ip + '\n';
+                            showModalError(data.errors.ip, 'ip');
                         }
                     } else if (data.error) {
-                        errorMessage += '• ' + data.error;
+                        showModalError(data.error);
                     }
-                    alert(errorMessage);
                 }
             })
             .catch(error => {
-                alert('Network error occurred. Please try again.');
+                showModalError('Network error occurred. Please try again.');
                 console.error('Validation error:', error);
             });
         }
 
         function submitEdit() {
             // Clear previous errors
+            clearEditModalErrors();
+
             const form = document.getElementById('editForm');
             const nameField = document.getElementById('edit-pnode-name');
             const ipField = document.getElementById('edit-pnode-ip');
@@ -2037,19 +2054,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             const nodeName = nameField.value.trim();
             const ipAddress = ipField.value.trim();
 
-            // Basic client-side validation
-            if (!nodeName || !ipAddress) {
-                alert('Please fill in all fields.');
-                return;
+            let hasErrors = false;
+
+            // Client-side validation
+            const nameError = validateNodeName(nodeName);
+            if (nameError) {
+                showEditModalError(nameError, 'name');
+                hasErrors = true;
             }
 
-            if (nodeName.length > 100) {
-                alert('Node name must be 100 characters or less.');
-                return;
+            const ipError = validateIPAddress(ipAddress);
+            if (ipError) {
+                showEditModalError(ipError, 'ip');
+                hasErrors = true;
             }
 
-            if (!/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.test(ipAddress)) {
-                alert('Please enter a valid IP address.');
+            if (hasErrors) {
                 return;
             }
 
@@ -2064,32 +2084,118 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Update form values with trimmed versions
                     nameField.value = nodeName;
                     ipField.value = ipAddress;
-                    
-                    // Submit the form
                     form.submit();
                 } else {
-                    // Show server-side validation errors
-                    let errorMessage = 'Validation failed:\n\n';
                     if (data.errors) {
                         if (data.errors.name) {
-                            errorMessage += '• ' + data.errors.name + '\n';
+                            showEditModalError(data.errors.name, 'name');
                         }
                         if (data.errors.ip) {
-                            errorMessage += '• ' + data.errors.ip + '\n';
+                            showEditModalError(data.errors.ip, 'ip');
                         }
                     } else if (data.error) {
-                        errorMessage += '• ' + data.error;
+                        showEditModalError(data.error);
                     }
-                    alert(errorMessage);
                 }
             })
             .catch(error => {
-                alert('Network error occurred. Please try again.');
+                showEditModalError('Network error occurred. Please try again.');
                 console.error('Validation error:', error);
             });
+        }
+
+        // Add the helper functions from user_dashboard.php
+        function clearModalErrors() {
+            const errorDiv = document.getElementById('addModalError');
+            errorDiv.style.display = 'none';
+            errorDiv.innerHTML = '';
+
+            const nameError = document.getElementById('name-error');
+            const ipError = document.getElementById('ip-error');
+            nameError.style.display = 'none';
+            ipError.style.display = 'none';
+            nameError.innerHTML = '';
+            ipError.innerHTML = '';
+
+            document.getElementById('add-pnode-name').classList.remove('input-error');
+            document.getElementById('add-pnode-ip').classList.remove('input-error');
+        }
+
+        function clearEditModalErrors() {
+            const errorDiv = document.getElementById('editModalError');
+            errorDiv.style.display = 'none';
+            errorDiv.innerHTML = '';
+
+            const nameError = document.getElementById('edit-name-error');
+            const ipError = document.getElementById('edit-ip-error');
+            nameError.style.display = 'none';
+            ipError.style.display = 'none';
+            nameError.innerHTML = '';
+            ipError.innerHTML = '';
+
+            document.getElementById('edit-pnode-name').classList.remove('input-error');
+            document.getElementById('edit-pnode-ip').classList.remove('input-error');
+        }
+
+        function showModalError(message, fieldId = null) {
+            if (fieldId) {
+                const errorDiv = document.getElementById(fieldId + '-error');
+                errorDiv.innerHTML = message;
+                errorDiv.style.display = 'block';
+                document.getElementById('add-pnode-' + fieldId).classList.add('input-error');
+            } else {
+                const errorDiv = document.getElementById('addModalError');
+                errorDiv.innerHTML = '<strong>Error:</strong> ' + message;
+                errorDiv.style.display = 'block';
+            }
+        }
+
+        function showEditModalError(message, fieldId = null) {
+            if (fieldId) {
+                const errorDiv = document.getElementById('edit-' + fieldId + '-error');
+                errorDiv.innerHTML = message;
+                errorDiv.style.display = 'block';
+                document.getElementById('edit-pnode-' + fieldId).classList.add('input-error');
+            } else {
+                const errorDiv = document.getElementById('editModalError');
+                errorDiv.innerHTML = '<strong>Error:</strong> ' + message;
+                errorDiv.style.display = 'block';
+            }
+        }
+
+        // Add validation functions
+        function validateNodeName(name) {
+            if (!name || name.trim() === '') {
+                return 'Node name is required.';
+            }
+            if (name.length > 100) {
+                return 'Node name must be 100 characters or less.';
+            }
+            const validPattern = /^[a-zA-Z0-9\s\-_]+$/;
+            if (!validPattern.test(name)) {
+                return 'Node name can only contain letters, numbers, spaces, hyphens, and underscores.';
+            }
+            return null;
+        }
+
+        function validateIPAddress(ip) {
+            if (!ip || ip.trim() === '') {
+                return 'IP address is required.';
+            }
+            const ipPattern = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+            const match = ip.match(ipPattern);
+            if (!match) {
+                return 'Please enter a valid IP address (e.g., 192.168.1.100).';
+            }
+            for (let i = 1; i <= 4; i++) {
+                const octet = parseInt(match[i]);
+                if (octet < 0 || octet > 255) {
+                    return 'IP address octets must be between 0 and 255.';
+                }
+            }
+            return null;
         }
 
         function submitDelete() {
