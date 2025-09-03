@@ -1066,12 +1066,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     </select>
                     <div class="field-error" id="edit-manage-type-error" style="display: none;"></div>
                 </div>
-                <div class="modal-form-group">
-                    <div class="checkbox-container">
-                        <input type="checkbox" id="edit-staking-farm" name="staking_farm" value="1" class="styled-checkbox">
-                        <label for="edit-staking-farm" class="checkbox-label">Staking Farm</label>
+                <div class="checkbox-form-group">
+                    <div class="checkbox-inline-container">
+                        <input type="checkbox" id="edit-staking-farm" name="staking_farm" value="1">
+                        <span class="checkbox-inline-label">Staking Farm</span>
                     </div>
-                    <small class="field-help">Check if this device is used for staking operations</small>
+                    <small class="checkbox-help-text">Check if this device is used for staking operations</small>
                 </div>
                 <div class="modal-buttons">
                     <button type="button" class="modal-btn modal-btn-secondary" onclick="closeEditModal()">Cancel</button>
