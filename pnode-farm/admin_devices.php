@@ -280,29 +280,38 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 $error = "Device not found or not authorized.";
                 logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_edit_failed', 'Unauthorized device access');
             } else {
-                $stmt = $pdo->prepare("SELECT COUNT(*) FROM devices WHERE username = :username AND pnode_name = :pnode_name AND id != :device_id");
-                $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
+                $stmt = $pdo->prepare("SELECT COUNT(*) FROM devices WHERE pnode_name = :pnode_name AND id != :device_id");
                 $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
                 $stmt->bindValue(':device_id', $device_id, PDO::PARAM_INT);
                 $stmt->execute();
                 if ($stmt->fetchColumn() > 0) {
-                    $error = "Device name already registered.";
+                    $error = "Device name already registered in the system.";
                     logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_edit_failed', 'Duplicate device name');
                 } else {
-                    $stmt = $pdo->prepare("UPDATE devices SET pnode_name = :pnode_name, pnode_ip = :pnode_ip WHERE id = :device_id AND (username = :username OR :admin = 1)");
-                    $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
+                    // Check for duplicate IP address system-wide (excluding current device)
+                    $stmt = $pdo->prepare("SELECT COUNT(*) FROM devices WHERE pnode_ip = :pnode_ip AND id != :device_id");
                     $stmt->bindValue(':pnode_ip', $pnode_ip, PDO::PARAM_STR);
                     $stmt->bindValue(':device_id', $device_id, PDO::PARAM_INT);
-                    $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
-                    $stmt->bindValue(':admin', $_SESSION['admin'], PDO::PARAM_INT);
                     $stmt->execute();
-
-                    logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_edit_success', "Device ID: $device_id, New Name: $pnode_name, New IP: $pnode_ip");
-                    if (PHP_SAPI !== 'cli') {
-                        header("Location: admin_devices.php");
-                        exit();
+                    if ($stmt->fetchColumn() > 0) {
+                        $error = "IP address already registered in the system.";
+                        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_edit_failed', 'Duplicate IP address');
                     } else {
-                        echo "Device edited successfully: ID=$device_id, $pnode_name, $pnode_ip\n";
+                        $stmt = $pdo->prepare("UPDATE devices SET pnode_name = :pnode_name, pnode_ip = :pnode_ip WHERE id = :device_id AND (username = :username OR :admin = 1)");
+                        $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
+                        $stmt->bindValue(':pnode_ip', $pnode_ip, PDO::PARAM_STR);
+                        $stmt->bindValue(':device_id', $device_id, PDO::PARAM_INT);
+                        $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
+                        $stmt->bindValue(':admin', $_SESSION['admin'], PDO::PARAM_INT);
+                        $stmt->execute();
+
+                        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_edit_success', "Device ID: $device_id, New Name: $pnode_name, New IP: $pnode_ip");
+                        if (PHP_SAPI !== 'cli') {
+                            header("Location: admin_devices.php");
+                            exit();
+                        } else {
+                            echo "Device edited successfully: ID=$device_id, $pnode_name, $pnode_ip\n";
+                        }
                     }
                 }
             }
@@ -1955,11 +1964,132 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         }
 
         function submitAdd() {
-            document.getElementById('addForm').submit();
+            // Clear previous errors
+            const form = document.getElementById('addForm');
+            const nameField = document.getElementById('add-pnode-name');
+            const ipField = document.getElementById('add-pnode-ip');
+
+            const nodeName = nameField.value.trim();
+            const ipAddress = ipField.value.trim();
+
+            // Basic client-side validation
+            if (!nodeName || !ipAddress) {
+                alert('Please fill in all fields.');
+                return;
+            }
+
+            if (nodeName.length > 100) {
+                alert('Node name must be 100 characters or less.');
+                return;
+            }
+
+            if (!/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.test(ipAddress)) {
+                alert('Please enter a valid IP address.');
+                return;
+            }
+
+            // Server-side validation via AJAX
+            fetch('validate_device.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `action=add&pnode_name=${encodeURIComponent(nodeName)}&pnode_ip=${encodeURIComponent(ipAddress)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update form values with trimmed versions
+                    nameField.value = nodeName;
+                    ipField.value = ipAddress;
+                    
+                    // Submit the form
+                    form.submit();
+                } else {
+                    // Show server-side validation errors
+                    let errorMessage = 'Validation failed:\n\n';
+                    if (data.errors) {
+                        if (data.errors.name) {
+                            errorMessage += '• ' + data.errors.name + '\n';
+                        }
+                        if (data.errors.ip) {
+                            errorMessage += '• ' + data.errors.ip + '\n';
+                        }
+                    } else if (data.error) {
+                        errorMessage += '• ' + data.error;
+                    }
+                    alert(errorMessage);
+                }
+            })
+            .catch(error => {
+                alert('Network error occurred. Please try again.');
+                console.error('Validation error:', error);
+            });
         }
 
         function submitEdit() {
-            document.getElementById('editForm').submit();
+            // Clear previous errors
+            const form = document.getElementById('editForm');
+            const nameField = document.getElementById('edit-pnode-name');
+            const ipField = document.getElementById('edit-pnode-ip');
+            const deviceId = document.getElementById('edit-device-id').value;
+
+            const nodeName = nameField.value.trim();
+            const ipAddress = ipField.value.trim();
+
+            // Basic client-side validation
+            if (!nodeName || !ipAddress) {
+                alert('Please fill in all fields.');
+                return;
+            }
+
+            if (nodeName.length > 100) {
+                alert('Node name must be 100 characters or less.');
+                return;
+            }
+
+            if (!/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.test(ipAddress)) {
+                alert('Please enter a valid IP address.');
+                return;
+            }
+
+            // Server-side validation via AJAX
+            fetch('validate_device.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `action=edit&device_id=${encodeURIComponent(deviceId)}&pnode_name=${encodeURIComponent(nodeName)}&pnode_ip=${encodeURIComponent(ipAddress)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update form values with trimmed versions
+                    nameField.value = nodeName;
+                    ipField.value = ipAddress;
+                    
+                    // Submit the form
+                    form.submit();
+                } else {
+                    // Show server-side validation errors
+                    let errorMessage = 'Validation failed:\n\n';
+                    if (data.errors) {
+                        if (data.errors.name) {
+                            errorMessage += '• ' + data.errors.name + '\n';
+                        }
+                        if (data.errors.ip) {
+                            errorMessage += '• ' + data.errors.ip + '\n';
+                        }
+                    } else if (data.error) {
+                        errorMessage += '• ' + data.error;
+                    }
+                    alert(errorMessage);
+                }
+            })
+            .catch(error => {
+                alert('Network error occurred. Please try again.');
+                console.error('Validation error:', error);
+            });
         }
 
         function submitDelete() {
