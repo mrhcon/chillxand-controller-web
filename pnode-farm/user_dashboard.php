@@ -48,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Duplicate IP address');
                     } else {
                         // Add device with audit trail
-                        $stmt = $pdo->prepare("INSERT INTO devices (username, pnode_name, pnode_ip, registration_date, last_modified_by) VALUES (:username, :pnode_name, :pnode_ip, NOW(), :user_id)");
+                        $stmt = $pdo->prepare("INSERT INTO devices (username, pnode_name, pnode_ip, created, last_modified_by, created_by) VALUES (:username, :pnode_name, :pnode_ip, NOW(), :user_id, :user_id)");
                         $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
                         $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
                         $stmt->bindValue(':pnode_ip', $pnode_ip, PDO::PARAM_STR);
@@ -171,44 +171,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
     }
 }
 
-// Handle delete device
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['action'] == 'delete') {
-    // Check if required POST variable exists
-    if (!isset($_POST['device_id'])) {
-        $error = "Missing device ID.";
-        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_delete_failed', 'Missing device ID');
-    } else {
-        $device_id = $_POST['device_id'];
-        try {
-            // Get device details and verify ownership
-            $stmt = $pdo->prepare("SELECT pnode_name, pnode_ip FROM devices WHERE id = :device_id AND username = :username");
-            $stmt->bindValue(':device_id', $device_id, PDO::PARAM_INT);
-            $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
-            $stmt->execute();
-            $device = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            if ($device) {
-                // Delete device (cascade will handle device_status_log)
-                $stmt = $pdo->prepare("DELETE FROM devices WHERE id = :device_id AND username = :username");
-                $stmt->bindValue(':device_id', $device_id, PDO::PARAM_INT);
-                $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
-                $stmt->execute();
-
-                logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_delete_success', "Device: {$device['pnode_name']}, IP: {$device['pnode_ip']}");
-                header("Location: user_dashboard.php");
-                exit();
-            } else {
-                $error = "Device not found or not authorized.";
-                logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_delete_failed', 'Device not found or unauthorized');
-            }
-        } catch (PDOException $e) {
-            $error = "Error deleting device: " . $e->getMessage();
-            error_log($error);
-            logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_delete_failed', $error);
-        }
-    }
-}
-
 // Fetch user details
 try {
     $stmt = $pdo->prepare("SELECT username, email, first_name, last_name, country, admin FROM users WHERE id = ?");
@@ -240,7 +202,7 @@ try {
 // Fetch user's devices with enhanced status and order by node name
 try {
     $stmt = $pdo->prepare("
-        SELECT d.id, d.pnode_name, d.pnode_ip, d.location, d.registration_date, 
+        SELECT d.id, d.pnode_name, d.pnode_ip, d.location, d.created, 
             d.manage_type_id, d.staking_farm, mt.type_name as management_type_name
         FROM devices d
         LEFT JOIN management_types mt ON d.manage_type_id = mt.id
@@ -619,7 +581,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'dashboard_acc
                                         </div>
                                     </td>
                                     <td>
-                                        <div><?php echo htmlspecialchars($device['registration_date']); ?></div>
+                                        <div><?php echo htmlspecialchars($device['created']); ?></div>
                                         <?php if ($device['management_type_name']): ?>
                                             <div style="color: #6c757d; font-size: 0.85em;">Type: <?php echo htmlspecialchars($device['management_type_name']); ?></div>
                                         <?php endif; ?>
