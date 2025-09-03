@@ -4,11 +4,23 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
+// Load configuration
+$config = include __DIR__ . '/config.php';
+
+// Check if config loaded successfully
+if (!$config || !isset($config['database'])) {
+    error_log("Configuration file not found or invalid. Please copy config.example.php to config.php and update with your credentials.");
+    $pdo = null;
+    return;
+}
+
+$db_config = $config['database'];
+
 try {
-	$host = 'localhost';
-	$dbname = 'control_login_system';
-	$username = 'control_admin'; // Change to your MySQL username
-	$password = 'V3@hkwT00ryqCgl#';     // Change to your MySQL password
+    $host = $db_config['host'];
+    $dbname = $db_config['dbname'];
+    $username = $db_config['username'];
+    $password = $db_config['password'];
 
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
