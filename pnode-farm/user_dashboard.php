@@ -39,29 +39,39 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
             try {
                 echo "<div style='background: #d1ecf1; border: 1px solid #bee5eb; padding: 10px; margin: 10px 0;'>✅ VALIDATION PASSED - CHECKING DUPLICATES</div>";
 
-                $stmt = $pdo->prepare("SELECT COUNT(*) FROM devices WHERE username = :username AND pnode_name = :pnode_name");
-                $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
+                // Check for duplicate name system-wide
+                $stmt = $pdo->prepare("SELECT COUNT(*) FROM devices WHERE pnode_name = :pnode_name");
                 $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
                 $stmt->execute();
                 if ($stmt->fetchColumn() > 0) {
-                    $error = "Device name already registered.";
+                    $error = "Device name already registered in the system.";
                     echo "<div style='background: #f8d7da; border: 1px solid #f5c6cb; padding: 10px; margin: 10px 0;'>❌ DUPLICATE NAME</div>";
                     logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Duplicate device name');
                 } else {
-                    echo "<div style='background: #d4edda; border: 1px solid #c3e6cb; padding: 10px; margin: 10px 0;'>✅ INSERTING DEVICE</div>";
-
-                    // Add device
-                    $stmt = $pdo->prepare("INSERT INTO devices (username, pnode_name, pnode_ip, registration_date) VALUES (:username, :pnode_name, :pnode_ip, NOW())");
-                    $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
-                    $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
+                    // Check for duplicate IP address system-wide
+                    $stmt = $pdo->prepare("SELECT COUNT(*) FROM devices WHERE pnode_ip = :pnode_ip");
                     $stmt->bindValue(':pnode_ip', $pnode_ip, PDO::PARAM_STR);
                     $stmt->execute();
+                    if ($stmt->fetchColumn() > 0) {
+                        $error = "IP address already registered in the system.";
+                        echo "<div style='background: #f8d7da; border: 1px solid #f5c6cb; padding: 10px; margin: 10px 0;'>❌ DUPLICATE IP</div>";
+                        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Duplicate IP address');
+                    } else {
+                        echo "<div style='background: #d4edda; border: 1px solid #c3e6cb; padding: 10px; margin: 10px 0;'>✅ INSERTING DEVICE</div>";
 
-                    echo "<div style='background: #d4edda; border: 1px solid #c3e6cb; padding: 10px; margin: 10px 0;'>✅ DEVICE INSERTED - REDIRECTING</div>";
+                        // Add device
+                        $stmt = $pdo->prepare("INSERT INTO devices (username, pnode_name, pnode_ip, registration_date) VALUES (:username, :pnode_name, :pnode_ip, NOW())");
+                        $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
+                        $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
+                        $stmt->bindValue(':pnode_ip', $pnode_ip, PDO::PARAM_STR);
+                        $stmt->execute();
 
-                    logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_success', "Device: $pnode_name, IP: $pnode_ip");
-                    header("Location: user_dashboard.php");
-                    exit();
+                        echo "<div style='background: #d4edda; border: 1px solid #c3e6cb; padding: 10px; margin: 10px 0;'>✅ DEVICE INSERTED - REDIRECTING</div>";
+
+                        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_success', "Device: $pnode_name, IP: $pnode_ip");
+                        header("Location: user_dashboard.php");
+                        exit();
+                    }
                 }
             } catch (PDOException $e) {
                 $error = "Error adding device: " . $e->getMessage();
