@@ -211,6 +211,9 @@ function getLatestDeviceStatuses($pdo, $device_ids) {
                     'xandminer_status' => null,
                     'xandminerd_status' => null,
                     'cpu_load_avg' => null,
+                    'memory_percent' => null,
+                    'memory_total_bytes' => null,
+                    'memory_used_bytes' => null,
                     'server_ip' => null,
                     'server_hostname' => null,
                     'chillxand_version' => null,
@@ -247,22 +250,22 @@ function getLatestDeviceStatuses($pdo, $device_ids) {
 function parseCachedDeviceHealth($cached_status) {
     $result = [
         'error' => null,
-        'health_status' => $cached_status['health_status'],
-        'atlas_registered' => $cached_status['atlas_registered'],
-        'pod_status' => $cached_status['pod_status'],
-        'xandminer_status' => $cached_status['xandminer_status'],
-        'xandminerd_status' => $cached_status['xandminerd_status'],
-        'cpu_load_avg' => $cached_status['cpu_load_avg'],
-        'memory_percent' => $cached_status['memory_percent'],
-        'memory_total_bytes' => $cached_status['memory_total_bytes'],
-        'memory_used_bytes' => $cached_status['memory_used_bytes'],
-        'server_ip' => $cached_status['server_ip'],
-        'server_hostname' => $cached_status['server_hostname'],
-        'chillxand_version' => $cached_status['chillxand_version'],
-        'pod_version' => $cached_status['pod_version'],
-        'xandminer_version' => $cached_status['xandminer_version'],
-        'xandminerd_version' => $cached_status['xandminerd_version'],
-        'last_update' => $cached_status['check_time']
+        'health_status' => $cached_status['health_status'] ?? null,
+        'atlas_registered' => $cached_status['atlas_registered'] ?? null,
+        'pod_status' => $cached_status['pod_status'] ?? null,
+        'xandminer_status' => $cached_status['xandminer_status'] ?? null,
+        'xandminerd_status' => $cached_status['xandminerd_status'] ?? null,
+        'cpu_load_avg' => $cached_status['cpu_load_avg'] ?? null,
+        'memory_percent' => $cached_status['memory_percent'] ?? null,
+        'memory_total_bytes' => $cached_status['memory_total_bytes'] ?? null,
+        'memory_used_bytes' => $cached_status['memory_used_bytes'] ?? null,
+        'server_ip' => $cached_status['server_ip'] ?? null,
+        'server_hostname' => $cached_status['server_hostname'] ?? null,
+        'chillxand_version' => $cached_status['chillxand_version'] ?? null,
+        'pod_version' => $cached_status['pod_version'] ?? null,
+        'xandminer_version' => $cached_status['xandminer_version'] ?? null,
+        'xandminerd_version' => $cached_status['xandminerd_version'] ?? null,
+        'last_update' => $cached_status['check_time'] ?? null
     ];
 
     // Check if health data is recent
