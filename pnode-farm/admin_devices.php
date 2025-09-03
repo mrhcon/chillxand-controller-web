@@ -984,13 +984,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     </select>
                     <div class="field-error" id="manage-type-error" style="display: none;"></div>
                 </div>
-                <div class="modal-form-group checkbox-group">
-                    <label for="add-staking-farm">
-                        <input type="checkbox" id="add-staking-farm" name="staking_farm" value="1">
-                        <span class="checkbox-label-text">Staking Farm</span>
-                    </label>
-                    <small>Check this if this device is used for staking operations</small>
-                </div>               
+                <div class="modal-form-group">
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="add-staking-farm" name="staking_farm" value="1" class="styled-checkbox">
+                        <label for="add-staking-farm" class="checkbox-label">Staking Farm</label>
+                    </div>
+                    <small class="field-help">Check if this device is used for staking operations</small>
+                </div>             
                 <div class="modal-buttons">
                     <button type="button" class="modal-btn modal-btn-secondary" onclick="closeAddModal()">Cancel</button>
                     <button type="button" class="modal-btn modal-btn-primary" onclick="submitAdd()">Add Device</button>
@@ -1066,12 +1066,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     </select>
                     <div class="field-error" id="edit-manage-type-error" style="display: none;"></div>
                 </div>
-                <div class="modal-form-group checkbox-group">
-                    <label for="edit-staking-farm">
-                        <input type="checkbox" id="edit-staking-farm" name="staking_farm" value="1">
-                        <span class="checkbox-label-text">Staking Farm</span>
-                    </label>
-                    <small>Check this if this device is used for staking operations</small>
+                <div class="modal-form-group">
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="edit-staking-farm" name="staking_farm" value="1" class="styled-checkbox">
+                        <label for="edit-staking-farm" class="checkbox-label">Staking Farm</label>
+                    </div>
+                    <small class="field-help">Check if this device is used for staking operations</small>
                 </div>
                 <div class="modal-buttons">
                     <button type="button" class="modal-btn modal-btn-secondary" onclick="closeEditModal()">Cancel</button>

@@ -2426,3 +2426,42 @@ select {
     max-height: 90vh;
     overflow-y: auto;
 }
+
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.styled-checkbox {
+    width: 18px;
+    height: 18px;
+    margin-right: 12px;
+    margin-top: 0;
+    cursor: pointer;
+}
+
+.checkbox-label {
+    font-weight: 500;
+    color: #333;
+    cursor: pointer;
+    margin: 0;
+    font-size: 14px;
+}
+
+.field-help {
+    color: #666;
+    font-size: 12px;
+    line-height: 1.4;
+    margin-left: 30px;
+    margin-top: 0;
+}
+
+/* Ensure consistent spacing for all form groups */
+.modal-form-group {
+    margin-bottom: 18px;
+}
+
+.modal-form-group:last-of-type {
+    margin-bottom: 0;
+}
