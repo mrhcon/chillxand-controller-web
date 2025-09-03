@@ -284,8 +284,8 @@ if (isset($_GET['deleted']) && $_GET['deleted'] == '1') {
 // Fetch all users and their device counts
 try {
     $stmt = $pdo->prepare("
-        SELECT u.id, u.username, u.email, u.first_name, u.last_name, u.country, u.admin,
-               (SELECT COUNT(*) FROM devices d WHERE d.username = u.username) AS device_count
+        SELECT u.id, u.username, u.email, u.first_name, u.last_name, u.country, u.admin, u.registration_date,
+            (SELECT COUNT(*) FROM devices d WHERE d.username = u.username) AS device_count
         FROM users u
         ORDER BY u.username
     ");
@@ -387,6 +387,10 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
                                     Device Count
                                     <span class="sort-indicator"></span>
                                 </th>
+                                <th class="sortable-header" data-sort="registration_date">
+                                    Registration Date
+                                    <span class="sort-indicator"></span>
+                                </th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -400,6 +404,7 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
                                     <td><?php echo htmlspecialchars($user['country'] ?? 'N/A'); ?></td>
                                     <td style="text-align: center;"><?php echo $user['admin'] ? '✓' : ''; ?></td>
                                     <td style="text-align: center;"><?php echo htmlspecialchars($user['device_count']); ?></td>
+                                    <td><?php echo htmlspecialchars(date('Y-m-d H:i', strtotime($user['registration_date']))); ?></td>
                                     <td>
                                         <div class="action-buttons-container">
                                             <div class="action-button-row">
@@ -510,6 +515,11 @@ logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_users_a
                     case 'device_count':
                         aValue = parseInt(a.cells[6].textContent.trim()) || 0;
                         bValue = parseInt(b.cells[6].textContent.trim()) || 0;
+                        return direction === 'asc' ? aValue - bValue : bValue - aValue;
+
+                    case 'registration_date':
+                        aValue = new Date(a.cells[7].textContent.trim());
+                        bValue = new Date(b.cells[7].textContent.trim());
                         return direction === 'asc' ? aValue - bValue : bValue - aValue;
 
                     default:
