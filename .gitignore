@@ -1,0 +1,12 @@
+# Environment and config files
+.env
+config.php
+db_config.php
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
