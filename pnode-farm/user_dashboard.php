@@ -11,41 +11,31 @@ if (!isset($_SESSION['user_id'])) {
 
 // Handle add device
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['action'] == 'add') {
-    echo "<div style='background: #d4edda; border: 1px solid #c3e6cb; padding: 10px; margin: 10px 0;'>✅ ADD DEVICE HANDLER REACHED</div>";
-
     // Check if required POST variables exist
     if (!isset($_POST['pnode_name']) || !isset($_POST['pnode_ip'])) {
         $error = "Missing required form data.";
-        echo "<div style='background: #f8d7da; border: 1px solid #f5c6cb; padding: 10px; margin: 10px 0;'>❌ MISSING POST DATA</div>";
         logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Missing form data');
     } else {
-        echo "<div style='background: #d1ecf1; border: 1px solid #bee5eb; padding: 10px; margin: 10px 0;'>✅ POST DATA EXISTS</div>";
-
         $pnode_name = trim($_POST['pnode_name']);
         $pnode_ip = trim($_POST['pnode_ip']);
 
         if (empty($pnode_name) || empty($pnode_ip)) {
             $error = "Please fill in all fields.";
-            echo "<div style='background: #f8d7da; border: 1px solid #f5c6cb; padding: 10px; margin: 10px 0;'>❌ EMPTY FIELDS</div>";
             logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Empty fields');
         } elseif (strlen($pnode_name) > 100) {
             $error = "Node name must be 100 characters or less.";
             logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Invalid node name length');
         } elseif (!filter_var($pnode_ip, FILTER_VALIDATE_IP)) {
             $error = "Invalid IP address.";
-            echo "<div style='background: #f8d7da; border: 1px solid #f5c6cb; padding: 10px; margin: 10px 0;'>❌ INVALID IP: " . htmlspecialchars($pnode_ip) . "</div>";
             logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Invalid IP address');
         } else {
             try {
-                echo "<div style='background: #d1ecf1; border: 1px solid #bee5eb; padding: 10px; margin: 10px 0;'>✅ VALIDATION PASSED - CHECKING DUPLICATES</div>";
-
                 // Check for duplicate name system-wide
                 $stmt = $pdo->prepare("SELECT COUNT(*) FROM devices WHERE pnode_name = :pnode_name");
                 $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
                 $stmt->execute();
                 if ($stmt->fetchColumn() > 0) {
                     $error = "Device name already registered in the system.";
-                    echo "<div style='background: #f8d7da; border: 1px solid #f5c6cb; padding: 10px; margin: 10px 0;'>❌ DUPLICATE NAME</div>";
                     logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Duplicate device name');
                 } else {
                     // Check for duplicate IP address system-wide
@@ -54,19 +44,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     $stmt->execute();
                     if ($stmt->fetchColumn() > 0) {
                         $error = "IP address already registered in the system.";
-                        echo "<div style='background: #f8d7da; border: 1px solid #f5c6cb; padding: 10px; margin: 10px 0;'>❌ DUPLICATE IP</div>";
                         logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Duplicate IP address');
                     } else {
-                        echo "<div style='background: #d4edda; border: 1px solid #c3e6cb; padding: 10px; margin: 10px 0;'>✅ INSERTING DEVICE</div>";
-
                         // Add device
                         $stmt = $pdo->prepare("INSERT INTO devices (username, pnode_name, pnode_ip, registration_date) VALUES (:username, :pnode_name, :pnode_ip, NOW())");
                         $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
                         $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
                         $stmt->bindValue(':pnode_ip', $pnode_ip, PDO::PARAM_STR);
                         $stmt->execute();
-
-                        echo "<div style='background: #d4edda; border: 1px solid #c3e6cb; padding: 10px; margin: 10px 0;'>✅ DEVICE INSERTED - REDIRECTING</div>";
 
                         logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_success', "Device: $pnode_name, IP: $pnode_ip");
                         header("Location: user_dashboard.php");
@@ -75,7 +60,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 }
             } catch (PDOException $e) {
                 $error = "Error adding device: " . $e->getMessage();
-                echo "<div style='background: #f8d7da; border: 1px solid #f5c6cb; padding: 10px; margin: 10px 0;'>❌ DATABASE ERROR: " . htmlspecialchars($e->getMessage()) . "</div>";
                 error_log($error);
                 logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', $error);
             }
@@ -123,28 +107,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         $error = "IP address already registered in the system.";
                         logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_edit_failed', 'Duplicate IP address');
                     } else {
-                        // Check for duplicate name (excluding current device)
-                        $stmt = $pdo->prepare("SELECT COUNT(*) FROM devices WHERE username = :username AND pnode_name = :pnode_name AND id != :device_id");
-                        $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
+                        // Update device
+                        $stmt = $pdo->prepare("UPDATE devices SET pnode_name = :pnode_name, pnode_ip = :pnode_ip WHERE id = :device_id AND username = :username");
                         $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
+                        $stmt->bindValue(':pnode_ip', $pnode_ip, PDO::PARAM_STR);
                         $stmt->bindValue(':device_id', $device_id, PDO::PARAM_INT);
+                        $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
                         $stmt->execute();
-                        if ($stmt->fetchColumn() > 0) {
-                            $error = "Device name already registered.";
-                            logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_edit_failed', 'Duplicate device name');
-                        } else {
-                            // Update device
-                            $stmt = $pdo->prepare("UPDATE devices SET pnode_name = :pnode_name, pnode_ip = :pnode_ip WHERE id = :device_id AND username = :username");
-                            $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
-                            $stmt->bindValue(':pnode_ip', $pnode_ip, PDO::PARAM_STR);
-                            $stmt->bindValue(':device_id', $device_id, PDO::PARAM_INT);
-                            $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
-                            $stmt->execute();
 
-                            logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_edit_success', "Device ID: $device_id, New Name: $pnode_name, New IP: $pnode_ip");
-                            header("Location: user_dashboard.php");
-                            exit();
-                        }
+                        logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_edit_success', "Device ID: $device_id, New Name: $pnode_name, New IP: $pnode_ip");
+                        header("Location: user_dashboard.php");
+                        exit();
+                    }
                     }
                 }
             } catch (PDOException $e) {
