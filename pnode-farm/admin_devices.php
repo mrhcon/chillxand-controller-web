@@ -985,12 +985,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     <div class="field-error" id="manage-type-error" style="display: none;"></div>
                 </div>
                 <div class="modal-form-group">
-                    <label for="add-staking-farm" style="display: flex; align-items: center; font-weight: 500; margin-bottom: 5px;">
-                        <input type="checkbox" id="add-staking-farm" name="staking_farm" value="1" style="margin-right: 8px; margin-top: 0;">
-                        Staking Farm
-                    </label>
-                    <small style="color: #666; font-size: 12px; margin-left: 0;">Check if this device is used for staking operations</small>
-                </div>        
+                    <div>
+                        <input type="checkbox" id="add-staking-farm" name="staking_farm" value="1"> 
+                        <label for="add-staking-farm">Staking Farm</label>
+                    </div>
+                    <small>Check if this device is used for staking operations</small>
+                </div>   
                 <div class="modal-buttons">
                     <button type="button" class="modal-btn modal-btn-secondary" onclick="closeAddModal()">Cancel</button>
                     <button type="button" class="modal-btn modal-btn-primary" onclick="submitAdd()">Add Device</button>
