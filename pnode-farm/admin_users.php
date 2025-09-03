@@ -149,15 +149,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         // Update user (excluding username, all fields are now required so no NULL values)
                         $stmt = $pdo->prepare("
                             UPDATE users 
-                            SET email = :email, first_name = :first_name, last_name = :last_name, country = :country, admin = :admin , last_modified_by = :user_id, last_modified = NOW()
-                            WHERE id = :user_id
+                            SET email = :email, first_name = :first_name, last_name = :last_name, country = :country, admin = :admin , last_modified_by = :last_modified_by, last_modified = NOW()
+                            WHERE username = :username
                         ");
                         $stmt->bindValue(':email', $email, PDO::PARAM_STR);
                         $stmt->bindValue(':first_name', $first_name, PDO::PARAM_STR);
                         $stmt->bindValue(':last_name', $last_name, PDO::PARAM_STR);
                         $stmt->bindValue(':country', $country, PDO::PARAM_STR);
                         $stmt->bindValue(':admin', $admin, PDO::PARAM_INT);
-                        $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+                        $stmt->bindValue(':last_modified_by', $user_id, PDO::PARAM_INT);
+                        $stmt->bindValue(':username', $username, PDO::PARAM_STR);
                         $stmt->execute();
 
                         // If we're editing our own account, update session admin status
