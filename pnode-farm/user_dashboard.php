@@ -119,7 +119,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         header("Location: user_dashboard.php");
                         exit();
                     }
-                    }
                 }
             } catch (PDOException $e) {
                 $error = "Error editing device: " . $e->getMessage();
