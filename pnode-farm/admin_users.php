@@ -216,18 +216,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                     if ($device_count > 0) {
                         // Delete all devices owned by this user first
                         // Soft delete device with audit trail
-                        $stmt = $pdo->prepare("UPDATE devices SET logically_deleted = 1, deleted_at = NOW(), deleted_by = :user_id WHERE username = :username");
+                        $stmt = $pdo->prepare("UPDATE devices SET logically_deleted = 1, deleted_at = NOW(), deleted_by = :deleted_by WHERE username = :username");
+                        $stmt->bindValue(':deleted_by', $_SESSION['user_id'], PDO::PARAM_INT);
                         $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
-                        $stmt->bindValue(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
                         $stmt->execute();
                         
                         logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'admin_devices_deleted_with_user', "Deleted $device_count devices for user: {$user_to_delete['username']}");
                     }
 
                     // Finally, delete the user
-                    $stmt = $pdo->prepare("UPDATE users SET logically_deleted = 1, deleted_at = NOW(), deleted_by = :user_id WHERE username = :username");
+                    $stmt = $pdo->prepare("UPDATE users SET logically_deleted = 1, deleted_at = NOW(), deleted_by = :deleted_by WHERE username = :username");
+                    $stmt->bindValue(':deleted_by', $_SESSION['user_id'], PDO::PARAM_INT);
                     $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
-                    $stmt->bindValue(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
                     $stmt->execute();
 
                     // Commit transaction
