@@ -1009,6 +1009,106 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                 });
             });
 
+            // Add form validation for admin forms
+            const adminNameInput = document.getElementById('add-pnode-name');
+            const adminIpInput = document.getElementById('add-pnode-ip');
+
+            if (adminNameInput) {
+                adminNameInput.addEventListener('blur', function() {
+                    const nameError = validateNodeName(this.value.trim());
+                    const errorDiv = document.getElementById('name-error');
+
+                    if (nameError) {
+                        errorDiv.innerHTML = nameError;
+                        errorDiv.style.display = 'block';
+                        this.classList.add('input-error');
+                    } else {
+                        errorDiv.style.display = 'none';
+                        this.classList.remove('input-error');
+                    }
+                });
+
+                adminNameInput.addEventListener('input', function() {
+                    if (this.classList.contains('input-error')) {
+                        document.getElementById('name-error').style.display = 'none';
+                        this.classList.remove('input-error');
+                    }
+                });
+            }
+
+            if (adminIpInput) {
+                adminIpInput.addEventListener('blur', function() {
+                    const ipError = validateIPAddress(this.value.trim());
+                    const errorDiv = document.getElementById('ip-error');
+
+                    if (ipError) {
+                        errorDiv.innerHTML = ipError;
+                        errorDiv.style.display = 'block';
+                        this.classList.add('input-error');
+                    } else {
+                        errorDiv.style.display = 'none';
+                        this.classList.remove('input-error');
+                    }
+                });
+
+                adminIpInput.addEventListener('input', function() {
+                    if (this.classList.contains('input-error')) {
+                        document.getElementById('ip-error').style.display = 'none';
+                        this.classList.remove('input-error');
+                    }
+                });
+            }
+
+            // Edit form validation for admin
+            const editAdminNameInput = document.getElementById('edit-pnode-name');
+            const editAdminIpInput = document.getElementById('edit-pnode-ip');
+
+            if (editAdminNameInput) {
+                editAdminNameInput.addEventListener('blur', function() {
+                    const nameError = validateNodeName(this.value.trim());
+                    const errorDiv = document.getElementById('edit-name-error');
+
+                    if (nameError) {
+                        errorDiv.innerHTML = nameError;
+                        errorDiv.style.display = 'block';
+                        this.classList.add('input-error');
+                    } else {
+                        errorDiv.style.display = 'none';
+                        this.classList.remove('input-error');
+                    }
+                });
+
+                editAdminNameInput.addEventListener('input', function() {
+                    if (this.classList.contains('input-error')) {
+                        document.getElementById('edit-name-error').style.display = 'none';
+                        this.classList.remove('input-error');
+                    }
+                });
+            }
+
+            if (editAdminIpInput) {
+                editAdminIpInput.addEventListener('blur', function() {
+                    const ipError = validateIPAddress(this.value.trim());
+                    const errorDiv = document.getElementById('edit-ip-error');
+
+                    if (ipError) {
+                        errorDiv.innerHTML = ipError;
+                        errorDiv.style.display = 'block';
+                        this.classList.add('input-error');
+                    } else {
+                        errorDiv.style.display = 'none';
+                        this.classList.remove('input-error');
+                    }
+                });
+
+                editAdminIpInput.addEventListener('input', function() {
+                    if (this.classList.contains('input-error')) {
+                        document.getElementById('edit-ip-error').style.display = 'none';
+                        this.classList.remove('input-error');
+                    }
+                });
+            }
+
             console.log('All handlers initialized successfully');
         });
 
