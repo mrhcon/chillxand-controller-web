@@ -48,11 +48,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                         logInteraction($pdo, $_SESSION['user_id'], $_SESSION['username'], 'device_register_failed', 'Duplicate IP address');
                     } else {
                         // Add device with audit trail
-                        $stmt = $pdo->prepare("INSERT INTO devices (username, pnode_name, pnode_ip, created, last_modified, last_modified_by, created_by) VALUES (:username, :pnode_name, :pnode_ip, NOW(), NOW(), :modified_by, :created_by)");
+                        $stmt = $pdo->prepare("INSERT INTO devices (username, pnode_name, pnode_ip, created, created_by) VALUES (:username, :pnode_name, :pnode_ip, NOW(), :created_by)");
                         $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
                         $stmt->bindValue(':pnode_name', $pnode_name, PDO::PARAM_STR);
                         $stmt->bindValue(':pnode_ip', $pnode_ip, PDO::PARAM_STR);
-                        $stmt->bindValue(':modified_by', $_SESSION['user_id'], PDO::PARAM_INT);
                         $stmt->bindValue(':created_by', $_SESSION['user_id'], PDO::PARAM_INT);
                         $stmt->execute();
 
@@ -151,7 +150,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
 
             if ($device) {
                 // Soft delete device with audit trail
-                $stmt = $pdo->prepare("UPDATE devices SET logically_deleted = 1, deleted_at = NOW(), deleted_by = :user_id, last_modified_by = :user_id WHERE id = :device_id AND username = :username");
+                $stmt = $pdo->prepare("UPDATE devices SET logically_deleted = 1, deleted_at = NOW(), deleted_by = :user_id WHERE id = :device_id AND username = :username");
                 $stmt->bindValue(':device_id', $device_id, PDO::PARAM_INT);
                 $stmt->bindValue(':username', $_SESSION['username'], PDO::PARAM_STR);
                 $stmt->bindValue(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
