@@ -851,13 +851,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
                    </table>
                <?php endif; ?>
 
-               <div style="margin-top: 20px; padding: 10px; background-color: #e9ecef; border-radius: 4px;">
+               <!-- <div style="margin-top: 20px; padding: 10px; background-color: #e9ecef; border-radius: 4px;">
                    <h4>Background Health Monitoring</h4>
                    <p><small>Device health status is automatically checked every 2 minutes by a background process.
                    Use the refresh button (↻) next to each device for immediate status updates. The status logs show
                    device connectivity checks, response times, and health status. Update buttons allow you to trigger
                    controller or pod updates on the remote devices.</small></p>
-               </div>
+               </div> -->
            </div>
        </div>
    </div>
